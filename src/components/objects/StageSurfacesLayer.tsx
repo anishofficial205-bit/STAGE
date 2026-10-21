@@ -4,7 +4,8 @@
  * shaped like it (circles, thrust outlines, arch frames). A surface hovered
  * or selected in the panel shows a blue tint even when it has no style yet.
  */
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { getTemplate } from '../../templates/registry';
 import { useActiveData, useActiveParams, useProjectStore } from '../../store/useProjectStore';
@@ -12,6 +13,9 @@ import { styleProps, type FaceStyle } from '../../objects/materials';
 import { SURFACE, useObjectUI } from '../../objects/ui';
 import type { Surface } from '../../types';
 import { usePlacedGraphic } from '../../graphics/usePlaced';
+import { updatePlacement } from '../../graphics/library';
+import { panBy } from '../../graphics/placement';
+import type { GraphicPlacement } from '../../graphics/types';
 import { shaderKey } from '../../objects/faceMaterial';
 
 const OFFSET = 0.004; // metres in front of the real surface
@@ -39,8 +43,40 @@ export function surfaceSize(s: Surface) {
   return { w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys) };
 }
 
+/** Drag on a surface while "repositioning" its graphic to pan the image. */
+function useSurfacePan(surface: Surface, style: FaceStyle | undefined) {
+  const controls = useThree((s) => s.controls) as unknown as { enabled: boolean } | null;
+  const drag = useRef<{ uv0: THREE.Vector2; g: GraphicPlacement; aspect: number } | null>(null);
+  const size = surfaceSize(surface);
+  return {
+    onPointerDown: (e: ThreeEvent<PointerEvent>) => {
+      const ui = useObjectUI.getState();
+      const g = style?.graphic;
+      const meta = g && useProjectStore.getState().graphics[g.id];
+      if (!ui.repositioning || ui.selectedFace?.objectId !== SURFACE || ui.selectedFace.face !== surface.id || !e.uv || !g || !meta || (g.fit !== 'fill' && g.fit !== 'tile')) return;
+      e.stopPropagation();
+      drag.current = { uv0: e.uv.clone(), g, aspect: meta.width / meta.height };
+      (e.target as unknown as Element).setPointerCapture(e.pointerId);
+      if (controls) controls.enabled = false;
+    },
+    onPointerMove: (e: ThreeEvent<PointerEvent>) => {
+      const d = drag.current;
+      if (!d || !e.uv) return;
+      e.stopPropagation();
+      updatePlacement({ objectId: SURFACE, face: surface.id }, panBy(d.g, size, d.aspect, e.uv.x - d.uv0.x, e.uv.y - d.uv0.y), `pan:surface:${surface.id}`);
+    },
+    onPointerUp: (e: ThreeEvent<PointerEvent>) => {
+      if (!drag.current) return;
+      drag.current = null;
+      (e.target as unknown as Element).releasePointerCapture(e.pointerId);
+      if (controls) controls.enabled = true;
+    },
+  };
+}
+
 function Overlay({ surface, style, highlight }: { surface: Surface; style?: FaceStyle; highlight: boolean }) {
   const geometry = useMemo(() => surfaceGeometry(surface), [surface]);
+  const pan = useSurfacePan(surface, style);
   const euler = new THREE.Euler(...surface.rotation);
   const n = new THREE.Vector3(0, 0, 1).applyEuler(euler).multiplyScalar(OFFSET);
   const size = surfaceSize(surface);
@@ -48,7 +84,7 @@ function Overlay({ surface, style, highlight }: { surface: Surface; style?: Face
   const graphic = usePlacedGraphic(style?.graphic, size);
   const glow = !!graphic && !!surface.glow;
   return (
-    <mesh geometry={geometry} position={[surface.position[0] + n.x, surface.position[1] + n.y, surface.position[2] + n.z]} rotation={euler} receiveShadow>
+    <mesh geometry={geometry} position={[surface.position[0] + n.x, surface.position[1] + n.y, surface.position[2] + n.z]} rotation={euler} receiveShadow {...pan}>
       <meshStandardMaterial
         key={shaderKey(graphic?.map ?? ('map' in props ? props.map : null), 'envMap' in props ? props.envMap : null, graphic ? graphic.transparent : props.transparent, glow, !!graphic?.onBeforeCompile)}
         {...props}

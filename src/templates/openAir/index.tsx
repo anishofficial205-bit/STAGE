@@ -395,8 +395,12 @@ export const openAirTemplate: StageTemplate = {
       { id: 'stage-floor', label: 'Stage floor', position: [0, L.ph, -L.pd / 2], rotation: [-Math.PI / 2, 0, 0], width: L.pw, height: L.pd },
       { id: 'stage-skirt', label: 'Stage front skirt', position: [0, L.ph / 2, 0], rotation: [0, 0, 0], width: L.pw, height: L.ph },
       { id: 'truss-header', label: 'Truss header (banner)', position: [0, L.trussH - 0.7, L.headerZ + 0.3], rotation: [0, 0, 0], width: L.tw, height: 1 },
-      { id: 'left-screen', label: 'Left screen', position: [-L.towerX, screenY, -0.17], rotation: [0, 0, 0], width: L.sw, height: L.sh },
-      { id: 'right-screen', label: 'Right screen', position: [L.towerX, screenY, -0.17], rotation: [0, 0, 0], width: L.sw, height: L.sh },
+      ...(L.towers
+        ? [
+            { id: 'left-screen', label: 'Left screen', position: [-L.towerX, screenY, -0.17] as Vec3, rotation: [0, 0, 0] as Vec3, width: L.sw, height: L.sh, glow: true },
+            { id: 'right-screen', label: 'Right screen', position: [L.towerX, screenY, -0.17] as Vec3, rotation: [0, 0, 0] as Vec3, width: L.sw, height: L.sh, glow: true },
+          ]
+        : []),
     ];
   },
 

@@ -7,10 +7,10 @@ import * as THREE from 'three';
 import { create } from 'zustand';
 import JSZip from 'jszip';
 import { useEffect } from 'react';
-import { useProjectStore } from '../store/useProjectStore';
+import { MERGE_WITH_PREVIOUS, useProjectStore } from '../store/useProjectStore';
 import { newObjectId } from '../store/ids';
 import { defaultStyle, type FaceStyle } from '../objects/materials';
-import { SURFACE, type FaceRef } from '../objects/ui';
+import { FLOOR_DECAL, SURFACE, type FaceRef } from '../objects/ui';
 import { getBlob, putBlob } from './db';
 import { defaultPlacement, type GraphicMeta, type GraphicPlacement } from './types';
 
@@ -186,8 +186,27 @@ function setStyle(target: FaceRef, style: FaceStyle | null, key?: string) {
 /** Put a library graphic on a face (white base so the artwork isn't tinted). */
 export function assignGraphic(target: FaceRef, graphicId: string, key?: string) {
   const current = styleOf(target);
+  const s = useProjectStore.getState();
+  const decal = target.objectId !== SURFACE && (s.objectsByTemplate[s.templateId] ?? []).find((o) => o.id === target.objectId && o.type === FLOOR_DECAL);
+  const meta = s.graphics[graphicId];
+  if (decal && meta && !current?.graphic) {
+    // A decal is the graphic: show all of it, at the image's proportions.
+    s.setFaceStyle(decal.id, target.face, { ...defaultStyle(), color: '#ffffff', graphic: { ...defaultPlacement(graphicId), fit: 'stretch' } }, key);
+    matchImageProportions(decal.id, graphicId);
+    return;
+  }
   // Keep the face's material, but make it white so the artwork isn't tinted; keep an existing placement.
   setStyle(target, { ...(current ?? defaultStyle()), color: '#ffffff', graphic: current?.graphic ? { ...current.graphic, id: graphicId } : defaultPlacement(graphicId) }, key);
+}
+
+/** Set a floor decal's depth so it has the same proportions as its graphic. */
+export function matchImageProportions(objectId: string, graphicId: string) {
+  const s = useProjectStore.getState();
+  const meta = s.graphics[graphicId];
+  const o = (s.objectsByTemplate[s.templateId] ?? []).find((x) => x.id === objectId);
+  if (!meta || !o) return;
+  const width = Number(o.params.width);
+  s.updateObjects((list) => list.map((x) => (x.id === objectId ? { ...x, params: { ...x.params, depth: +((width * meta.height) / meta.width).toFixed(3) } } : x)), MERGE_WITH_PREVIOUS);
 }
 
 /** Change how the graphic sits on a face. */

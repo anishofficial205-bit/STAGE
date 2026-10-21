@@ -120,7 +120,7 @@ export const blackBoxTemplate: StageTemplate = {
       { id: 'wall-front', label: 'Front wall', position: [0, height / 2, halfL], rotation: [0, Math.PI, 0], width: halfW * 2, height },
       { id: 'wall-left', label: 'Left wall', position: [-halfW, height / 2, 0], rotation: [0, Math.PI / 2, 0], width: halfL * 2, height },
       { id: 'wall-right', label: 'Right wall', position: [halfW, height / 2, 0], rotation: [0, -Math.PI / 2, 0], width: halfL * 2, height },
-      { id: 'floor', label: 'Floor', position: [0, 0, 0], rotation: [-Math.PI / 2, 0, 0], width: halfW * 2, height: halfL * 2 },
+      { id: 'floor', label: 'Floor', position: [0, 0.005, 0], rotation: [-Math.PI / 2, 0, 0], width: halfW * 2, height: halfL * 2 },
     ];
     blocksOf(data)
       .filter((b) => b.kind === 'platform')

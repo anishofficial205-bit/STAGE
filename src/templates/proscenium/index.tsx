@@ -237,7 +237,19 @@ export const prosceniumTemplate: StageTemplate = {
       { id: 'back-wall', label: 'Back wall', position: [0, L.h + L.houseTop / 2, -L.stageD], rotation: [0, 0, 0], width: L.houseW, height: L.houseTop },
       { id: 'stage-floor', label: 'Stage floor', position: [0, L.h, -L.stageD / 2], rotation: [-Math.PI / 2, 0, 0], width: L.stageW, height: L.stageD },
       { id: 'apron-front', label: 'Apron front edge', position: [0, L.h / 2, L.apron], rotation: [0, 0, 0], width: L.apronW, height: L.h },
-      { id: 'arch-front', label: 'Arch front face', position: [0, L.h + (L.archH + L.frame) / 2, 0.15], rotation: [0, 0, 0], width: L.archW + 2 * L.frame, height: L.archH + L.frame },
+      {
+        id: 'arch-front',
+        label: 'Arch front face',
+        position: [0, L.h + (L.archH + L.frame) / 2, 0.15],
+        rotation: [0, 0, 0],
+        width: L.archW + 2 * L.frame,
+        height: L.archH + L.frame,
+        // The frame's U shape (outer edge, then the opening traced back), so graphics leave the opening clear.
+        outline: [
+          ...archOutline(L.archW / 2, L.h, L.h + L.archH, L.archRise, L.frame),
+          ...[...archOutline(L.archW / 2, L.h, L.h + L.archH, L.archRise)].reverse(),
+        ].map(([x, y]) => [x, y - (L.h + (L.archH + L.frame) / 2)] as [number, number]),
+      },
       { id: 'left-wing-wall', label: 'Stage left wing wall', position: [L.houseW / 2, L.h + L.houseTop / 2, -L.stageD / 2], rotation: [0, -Math.PI / 2, 0], width: L.stageD, height: L.houseTop },
       { id: 'right-wing-wall', label: 'Stage right wing wall', position: [-L.houseW / 2, L.h + L.houseTop / 2, -L.stageD / 2], rotation: [0, Math.PI / 2, 0], width: L.stageD, height: L.houseTop },
     ];

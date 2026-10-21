@@ -3,7 +3,7 @@
  * handles (move / height / rotate / edge-resize), smart guides and the cables
  * of hanging pieces.
  */
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Line } from '@react-three/drei';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
@@ -14,7 +14,7 @@ import { getStageInfo } from '../../helpers/stageInfo';
 import type { Vec3 } from '../../types';
 import { aabb, isOffStage, place, rotateXZ, unrotateXZ, worldHangLines, type Placed } from '../../objects/geometry';
 import { moveSelection, resizeFromEdge, setElevation, setRotation } from '../../objects/actions';
-import { useObjectUI } from '../../objects/ui';
+import { SURFACE, useObjectUI } from '../../objects/ui';
 import { getObjectType } from '../../objects/registry';
 import { placementOf, resizeRule } from '../../objects/types';
 import { useBlackBoxUI } from '../../templates/blackBox/blocks';
@@ -23,7 +23,7 @@ import { rotateSelection } from '../../objects/arrange';
 import type { SetObject } from '../../objects/types';
 import { ObjectFaces } from '../../objects/faceMaterial';
 import { updatePlacement } from '../../graphics/library';
-import { fillWindow } from '../../graphics/placement';
+import { panBy } from '../../graphics/placement';
 import type { GraphicPlacement } from '../../graphics/types';
 
 /** The face id of the material hit by a pointer event (set by FaceMat), if any. */
@@ -370,18 +370,7 @@ function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; sel
       if (s.pan) {
         if (!e.uv) return;
         const { g, uv0, size, aspect, face } = s.pan;
-        const du = e.uv.x - uv0.x;
-        const dv = e.uv.y - uv0.y;
-        let change: { offsetX: number; offsetY: number };
-        if (g.fit === 'fill') {
-          const [rx, ry] = fillWindow(g, size, aspect);
-          const clamp = (v: number) => Math.max(-0.5, Math.min(0.5, v));
-          change = { offsetX: clamp(g.offsetX + (rx < 1 ? (du * rx) / (1 - rx) : 0)), offsetY: clamp(g.offsetY + (ry < 1 ? (dv * ry) / (1 - ry) : 0)) };
-        } else {
-          const tw = Math.max(0.01, g.tileSize);
-          change = { offsetX: g.offsetX + (du * size.w) / tw, offsetY: g.offsetY + (dv * size.h * aspect) / tw };
-        }
-        updatePlacement({ objectId: obj.id, face }, change, `pan:${obj.id}:${face}`);
+        updatePlacement({ objectId: obj.id, face }, panBy(g, size, aspect, e.uv.x - uv0.x, e.uv.y - uv0.y), `pan:${obj.id}:${face}`);
         return;
       }
       if (!e.ray.intersectPlane(horizontal(p.baseY), tmp)) return;
@@ -416,6 +405,14 @@ export function SetObjectsLayer() {
   const info = useMemo(() => getStageInfo(getTemplate(templateId)!, params, data), [templateId, params, data]);
   const placed = useMemo(() => objects.map((o) => place(o, info)).filter((p): p is Placed => !!p), [objects, info]);
   const single = selectedIds.length === 1 ? placed.find((p) => p.obj.id === selectedIds[0]) : undefined;
+  // A picked face (and graphic repositioning) belongs to its object's selection.
+  useEffect(() => {
+    const ui = useObjectUI.getState();
+    if (ui.selectedFace && ui.selectedFace.objectId !== SURFACE && !selectedIds.includes(ui.selectedFace.objectId)) {
+      ui.setSelectedFace(null);
+      ui.setRepositioning(false);
+    }
+  }, [selectedIds]);
   const hidden = useMemo(() => new Set(objects.filter((o) => inherited(o, objects, 'hidden')).map((o) => o.id)), [objects]);
   const locked = useMemo(() => new Set(objects.filter((o) => inherited(o, objects, 'locked')).map((o) => o.id)), [objects]);
   const multi = selectedIds.length > 1 ? placed.filter((p) => selectedIds.includes(p.obj.id) && !hidden.has(p.obj.id)) : [];

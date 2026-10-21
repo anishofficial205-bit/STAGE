@@ -106,6 +106,20 @@ export function fitBackgroundPatch(background: string) {
   };
 }
 
+/**
+ * New pan offsets after dragging across a face by (du, dv) in face UV units:
+ * the image follows the pointer. Fill pans within the image; Tile slides the pattern.
+ */
+export function panBy(g: GraphicPlacement, face: { w: number; h: number }, imageAspect: number, du: number, dv: number) {
+  if (g.fit === 'fill') {
+    const [rx, ry] = fillWindow(g, face, imageAspect);
+    const clamp = (v: number) => Math.max(-0.5, Math.min(0.5, v));
+    return { offsetX: clamp(g.offsetX + (rx < 1 ? (du * rx) / (1 - rx) : 0)), offsetY: clamp(g.offsetY + (ry < 1 ? (dv * ry) / (1 - ry) : 0)) };
+  }
+  const tw = Math.max(0.01, g.tileSize);
+  return { offsetX: g.offsetX + (du * face.w) / tw, offsetY: g.offsetY + (dv * face.h * imageAspect) / tw };
+}
+
 /** Fill mode: the visible fraction of the displayed image (width, height). Used to turn drags into pan. */
 export function fillWindow(p: GraphicPlacement, face: { w: number; h: number }, imageAspect: number): [number, number] {
   const turns = ((Math.round(p.rotation) % 4) + 4) % 4;

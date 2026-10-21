@@ -5,6 +5,7 @@
  */
 import type { SetObjectType } from './types';
 import { boxObject } from './box';
+import { floorDecalObject } from './floorDecal';
 import { flatObject } from './flat';
 import { flatOpeningObject } from './flatOpening';
 import { wallRunObject } from './wallRun';
@@ -31,6 +32,7 @@ import { propObjects } from './props';
 
 export const objectTypes: SetObjectType[] = [
   boxObject,
+  floorDecalObject,
   flatObject,
   flatOpeningObject,
   wallRunObject,

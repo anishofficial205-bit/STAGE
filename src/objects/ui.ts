@@ -9,6 +9,8 @@ export interface FaceRef {
 }
 /** A stage surface (from the template's surfaces()) rather than an object face. */
 export const SURFACE = '@surface';
+/** Type id of the floor decal piece. */
+export const FLOOR_DECAL = 'floor-decal';
 
 export const useObjectUI = create<{
   guides: [Vec3, Vec3][];

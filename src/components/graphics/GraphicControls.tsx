@@ -1,7 +1,8 @@
 import { useRef } from 'react';
 import { Field } from '../fields';
 import { useProjectStore } from '../../store/useProjectStore';
-import { ACCEPT, assignGraphic, importOnto, removeFaceGraphic, updatePlacement, useGraphicUrl } from '../../graphics/library';
+import { ACCEPT, assignGraphic, importOnto, matchImageProportions, removeFaceGraphic, updatePlacement, useGraphicUrl } from '../../graphics/library';
+import { FLOOR_DECAL } from '../../objects/ui';
 import { useObjectUI, type FaceRef } from '../../objects/ui';
 import type { FitMode, GraphicPlacement } from '../../graphics/types';
 
@@ -20,6 +21,7 @@ export function GraphicControls({ target, graphic }: { target: FaceRef; graphic?
   const url = useGraphicUrl(graphic?.id ?? '');
   const repositioning = useObjectUI((s) => s.repositioning);
   const fileInput = useRef<HTMLInputElement>(null);
+  const isDecal = useProjectStore((s) => (s.objectsByTemplate[s.templateId] ?? []).some((o) => o.id === target.objectId && o.type === FLOOR_DECAL));
   const k = (name: string) => `graphic:${target.objectId}:${target.face}:${name}`;
   const set = (change: Partial<GraphicPlacement>, name?: string) => updatePlacement(target, change, name && k(name));
 
@@ -113,6 +115,11 @@ export function GraphicControls({ target, graphic }: { target: FaceRef; graphic?
           Flip ↕
         </button>
       </div>
+      {isDecal && (
+        <button className="btn" onClick={() => matchImageProportions(target.objectId, graphic.id)} title="Set the decal's depth to match the image's proportions">
+          Match image proportions
+        </button>
+      )}
       <Field def={{ key: 'opacity', label: 'Opacity', group: '', type: 'number', unit: 'none', default: 1, min: 0, max: 1, step: 0.05 }} value={graphic.opacity} units={units} onChange={(v) => set({ opacity: v as number }, 'opacity')} />
       <div className="btn-row">
         <button className="btn" onClick={() => fileInput.current?.click()}>

@@ -10,7 +10,8 @@ import { Collapsible } from '../Collapsible';
 import { StyleEditor, Swatch } from './StyleEditor';
 import { GraphicControls } from '../graphics/GraphicControls';
 import { assignGraphic, importOnto } from '../../graphics/library';
-import { GRAPHIC_DRAG_TYPE } from '../../objects/ui';
+import { FLOOR_DECAL, GRAPHIC_DRAG_TYPE } from '../../objects/ui';
+import { addObjectAt } from '../../objects/actions';
 
 interface Row {
   id: string;
@@ -122,7 +123,19 @@ export function SurfacesSection() {
   const setSurfaceStyle = useProjectStore((s) => s.setSurfaceStyle);
   const surfaces = getTemplate(templateId)!.surfaces(params, data).filter((s) => s.width > 0.01 && s.height > 0.01);
   return (
-    <Collapsible id="surfaces" title="Stage surfaces" defaultOpen={false}>
+    <Collapsible id="surfaces" title="Stage surfaces">
+      <p className="hint">Colour, materials and graphics on the stage itself. Drop an image onto a wall or floor in the view, or pick a surface below.</p>
+      <button
+        className="btn"
+        onClick={() => {
+          addObjectAt(FLOOR_DECAL);
+          const id = useProjectStore.getState().selectedIds[0];
+          if (id) useObjectUI.getState().setSelectedFace({ objectId: id, face: 'graphic' });
+        }}
+        title="A graphic placed on the floor at a chosen size and position"
+      >
+        + Add floor decal
+      </button>
       <FaceList
         target={SURFACE}
         rows={surfaces.map((s) => ({ id: s.id, name: s.label, size: sizeLabel(s.width, s.height, units) }))}
