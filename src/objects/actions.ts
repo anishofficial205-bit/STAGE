@@ -14,7 +14,7 @@ import { getObjectType } from './registry';
 import { place, rotateXZ, type Placed } from './geometry';
 import { snapMove } from './snapping';
 import { useObjectUI } from './ui';
-import type { SetObject } from './types';
+import { resizeRule, type SetObject } from './types';
 
 /** Grid step for objects: 0.25 m, or 6 in when working in feet. */
 export const gridStep = () => (useProjectStore.getState().units === 'ft' ? 0.5 * M_PER_FT : 0.25);
@@ -110,10 +110,10 @@ export const setProps = (id: string, props: Partial<Pick<SetObject, 'name' | 'x'
  */
 export function resizeFromEdge(start: { obj: SetObject; size: number; axis: 'x' | 'z'; sign: 1 | -1 }, size: number) {
   const type = getObjectType(start.obj.type)!;
-  const key = start.axis === 'x' ? type.resize?.width : type.resize?.depth;
-  if (!key) return;
+  const rule = resizeRule(type, start.obj.params, start.axis === 'x' ? 'width' : 'depth');
+  if (!rule) return;
   const before = type.size(start.obj.params);
-  const next = withParams(start.obj, { [key]: Math.max(0.05, Math.round(size * 1000) / 1000) });
+  const next = withParams(start.obj, { [rule.key]: Math.max(0.01, Math.round(size * rule.scale * 1000) / 1000) });
   const after = type.size(next.params);
   const grow = start.axis === 'x' ? after.width - before.width : after.depth - before.depth;
   const [ox, oz] = rotateXZ(start.axis === 'x' ? (start.sign * grow) / 2 : 0, start.axis === 'z' ? (start.sign * grow) / 2 : 0, start.obj.rotation);

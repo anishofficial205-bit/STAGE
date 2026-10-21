@@ -4,11 +4,32 @@
  * handles and layers all read from this list.
  */
 import type { SetObjectType } from './types';
-import { blockObject } from './block';
+import { boxObject } from './box';
+import { flatObject } from './flat';
+import { flatOpeningObject } from './flatOpening';
+import { wallRunObject } from './wallRun';
+import { backdropObject } from './backdrop';
+import { platformObject } from './platform';
+import { roundPlatformObject } from './roundPlatform';
+import { stepsObject } from './steps';
+import { rampObject } from './ramp';
 
-export const objectTypes: SetObjectType[] = [blockObject];
+export const objectTypes: SetObjectType[] = [
+  boxObject,
+  flatObject,
+  flatOpeningObject,
+  wallRunObject,
+  backdropObject,
+  platformObject,
+  roundPlatformObject,
+  stepsObject,
+  rampObject,
+];
 
-export const getObjectType = (id: string) => objectTypes.find((t) => t.id === id);
+/** Old type ids still found in saved projects. */
+const RENAMED: Record<string, string> = { block: 'box' };
+
+export const getObjectType = (id: string) => objectTypes.find((t) => t.id === (RENAMED[id] ?? id));
 
 /** Categories in library order. */
 export const objectCategories = () => [...new Set(objectTypes.map((t) => t.category))];

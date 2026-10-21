@@ -26,6 +26,16 @@ export interface ObjectSize {
   height: number;
 }
 
+/**
+ * Which param an edge handle changes. A plain key sets the param to the new
+ * size; `scale` converts (e.g. a half-round platform's depth is half its diameter → scale 2).
+ */
+export type ResizeRule = string | { key: string; scale: number };
+export interface ResizeMap {
+  width?: ResizeRule;
+  depth?: ResizeRule;
+}
+
 export interface SetObjectType {
   id: string;
   name: string;
@@ -38,8 +48,8 @@ export interface SetObjectType {
   faces: (params: Params) => ObjectFace[];
   placement: Placement;
   size: (params: Params) => ObjectSize;
-  /** Params driven by the edge and height handles. */
-  resize?: { width?: string; depth?: string; height?: string };
+  /** Params driven by the edge handles (may depend on the current params). */
+  resize?: ResizeMap | ((params: Params) => ResizeMap);
   /** For objects whose height above the floor is a param (e.g. a backdrop's bottom gap). */
   elevationParam?: string;
   /** Default height above the floor when placed (hanging pieces). */
@@ -66,4 +76,11 @@ export interface SetObject {
   rotation: number;
   hidden?: boolean;
   locked?: boolean;
+}
+
+export function resizeRule(type: SetObjectType, params: Params, axis: 'width' | 'depth'): { key: string; scale: number } | null {
+  const map = typeof type.resize === 'function' ? type.resize(params) : type.resize;
+  const r = map?.[axis];
+  if (!r) return null;
+  return typeof r === 'string' ? { key: r, scale: 1 } : r;
 }

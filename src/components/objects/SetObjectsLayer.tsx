@@ -16,6 +16,7 @@ import { isOffStage, place, rotateXZ, unrotateXZ, type Placed } from '../../obje
 import { moveSelection, resizeFromEdge, setElevation, setRotation } from '../../objects/actions';
 import { useObjectUI } from '../../objects/ui';
 import { getObjectType } from '../../objects/registry';
+import { resizeRule } from '../../objects/types';
 import { useBlackBoxUI } from '../../templates/blackBox/blocks';
 
 const SELECT = '#2f6fde';
@@ -165,8 +166,8 @@ function Handles({ p }: { p: Placed }) {
   const hy = Math.min(size.height / 2, 1.2);
   const rad = toRad(obj.rotation);
 
-  const handlesX = type.resize?.width ? ([1, -1] as const) : [];
-  const handlesZ = type.resize?.depth ? ([1, -1] as const) : [];
+  const handlesX = resizeRule(type, obj.params, 'width') ? ([1, -1] as const) : [];
+  const handlesZ = resizeRule(type, obj.params, 'depth') ? ([1, -1] as const) : [];
 
   const height = useDrag({
     start: (e) => {
