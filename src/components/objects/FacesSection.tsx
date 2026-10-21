@@ -8,6 +8,9 @@ import type { FaceStyle } from '../../objects/materials';
 import type { SetObject } from '../../objects/types';
 import { Collapsible } from '../Collapsible';
 import { StyleEditor, Swatch } from './StyleEditor';
+import { GraphicControls } from '../graphics/GraphicControls';
+import { assignGraphic, importOnto } from '../../graphics/library';
+import { GRAPHIC_DRAG_TYPE } from '../../objects/ui';
 
 interface Row {
   id: string;
@@ -31,6 +34,16 @@ function FaceList({ target, rows, styles, setStyle, allFaces }: { target: string
           <li key={r.id} className={`face ${open ? 'is-open' : ''}`}>
             <button
               className="face__row"
+              onDragOver={(e) => {
+                if (e.dataTransfer.types.includes(GRAPHIC_DRAG_TYPE) || e.dataTransfer.types.includes('Files')) e.preventDefault();
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                const id = e.dataTransfer.getData(GRAPHIC_DRAG_TYPE);
+                if (id) assignGraphic({ objectId: target, face: r.id }, id);
+                else if (e.dataTransfer.files.length) void importOnto({ objectId: target, face: r.id }, [...e.dataTransfer.files]);
+              }}
+              title="Drop a graphic here to put it on this face"
               onMouseEnter={() => setHoverFace({ objectId: target, face: r.id })}
               onClick={() => setSelectedFace(open ? null : { objectId: target, face: r.id })}
             >
@@ -40,6 +53,8 @@ function FaceList({ target, rows, styles, setStyle, allFaces }: { target: string
             </button>
             {open && (
               <div className="face__editor">
+                <GraphicControls target={{ objectId: target, face: r.id }} graphic={(styles[r.id] ?? styles[ALL_FACES])?.graphic} />
+                <h4 className="subhead">Colour and material</h4>
                 <StyleEditor
                   style={styles[r.id] ?? styles[ALL_FACES]}
                   onChange={(s, key) => setStyle(r.id, s, key && `${key}:${target}:${r.id}`)}
@@ -59,7 +74,7 @@ function FaceList({ target, rows, styles, setStyle, allFaces }: { target: string
                       )}
                       {styles[r.id] && (
                         <button className="btn btn--link" onClick={() => setStyle(r.id, null)}>
-                          Reset
+                          Reset face
                         </button>
                       )}
                     </div>

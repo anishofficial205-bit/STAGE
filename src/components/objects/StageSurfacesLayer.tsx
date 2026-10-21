@@ -11,6 +11,8 @@ import { useActiveData, useActiveParams, useProjectStore } from '../../store/use
 import { styleProps, type FaceStyle } from '../../objects/materials';
 import { SURFACE, useObjectUI } from '../../objects/ui';
 import type { Surface } from '../../types';
+import { usePlacedGraphic } from '../../graphics/usePlaced';
+import { shaderKey } from '../../objects/faceMaterial';
 
 const OFFSET = 0.004; // metres in front of the real surface
 
@@ -41,16 +43,21 @@ function Overlay({ surface, style, highlight }: { surface: Surface; style?: Face
   const geometry = useMemo(() => surfaceGeometry(surface), [surface]);
   const euler = new THREE.Euler(...surface.rotation);
   const n = new THREE.Vector3(0, 0, 1).applyEuler(euler).multiplyScalar(OFFSET);
-  const props = style ? styleProps(style, '#ffffff', surfaceSize(surface)) : { color: '#2f6fde', transparent: true, opacity: 0.25, depthWrite: false };
+  const size = surfaceSize(surface);
+  const props = style ? styleProps(style, '#ffffff', size) : { color: '#2f6fde', transparent: true, opacity: 0.25, depthWrite: false };
+  const graphic = usePlacedGraphic(style?.graphic, size);
+  const glow = !!graphic && !!surface.glow;
   return (
     <mesh geometry={geometry} position={[surface.position[0] + n.x, surface.position[1] + n.y, surface.position[2] + n.z]} rotation={euler} receiveShadow>
       <meshStandardMaterial
+        key={shaderKey(graphic?.map ?? ('map' in props ? props.map : null), 'envMap' in props ? props.envMap : null, graphic ? graphic.transparent : props.transparent, glow, !!graphic?.onBeforeCompile)}
         {...props}
+        {...(graphic ?? {})}
+        {...(glow ? { emissiveMap: graphic!.map, emissive: '#ffffff', emissiveIntensity: 0.9 } : {})}
         side={THREE.DoubleSide}
         polygonOffset
         polygonOffsetFactor={-2}
-        emissive={highlight && style ? '#2f6fde' : '#000000'}
-        emissiveIntensity={highlight && style ? 0.35 : 0}
+        {...(glow ? {} : { emissive: highlight && style ? '#2f6fde' : '#000000', emissiveIntensity: highlight && style ? 0.35 : 0 })}
         userData={{ surface: surface.id }}
       />
     </mesh>

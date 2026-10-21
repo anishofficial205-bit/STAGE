@@ -22,6 +22,9 @@ import { inherited, leafIds, topAncestor } from '../../objects/groups';
 import { rotateSelection } from '../../objects/arrange';
 import type { SetObject } from '../../objects/types';
 import { ObjectFaces } from '../../objects/faceMaterial';
+import { updatePlacement } from '../../graphics/library';
+import { fillWindow } from '../../graphics/placement';
+import type { GraphicPlacement } from '../../graphics/types';
 
 /** The face id of the material hit by a pointer event (set by FaceMat), if any. */
 export function faceAt(e: { object: THREE.Object3D; face?: THREE.Face | null }): string | null {
@@ -311,6 +314,12 @@ function Handles({ p }: { p: Placed }) {
   );
 }
 
+interface DragState {
+  off: readonly [number, number];
+  starts: Record<string, { x: number; z: number }>;
+  pan?: { face: string; uv0: THREE.Vector2; g: GraphicPlacement; aspect: number; size: { w: number; h: number } };
+}
+
 function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][]; locked: boolean }) {
   const { obj, type, size } = p;
   const built = useMemo(() => type.build(obj.params), [type, obj.params]);
@@ -319,11 +328,23 @@ function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; sel
     for (const f of type.faces(obj.params)) sizes[f.id] = { w: f.width, h: f.height };
     return { objectId: obj.id, styles: obj.faces ?? {}, sizes };
   }, [type, obj.params, obj.faces, obj.id]);
-  const drag = useDrag({
+  const drag = useDrag<DragState>({
     start: (e) => {
       const store = useProjectStore.getState();
       useBlackBoxUI.getState().select(null);
       const list = store.objectsByTemplate[store.templateId] ?? [];
+      // Repositioning a graphic: drag on its face pans the image instead of moving the object.
+      const ui = useObjectUI.getState();
+      const hitFace = faceAt(e);
+      if (ui.repositioning && ui.selectedFace?.objectId === obj.id && hitFace === ui.selectedFace.face && e.uv) {
+        const style = obj.faces?.[hitFace] ?? obj.faces?.['*'];
+        const g = style?.graphic;
+        const meta = g && store.graphics[g.id];
+        const size = type.faces(obj.params).find((f) => f.id === hitFace);
+        if (g && meta && size && (g.fit === 'fill' || g.fit === 'tile')) {
+          return { off: [0, 0] as const, starts: {}, pan: { face: hitFace, uv0: e.uv.clone(), g, aspect: meta.width / meta.height, size: { w: size.width, h: size.height } } };
+        }
+      }
       // Alt/Option-click picks the face under the cursor for colours, materials and graphics.
       if (e.altKey) {
         const face = faceAt(e);
@@ -343,9 +364,26 @@ function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; sel
       const ids = useProjectStore.getState().selectedIds;
       const starts = Object.fromEntries(list.filter((o) => ids.includes(o.id) && !inherited(o, list, 'locked')).map((o) => [o.id, { x: o.x, z: o.z }]));
       if (!starts[obj.id]) return null;
-      return { off: [p.wx - tmp.x, p.wz - tmp.z] as const, starts };
+      return { off: [p.wx - tmp.x, p.wz - tmp.z] as const, starts } as DragState;
     },
     move: (e, s) => {
+      if (s.pan) {
+        if (!e.uv) return;
+        const { g, uv0, size, aspect, face } = s.pan;
+        const du = e.uv.x - uv0.x;
+        const dv = e.uv.y - uv0.y;
+        let change: { offsetX: number; offsetY: number };
+        if (g.fit === 'fill') {
+          const [rx, ry] = fillWindow(g, size, aspect);
+          const clamp = (v: number) => Math.max(-0.5, Math.min(0.5, v));
+          change = { offsetX: clamp(g.offsetX + (rx < 1 ? (du * rx) / (1 - rx) : 0)), offsetY: clamp(g.offsetY + (ry < 1 ? (dv * ry) / (1 - ry) : 0)) };
+        } else {
+          const tw = Math.max(0.01, g.tileSize);
+          change = { offsetX: g.offsetX + (du * size.w) / tw, offsetY: g.offsetY + (dv * size.h * aspect) / tw };
+        }
+        updatePlacement({ objectId: obj.id, face }, change, `pan:${obj.id}:${face}`);
+        return;
+      }
       if (!e.ray.intersectPlane(horizontal(p.baseY), tmp)) return;
       // Hold ⌘/Ctrl to place freely without snapping.
       moveSelection(obj.id, [tmp.x + s.off[0], tmp.z + s.off[1]], s.starts, { snap: !(e.metaKey || e.ctrlKey) });

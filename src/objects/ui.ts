@@ -19,7 +19,17 @@ export const useObjectUI = create<{
   selectedFace: FaceRef | null;
   setHoverFace: (f: FaceRef | null) => void;
   setSelectedFace: (f: FaceRef | null) => void;
+  /** While on, dragging the selected face in the view pans its graphic instead of moving the object. */
+  repositioning: boolean;
+  setRepositioning: (on: boolean) => void;
+  /** Right-click menu on a face. */
+  menu: { x: number; y: number; target: FaceRef } | null;
+  setMenu: (m: { x: number; y: number; target: FaceRef } | null) => void;
 }>((set) => ({
+  repositioning: false,
+  setRepositioning: (repositioning) => set({ repositioning }),
+  menu: null,
+  setMenu: (menu) => set({ menu }),
   guides: [],
   setGuides: (guides) => set({ guides }),
   hoverFace: null,
@@ -33,3 +43,5 @@ export const viewportBridge: { three: RootState | null } = { three: null };
 
 /** dataTransfer type used when dragging a library tile into the viewport. */
 export const OBJECT_DRAG_TYPE = 'application/x-stage-object';
+/** dataTransfer type used when dragging a graphic from the library. */
+export const GRAPHIC_DRAG_TYPE = 'application/x-stage-graphic';

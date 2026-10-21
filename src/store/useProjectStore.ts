@@ -8,6 +8,7 @@ import { applyConstraints, defaultParams } from '../helpers/params';
 import { newObjectId } from './ids';
 import { GROUP_TYPE } from '../objects/types';
 import { MATERIALS, type FaceStyle } from '../objects/materials';
+import type { GraphicMeta } from '../graphics/types';
 import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
 
 const STORAGE_KEY = 'stage-builder:project';
@@ -34,10 +35,12 @@ export interface ProjectFile {
   objectsByTemplate: Record<string, SetObject[]>;
   /** Colours/materials/graphics on each template's stage surfaces, by surface id. */
   surfaceStylesByTemplate: Record<string, Record<string, FaceStyle>>;
+  /** Graphics library (metadata; the image files live in IndexedDB). */
+  graphics: Record<string, GraphicMeta>;
 }
 
 /** The parts of the project that undo/redo restores. */
-type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate'>;
+type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics'>;
 
 export interface ViewRequest {
   view: PresetView;
@@ -90,6 +93,11 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   /** Set (or clear, with null) the style of an object face or a stage surface. `key` merges slider drags. */
   setFaceStyle: (objectId: string, face: string, style: FaceStyle | null, key?: string) => void;
   setSurfaceStyle: (surfaceId: string, style: FaceStyle | null, key?: string) => void;
+  /** Graphics library. */
+  addGraphics: (metas: GraphicMeta[]) => void;
+  updateGraphic: (meta: GraphicMeta) => void;
+  /** Remove from the library and from every face and surface that uses it. */
+  removeGraphic: (id: string) => void;
 
   requestView: (view: PresetView, instant?: boolean) => void;
   setViewportAspect: (aspect: number) => void;
@@ -109,10 +117,21 @@ function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
     dataByTemplate: Object.fromEntries(templates.filter((t) => t.data).map((t) => [t.id, t.data!.initial(paramsByTemplate[t.id])])),
     objectsByTemplate: {},
     surfaceStylesByTemplate: {},
+    graphics: {},
   };
 }
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+function sanitizeGraphics(raw: unknown): Record<string, GraphicMeta> {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Record<string, GraphicMeta> = {};
+  for (const [id, g] of Object.entries(raw as Record<string, Partial<GraphicMeta>>)) {
+    if (!g || !isNum(g.width) || !isNum(g.height)) continue;
+    out[id] = { id, name: typeof g.name === 'string' ? g.name : 'Graphic', width: g.width, height: g.height, mime: typeof g.mime === 'string' ? g.mime : 'image/png', bytes: isNum(g.bytes) ? g.bytes : 0, vector: !!g.vector, page: isNum(g.page) ? g.page : undefined };
+  }
+  return out;
+}
 
 /** Keep only well-formed face styles. */
 function sanitizeStyles(raw: unknown): Record<string, FaceStyle> {
@@ -184,6 +203,7 @@ function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
     ),
     objectsByTemplate: Object.fromEntries(templates.map((t) => [t.id, sanitizeObjects(savedObjects[t.id])])),
     surfaceStylesByTemplate: Object.fromEntries(templates.map((t) => [t.id, sanitizeStyles(d.surfaceStylesByTemplate?.[t.id])])),
+    graphics: sanitizeGraphics(d.graphics),
   };
 }
 
@@ -211,7 +231,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   const doc = (): Doc => {
     const s = get();
-    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate };
+    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics };
   };
 
   /** Record the current state as an undo step before a change. */
@@ -434,6 +454,40 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       });
     },
 
+    addGraphics: (metas) => {
+      if (!metas.length) return;
+      commit();
+      set((s) => ({ graphics: { ...s.graphics, ...Object.fromEntries(metas.map((m) => [m.id, m])) }, dirty: true }));
+    },
+
+    updateGraphic: (meta) => set((s) => ({ graphics: { ...s.graphics, [meta.id]: meta }, dirty: true })),
+
+    removeGraphic: (id) => {
+      commit();
+      const strip = (styles: Record<string, FaceStyle> | undefined) => {
+        if (!styles) return styles;
+        let changed = false;
+        const out: Record<string, FaceStyle> = {};
+        for (const [k, v] of Object.entries(styles)) {
+          if (v.graphic?.id === id) {
+            changed = true;
+            const { graphic: _g, ...rest } = v; // eslint-disable-line @typescript-eslint/no-unused-vars
+            out[k] = rest;
+          } else out[k] = v;
+        }
+        return changed ? out : styles;
+      };
+      set((s) => {
+        const { [id]: _removed, ...graphics } = s.graphics; // eslint-disable-line @typescript-eslint/no-unused-vars
+        return {
+          graphics,
+          objectsByTemplate: Object.fromEntries(Object.entries(s.objectsByTemplate).map(([t, list]) => [t, list.map((o) => (o.faces ? { ...o, faces: strip(o.faces) } : o))])),
+          surfaceStylesByTemplate: Object.fromEntries(Object.entries(s.surfaceStylesByTemplate).map(([t, st]) => [t, strip(st) ?? {}])),
+          dirty: true,
+        };
+      });
+    },
+
     groupSelection: () => {
       const { list, groupId } = groupUnits(activeObjects(), get().selectedIds);
       if (!groupId) return;
@@ -453,8 +507,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setViewportAspect: (viewportAspect) => set({ viewportAspect }),
 
     toFile: () => {
-      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate } = get();
-      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate };
+      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics } = get();
+      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics };
     },
 
     save: () => {

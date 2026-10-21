@@ -77,5 +77,9 @@ export function StyleEditor({ style, onChange, extra }: { style?: FaceStyle; onC
 
 /** A small preview dot for a style. */
 export function Swatch({ style }: { style?: FaceStyle }) {
-  return <span className={`swatch ${style ? '' : 'swatch--none'} ${style ? `material__swatch--${style.material}` : ''}`} style={style ? { background: style.color } : undefined} />;
+  return (
+    <span className={`swatch ${style ? '' : 'swatch--none'} ${style ? `material__swatch--${style.material}` : ''} ${style?.graphic ? 'swatch--graphic' : ''}`} style={style ? { background: style.color } : undefined}>
+      {style?.graphic ? '▣' : ''}
+    </span>
+  );
 }

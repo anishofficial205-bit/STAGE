@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../store/useProjectStore';
 import { useViews } from './useViews';
 import { TOUR_EVENT } from './Tour';
+import { exportZip, importZip } from '../graphics/library';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -32,20 +33,25 @@ export function TopBar() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const exportJson = () => {
-    const blob = new Blob([JSON.stringify(s.toFile(), null, 2)], { type: 'application/json' });
+  /** Export as a .zip: the project plus every image it uses. */
+  const exportZipFile = async () => {
+    flash('Preparing export…');
+    const blob = await exportZip();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const slug = s.projectName.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'stage';
     a.href = url;
-    a.download = `${slug}.stage.json`;
+    a.download = `${slug}.stage.zip`;
     a.click();
     URL.revokeObjectURL(url);
+    flash('Exported');
   };
 
-  const importJson = async (file: File) => {
+  /** Import a .zip export (with images) or an older .json export. */
+  const importFile = async (file: File) => {
     try {
-      s.loadFile(JSON.parse(await file.text()));
+      if (/\.zip$/i.test(file.name) || file.type.includes('zip')) await importZip(file);
+      else s.loadFile(JSON.parse(await file.text()));
       flash(`Imported “${file.name}” — press Save to keep it`);
     } catch (err) {
       flash(err instanceof Error && !(err instanceof SyntaxError) ? err.message : 'Could not read that file.');
@@ -101,7 +107,7 @@ export function TopBar() {
         <button className="btn btn--primary" onClick={save} title="Save (⌘S)">
           {s.dirty ? 'Save •' : 'Save'}
         </button>
-        <button className="btn" onClick={exportJson}>
+        <button className="btn" onClick={() => void exportZipFile()} title="Download the project and its images as a .zip">
           Export
         </button>
         <button className="btn" onClick={() => fileInput.current?.click()}>
@@ -110,11 +116,11 @@ export function TopBar() {
         <input
           ref={fileInput}
           type="file"
-          accept=".json,application/json"
+          accept=".zip,.json,application/zip,application/json"
           hidden
           onChange={(e) => {
             const f = e.target.files?.[0];
-            if (f) importJson(f);
+            if (f) void importFile(f);
             e.target.value = '';
           }}
         />

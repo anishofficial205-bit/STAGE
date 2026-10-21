@@ -6,6 +6,7 @@ import { useThumbnails } from './Thumbnails';
 import { Modal } from './Modal';
 import { Collapsible } from './Collapsible';
 import { ObjectLibrary } from './objects/ObjectLibrary';
+import { GraphicsPanel } from './graphics/GraphicsPanel';
 
 const DIM_NAMES = { width: 'width', depth: 'depth', height: 'height' } as const;
 
@@ -71,6 +72,9 @@ export function StagePicker() {
       </div>
       <Collapsible id="library" title="Add objects">
         <ObjectLibrary />
+      </Collapsible>
+      <Collapsible id="graphics" title="Graphics">
+        <GraphicsPanel />
       </Collapsible>
       {pending && <SwitchDialog to={pending} onClose={() => setPending(null)} />}
     </aside>

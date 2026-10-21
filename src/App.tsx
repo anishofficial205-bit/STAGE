@@ -8,6 +8,7 @@ import { ThumbnailRenderer } from './components/Thumbnails';
 import { UndoToast } from './components/UndoToast';
 import { Tour } from './components/Tour';
 import { Shortcuts } from './components/Shortcuts';
+import { PdfPagePicker } from './components/graphics/PdfPagePicker';
 
 export default function App() {
   // Warn before leaving with unsaved changes.
@@ -29,6 +30,7 @@ export default function App() {
       <PropertiesPanel />
       <UndoToast />
       <Shortcuts />
+      <PdfPagePicker />
       <Tour />
       <ThumbnailRenderer />
     </div>

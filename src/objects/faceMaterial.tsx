@@ -8,6 +8,7 @@ import { createContext, useContext } from 'react';
 import * as THREE from 'three';
 import { useObjectUI } from './ui';
 import { styleProps, useReflectionsReady, type FaceStyle } from './materials';
+import { usePlacedGraphic } from '../graphics/usePlaced';
 
 export interface FaceContext {
   objectId: string;
@@ -21,6 +22,10 @@ export const ObjectFaces = createContext<FaceContext | null>(null);
 export const ALL_FACES = '*';
 
 const HIGHLIGHT = new THREE.Color('#2f6fde');
+
+/** Things that change a material's compiled shader. */
+export const shaderKey = (map: unknown, envMap: unknown, transparent: unknown, emissiveMap: unknown, fit: boolean) =>
+  `${map ? 'm' : '-'}${envMap ? 'e' : '-'}${transparent ? 't' : '-'}${emissiveMap ? 'g' : '-'}${fit ? 'f' : '-'}`;
 
 export interface FaceMatProps {
   face?: string;
@@ -45,14 +50,22 @@ export function FaceMat({ face, color, side, opacity = 1, roughness = 0.85, meta
   const style = ctx ? ctx.styles[id] ?? ctx.styles[ALL_FACES] : undefined;
   const size = ctx?.sizes[id] ?? { w: 1, h: 1 };
   const props = style ? styleProps(style, color, size) : { color, roughness, metalness, map: map ?? null, transparent: opacity < 1, opacity, depthWrite: opacity >= 1 };
+  const graphic = usePlacedGraphic(style?.graphic, size);
+  // Lit faces (LED walls) show their graphic as light, not just paint.
+  const glow = graphic && emissiveMap !== undefined ? graphic.map : emissiveMap ?? null;
+  const final = { ...props, ...(graphic ?? {}) };
   return (
     <meshStandardMaterial
+      // three.js only recompiles a material's shader when told to; remounting whenever a map,
+      // reflections, transparency or the Fit patch come or go keeps it simple and correct.
+      key={shaderKey(final.map, 'envMap' in final ? final.envMap : null, final.transparent, glow, !!graphic?.onBeforeCompile)}
       attach={attach}
       {...props}
+      {...(graphic ?? {})}
       side={side}
       emissive={highlighted ? HIGHLIGHT : emissive ?? '#000000'}
       emissiveIntensity={highlighted ? 0.45 : emissiveIntensity ?? 0}
-      emissiveMap={highlighted ? null : emissiveMap ?? null}
+      emissiveMap={highlighted ? null : glow}
       userData={{ face: id, objectId: ctx?.objectId }}
     />
   );
