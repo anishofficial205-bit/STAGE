@@ -40,7 +40,7 @@ export function Box({ from, to, color, opacity, castShadow = true }: { from: Vec
 }
 
 /** A floor-plan outline ([x, z] points) extruded between two heights. */
-export function Slab({ outline, bottom = 0, top, color, opacity }: { outline: Pt[]; bottom?: number; top: number } & MatProps) {
+export function Slab({ outline, bottom = 0, top, color, opacity, castShadow = true }: { outline: Pt[]; bottom?: number; top: number; castShadow?: boolean } & MatProps) {
   const key = JSON.stringify(outline);
   const depth = Math.max(top - bottom, 0.02);
   const geometry = useMemo(() => {
@@ -50,7 +50,7 @@ export function Slab({ outline, bottom = 0, top, color, opacity }: { outline: Pt
   }, [key, depth]); // eslint-disable-line react-hooks/exhaustive-deps
   if (outline.length < 3) return null;
   return (
-    <mesh geometry={geometry} rotation-x={-Math.PI / 2} position-y={bottom} castShadow receiveShadow>
+    <mesh geometry={geometry} rotation-x={-Math.PI / 2} position-y={bottom} castShadow={castShadow} receiveShadow>
       <Mat color={color} opacity={opacity} />
     </mesh>
   );
