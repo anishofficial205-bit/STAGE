@@ -7,7 +7,8 @@ import type { StageTemplate } from '../types';
 import { placeholderTemplate } from './placeholder';
 import { prosceniumTemplate } from './proscenium';
 import { endStageTemplate } from './endStage';
+import { thrustTemplate } from './thrust';
 
-export const templates: StageTemplate[] = [placeholderTemplate, prosceniumTemplate, endStageTemplate];
+export const templates: StageTemplate[] = [placeholderTemplate, prosceniumTemplate, endStageTemplate, thrustTemplate];
 
 export const getTemplate = (id: string) => templates.find((t) => t.id === id);

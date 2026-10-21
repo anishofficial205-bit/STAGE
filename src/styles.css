@@ -205,3 +205,16 @@ button, input, select { font: inherit; color: inherit; }
   user-select: none;
 }
 .dim-label__name { font-weight: 400; color: var(--muted); margin-right: 4px; }
+
+/* Tags drawn inside the 3D scene (e.g. overlay captions) */
+.scene-tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d0d5dc;
+}
+.scene-tag--warn { color: #b4232a; border-color: #f2b8bb; }
