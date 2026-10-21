@@ -3,7 +3,7 @@ import type { Pt } from '../helpers/shapes';
 import { allOnStage, floorHeightAt } from '../helpers/stageInfo';
 import { num } from '../helpers/params';
 import { getObjectType } from './registry';
-import type { ObjectSize, SetObject, SetObjectType } from './types';
+import { placementOf, type ObjectSize, type SetObject, type SetObjectType } from './types';
 
 /** A set object resolved into world space for the current stage. */
 export interface Placed {
@@ -55,7 +55,7 @@ export function aabb(p: Parameters<typeof corners>[0]) {
 }
 
 /** Floor and wall pieces that are (even partly) off every stage floor. Hanging pieces are exempt. */
-export const isOffStage = (p: Placed, info: StageInfo) => p.type.placement !== 'hanging' && !allOnStage(info, corners(p));
+export const isOffStage = (p: Placed, info: StageInfo) => placementOf(p.type, p.obj.params) !== 'hanging' && !allOnStage(info, corners(p));
 
 /** World-space hang lines of a placed object (e.g. a truss others can hang from). */
 export function worldHangLines(p: Placed): [Vec3, Vec3][] {

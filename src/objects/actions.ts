@@ -14,7 +14,7 @@ import { getObjectType } from './registry';
 import { place, rotateXZ, type Placed } from './geometry';
 import { snapMove } from './snapping';
 import { useObjectUI } from './ui';
-import { resizeRule, type SetObject } from './types';
+import { placementOf, resizeRule, type SetObject } from './types';
 
 /** Grid step for objects: 0.25 m, or 6 in when working in feet. */
 export const gridStep = () => (useProjectStore.getState().units === 'ft' ? 0.5 * M_PER_FT : 0.25);
@@ -76,10 +76,11 @@ export function moveSelection(primaryId: string, want: Pt, starts: Record<string
         if (o.id === primaryId) {
           if (result.rotation !== undefined) next.rotation = result.rotation;
           if (result.params) next = withParams(next, result.params);
-          // Hanging on rigging: keep the piece below the bar it hangs from.
+          // Hanging on rigging: the piece hangs just below the bar.
           if (result.hangY !== undefined) {
             const p = place(next, info);
-            if (p && p.baseY + p.size.height > result.hangY - 0.1) next = setElevationOn(next, p.elevation - (p.baseY + p.size.height - (result.hangY - 0.3)));
+            const gap = p?.type.hangGap ?? 0.3;
+            if (p) next = setElevationOn(next, p.elevation - (p.baseY + p.size.height - (result.hangY - gap)));
           }
         }
         return next;
@@ -138,6 +139,6 @@ export function addObjectAt(typeId: string, world?: Pt) {
   const obj = objects().find((o) => o.id === id)!;
   // Hanging pieces attach to rigging straight away when there is some nearby.
   const type = getObjectType(typeId)!;
-  if (type.placement !== 'floor') moveSelection(id, [info.centre[0] + obj.x, info.centre[1] + obj.z], { [id]: { x: obj.x, z: obj.z } }, { snap: true, key: MERGE_WITH_PREVIOUS });
+  if (placementOf(type, obj.params) !== 'floor') moveSelection(id, [info.centre[0] + obj.x, info.centre[1] + obj.z], { [id]: { x: obj.x, z: obj.z } }, { snap: true, key: MERGE_WITH_PREVIOUS });
   useObjectUI.getState().setGuides([]);
 }

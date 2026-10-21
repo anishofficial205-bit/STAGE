@@ -1,6 +1,7 @@
 import { Field } from '../fields';
 import { useActiveObjects, useProjectStore } from '../../store/useProjectStore';
 import { getObjectType } from '../../objects/registry';
+import { placementOf } from '../../objects/types';
 import { effectiveElevation } from '../../objects/geometry';
 import { setElevation, setParams, setProps, setRotation } from '../../objects/actions';
 import type { NumberParam, ParamDef, ParamValue } from '../../types';
@@ -70,7 +71,7 @@ export function ObjectProperties() {
           <Field def={pos('z', 'Z', 'Upstage (−) / downstage (+) from the stage centre.')} value={o.z} units={units} onChange={(v) => setProps(o.id, { z: v as number }, `z:${o.id}`)} />
         </div>
         <Field
-          def={{ ...pos('elevation', type.placement === 'hanging' ? 'Height above floor (bottom)' : 'Height above floor'), min: 0, max: 50 }}
+          def={{ ...pos('elevation', placementOf(type, o.params) === 'hanging' ? 'Height above floor (bottom)' : 'Height above floor'), min: 0, max: 50 }}
           value={effectiveElevation(o, type)}
           units={units}
           onChange={(v) => setElevation(o.id, v as number)}

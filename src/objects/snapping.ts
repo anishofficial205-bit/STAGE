@@ -10,6 +10,7 @@ import type { Params, StageInfo, Surface, Vec3 } from '../types';
 import type { Pt } from '../helpers/shapes';
 import { stageSnapLines } from '../helpers/stageInfo';
 import { aabb, rotateXZ, unrotateXZ, worldHangLines, type Placed } from './geometry';
+import { placementOf } from './types';
 
 export interface SnapResult {
   x: number;
@@ -111,7 +112,7 @@ function snapToPlatform({ moving, want, others }: Input): SnapResult | null {
 }
 
 function snapToWall({ moving, want, walls }: Input): SnapResult | null {
-  if (moving.type.placement !== 'wall') return null;
+  if (placementOf(moving.type, moving.obj.params) !== 'wall') return null;
   for (const s of walls) {
     if (Math.abs(s.rotation[0]) > 1e-3 || Math.abs(s.rotation[2]) > 1e-3) continue; // vertical surfaces only
     const ry = s.rotation[1];
@@ -165,6 +166,6 @@ function smartAndGrid({ moving, want, others, info, grid }: Input): SnapResult {
 
 export function snapMove(input: Input): SnapResult {
   if (!input.enabled) return { x: input.want[0], z: input.want[1], guides: [] };
-  if (input.moving.type.placement === 'hanging') return snapHanging(input) ?? smartAndGrid(input);
+  if (placementOf(input.moving.type, input.moving.obj.params) === 'hanging') return snapHanging(input) ?? smartAndGrid(input);
   return snapToPlatform(input) ?? snapToWall(input) ?? smartAndGrid(input);
 }

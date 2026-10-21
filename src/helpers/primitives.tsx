@@ -202,21 +202,25 @@ function strut(a: THREE.Vector3, b: THREE.Vector3, t: number) {
 
 const trussCache = new Map<string, THREE.BufferGeometry>();
 
-/** Lattice geometry of a square truss of length `len` along +Z (cached; shared between instances). */
-function trussGeometry(len: number, size: number) {
-  const key = `${len.toFixed(2)}:${size}`;
+/** Lattice geometry of a square (or triangular) truss of length `len` along +Z (cached; shared between instances). */
+export function trussGeometry(len: number, size: number, profile: 'square' | 'triangle' = 'square') {
+  const key = `${len.toFixed(2)}:${size}:${profile}`;
   const hit = trussCache.get(key);
   if (hit) return hit;
   const h = size / 2;
   const chord = size * 0.12;
   const lace = size * 0.06;
-  const corners = [[-h, -h], [h, -h], [h, h], [-h, h]];
+  // Chords round the cross-section: a square, or a triangle with its point down.
+  const corners =
+    profile === 'triangle'
+      ? [[-h, h * 0.75], [h, h * 0.75], [0, -h * 0.98]]
+      : [[-h, -h], [h, -h], [h, h], [-h, h]];
   const parts: THREE.BufferGeometry[] = corners.map(([x, y]) => strut(new THREE.Vector3(x, y, 0), new THREE.Vector3(x, y, len), chord));
   const steps = Math.max(1, Math.round(len / size));
   const step = len / steps;
-  for (let f = 0; f < 4; f++) {
+  for (let f = 0; f < corners.length; f++) {
     const [ax, ay] = corners[f];
-    const [bx, by] = corners[(f + 1) % 4];
+    const [bx, by] = corners[(f + 1) % corners.length];
     for (let k = 0; k < steps; k++) {
       // Zig-zag lacing between neighbouring chords.
       const [x0, y0, x1, y1] = k % 2 === 0 ? [ax, ay, bx, by] : [bx, by, ax, ay];

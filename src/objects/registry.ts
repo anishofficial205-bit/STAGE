@@ -20,6 +20,13 @@ import { cycloramaObject } from './cyclorama';
 import { doorFrameObject } from './doorFrame';
 import { windowFrameObject } from './windowFrame';
 import { staircaseObject } from './staircase';
+import { trussObject } from './truss';
+import { trussFrameObject } from './trussFrame';
+import { ledWallObject } from './ledWall';
+import { projectionScreenObject } from './projectionScreen';
+import { bannerObject } from './banner';
+import { hangingPanelObject } from './hangingPanel';
+import { fixtureObject } from './fixture';
 
 export const objectTypes: SetObjectType[] = [
   boxObject,
@@ -38,6 +45,13 @@ export const objectTypes: SetObjectType[] = [
   doorFrameObject,
   windowFrameObject,
   staircaseObject,
+  trussObject,
+  trussFrameObject,
+  ledWallObject,
+  projectionScreenObject,
+  bannerObject,
+  hangingPanelObject,
+  fixtureObject,
 ];
 
 /** Old type ids still found in saved projects. */

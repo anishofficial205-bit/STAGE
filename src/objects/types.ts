@@ -46,7 +46,10 @@ export interface SetObjectType {
   constraints: (params: Params) => Params;
   build: (params: Params) => ReactNode;
   faces: (params: Params) => ObjectFace[];
-  placement: Placement;
+  /** Fixed, or chosen by a param (e.g. an LED wall that can stand or hang). */
+  placement: Placement | ((params: Params) => Placement);
+  /** Hanging pieces: gap between the bar they hang from and their top (default 0.3 m). */
+  hangGap?: number;
   size: (params: Params) => ObjectSize;
   /** Params driven by the edge handles (may depend on the current params). */
   resize?: ResizeMap | ((params: Params) => ResizeMap);
@@ -84,3 +87,6 @@ export function resizeRule(type: SetObjectType, params: Params, axis: 'width' | 
   if (!r) return null;
   return typeof r === 'string' ? { key: r, scale: 1 } : r;
 }
+
+export const placementOf = (type: SetObjectType, params: Params): Placement =>
+  typeof type.placement === 'function' ? type.placement(params) : type.placement;

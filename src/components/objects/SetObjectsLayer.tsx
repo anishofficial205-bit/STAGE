@@ -11,12 +11,12 @@ import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } from '../../store/useProjectStore';
 import { getTemplate } from '../../templates/registry';
 import { getStageInfo } from '../../helpers/stageInfo';
-import type { StageInfo, Vec3 } from '../../types';
-import { isOffStage, place, rotateXZ, unrotateXZ, type Placed } from '../../objects/geometry';
+import type { Vec3 } from '../../types';
+import { isOffStage, place, rotateXZ, unrotateXZ, worldHangLines, type Placed } from '../../objects/geometry';
 import { moveSelection, resizeFromEdge, setElevation, setRotation } from '../../objects/actions';
 import { useObjectUI } from '../../objects/ui';
 import { getObjectType } from '../../objects/registry';
-import { resizeRule } from '../../objects/types';
+import { placementOf, resizeRule } from '../../objects/types';
 import { useBlackBoxUI } from '../../templates/blackBox/blocks';
 
 const SELECT = '#2f6fde';
@@ -67,8 +67,7 @@ function BoxOutline({ w, d, h, color }: { w: number; d: number; h: number; color
 }
 
 /** Thin cables from a hanging piece up to whatever it hangs from (or up out of view). */
-function Cables({ p, info }: { p: Placed; info: StageInfo }) {
-  const lines = info.rigging ?? [];
+function Cables({ p, lines }: { p: Placed; lines: [Vec3, Vec3][] }) {
   const top = p.baseY + p.size.height;
   const pts = [-0.4, 0.4].map((f) => {
     const [ox, oz] = rotateXZ(p.size.width * f, 0, p.obj.rotation);
@@ -88,9 +87,12 @@ function Cables({ p, info }: { p: Placed; info: StageInfo }) {
   });
   return (
     <>
-      {pts.map(({ at, y }, i) => (
-        <Line key={i} points={[[at[0], top, at[1]], [at[0], y, at[1]]]} color="#3a3f47" lineWidth={1} transparent opacity={0.8} />
-      ))}
+      {pts
+        // Pieces clamped straight onto a bar (e.g. lighting fixtures) need no cable.
+        .filter(({ y }) => y - top > 0.05)
+        .map(({ at, y }, i) => (
+          <Line key={i} points={[[at[0], top, at[1]], [at[0], y, at[1]]]} color="#3a3f47" lineWidth={1} transparent opacity={0.8} />
+        ))}
     </>
   );
 }
@@ -244,7 +246,7 @@ function Handles({ p }: { p: Placed }) {
   );
 }
 
-function ObjectView({ p, selected, offStage, info }: { p: Placed; selected: boolean; offStage: boolean; info: StageInfo }) {
+function ObjectView({ p, selected, offStage, rigging }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][] }) {
   const { obj, type, size } = p;
   const built = useMemo(() => type.build(obj.params), [type, obj.params]);
   const drag = useDrag({
@@ -277,7 +279,7 @@ function ObjectView({ p, selected, offStage, info }: { p: Placed; selected: bool
         {built}
         {(selected || offStage) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={selected ? (offStage ? WARN : SELECT) : WARN} />}
       </group>
-      {type.placement === 'hanging' && <Cables p={p} info={info} />}
+      {placementOf(type, obj.params) === 'hanging' && <Cables p={p} lines={rigging} />}
     </>
   );
 }
@@ -292,13 +294,15 @@ export function SetObjectsLayer() {
   const info = useMemo(() => getStageInfo(getTemplate(templateId)!, params, data), [templateId, params, data]);
   const placed = useMemo(() => objects.map((o) => place(o, info)).filter((p): p is Placed => !!p), [objects, info]);
   const single = selectedIds.length === 1 ? placed.find((p) => p.obj.id === selectedIds[0]) : undefined;
+  // Everything a piece can hang from: the stage's own rigging plus placed truss.
+  const rigging = useMemo(() => [...(info.rigging ?? []), ...placed.filter((p) => !p.obj.hidden).flatMap(worldHangLines)], [info, placed]);
 
   return (
     <group>
       {placed
         .filter((p) => !p.obj.hidden)
         .map((p) => (
-          <ObjectView key={p.obj.id} p={p} info={info} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} />
+          <ObjectView key={p.obj.id} p={p} rigging={rigging} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} />
         ))}
       {single && !single.obj.locked && !single.obj.hidden && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
       {guides.map(([a, b], i) => (
