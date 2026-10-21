@@ -5,6 +5,7 @@ import { TOUR_EVENT } from './Tour';
 import { exportZip, importZip } from '../graphics/library';
 import { PrintCheckDialog } from './graphics/PrintCheck';
 import { ExportDialog } from './export/ExportDialog';
+import { SaveStatus } from './Autosave';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -17,11 +18,6 @@ export function TopBar() {
   const flash = (msg: string) => {
     setToast(msg);
     window.setTimeout(() => setToast(null), 2200);
-  };
-
-  const save = () => {
-    s.save();
-    flash('Saved');
   };
 
   // Cmd/Ctrl+S saves.
@@ -119,9 +115,7 @@ export function TopBar() {
           ?
         </button>
         <span className="divider" />
-        <button className="btn btn--primary" onClick={save} title="Save (⌘S)">
-          {s.dirty ? 'Save •' : 'Save'}
-        </button>
+        <SaveStatus />
         <button className="btn" onClick={() => setRender(true)} title="Export images, all views, a presentation sheet or a turntable video">
           Render
         </button>

@@ -43,8 +43,8 @@ export const stepsObject: SetObjectType = {
   faces: (p) => {
     const [w, n, H, sd] = [num(p, 'width'), num(p, 'steps'), num(p, 'totalHeight'), num(p, 'stepDepth')];
     return [
-      { id: 'treads', name: 'Treads (tops)', width: w, height: n * sd },
-      { id: 'risers', name: 'Risers (fronts)', width: w, height: H },
+      { id: 'treads', name: 'Treads', width: w, height: n * sd },
+      { id: 'risers', name: 'Risers', width: w, height: H },
       { id: 'sides', name: 'Sides', width: n * sd, height: H },
     ];
   },

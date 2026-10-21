@@ -57,6 +57,8 @@ export const wallRunObject: SetObjectType = {
     { key: 'thickness', label: 'Thickness', group: 'Panels', type: 'number', default: 0.08, min: 0.02, max: 0.5, step: 0.01 },
   ],
   constraints: (p) => p,
+  // A straight run resizes by its panel width; bent runs are sized with the panel settings.
+  resize: (p) => (num(p, 'angle') === 0 ? { width: { key: 'panelWidth', scale: 1 / num(p, 'panels') } } : {}),
   size: (p) => {
     const pts = wallRunPoints(p);
     const xs = pts.map((q) => q[0]);

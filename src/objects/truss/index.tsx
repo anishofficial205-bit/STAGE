@@ -58,7 +58,7 @@ export const trussObject: SetObjectType = {
     {
       key: 'mount',
       label: 'Mounting',
-      group: 'Placement',
+      group: 'Build',
       type: 'select',
       default: 'floor',
       options: [

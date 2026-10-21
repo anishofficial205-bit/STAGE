@@ -145,7 +145,7 @@ export const ledWallObject: SetObjectType = {
   faces: (p) => {
     const { w, h } = dims(p);
     return [
-      { id: 'screen', name: 'Screen (front)', width: w, height: h },
+      { id: 'screen', name: 'Screen', width: w, height: h },
       { id: 'back', name: 'Back', width: w, height: h },
     ];
   },

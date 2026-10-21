@@ -531,3 +531,11 @@ button, input, select { font: inherit; color: inherit; }
 .export-custom { display: flex; gap: 6px; align-items: center; margin: -4px 0 12px; }
 .export-custom input { width: 90px; border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; }
 .export-actions { display: grid; gap: 8px; }
+
+/* Autosave status */
+.save-status { display: inline-flex; align-items: center; gap: 6px; border: 0; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; padding: 5px 6px; border-radius: 6px; white-space: nowrap; }
+.save-status:hover { background: #f2f4f7; }
+.save-status__dot { width: 7px; height: 7px; border-radius: 50%; background: #2fb36d; }
+.save-status.is-pending .save-status__dot { background: #e0a400; }
+.save-status.is-error { color: #b4232a; }
+.save-status.is-error .save-status__dot { background: #e5484d; }
