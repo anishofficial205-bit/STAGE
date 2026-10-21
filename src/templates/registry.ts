@@ -5,7 +5,8 @@
  */
 import type { StageTemplate } from '../types';
 import { placeholderTemplate } from './placeholder';
+import { prosceniumTemplate } from './proscenium';
 
-export const templates: StageTemplate[] = [placeholderTemplate];
+export const templates: StageTemplate[] = [placeholderTemplate, prosceniumTemplate];
 
 export const getTemplate = (id: string) => templates.find((t) => t.id === id);

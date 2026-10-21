@@ -22,8 +22,8 @@ function Lights({ bounds }: { bounds: Bounds }) {
         intensity={1.6}
         castShadow
         shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.0004}
-        shadow-normalBias={0.03}
+        shadow-bias={-0.001}
+        shadow-normalBias={0.06}
         shadow-radius={4}
         shadow-camera-left={-size}
         shadow-camera-right={size}

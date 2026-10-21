@@ -9,6 +9,9 @@ export const COLORS = {
   seat: '#7e8894',
   riser: '#cfd2d6',
   dimension: '#2f6fde',
+  dark: '#4a4f57', // pits, tunnels, masking fabric
+  truss: '#5d636b',
+  overlay: '#e5484d', // warnings drawn in the scene
 };
 
 export const ROUGHNESS = 0.88;
