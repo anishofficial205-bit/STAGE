@@ -143,6 +143,25 @@ export const prosceniumTemplate: StageTemplate = {
   description: 'Framed by an arch, audience in front',
   audienceSides: ['front'],
 
+  dimensions: { width: 'stageWidth', depth: 'stageDepth', height: 'stageHeight' },
+  presets: [
+    {
+      name: 'School auditorium',
+      description: 'Modest stage, single raked seating block, no fly tower.',
+      params: { stageWidth: 10, stageDepth: 7, stageHeight: 0.9, apronDepth: 1.2, archWidth: 9, archHeight: 5, frameThickness: 0.6, wingWidth: 2, backWallHeight: 7, flyTower: false, pit: false, rows: 18, seatingWidth: 16, curve: 0.2, balcony: false },
+    },
+    {
+      name: 'City theatre',
+      description: 'Mid-size house with fly tower, orchestra pit and a balcony.',
+      params: { stageWidth: 14, stageDepth: 12, stageHeight: 1, apronDepth: 2, archWidth: 12, archHeight: 8, frameThickness: 1.2, wingWidth: 5, backWallHeight: 16, flyTower: true, pit: true, pitDepth: 2.5, rows: 22, seatingWidth: 22, curve: 0.35, balcony: true, balconyRows: 8 },
+    },
+    {
+      name: 'Grand opera house',
+      description: 'Very large stage and wings, deep pit, rounded arch, big balcony.',
+      params: { stageWidth: 20, stageDepth: 22, stageHeight: 1.1, apronDepth: 3, archWidth: 16, archHeight: 12, frameThickness: 2, archTop: 'rounded', wingWidth: 10, backWallHeight: 25, flyTower: true, pit: true, pitDepth: 4.5, rows: 28, seatingWidth: 28, curve: 0.5, balcony: true, balconyRows: 10 },
+    },
+  ],
+
   params: [
     // Stage
     { key: 'stageWidth', label: 'Stage width', group: 'Stage', type: 'number', default: 12, min: 4, max: 40, step: 0.1 },
@@ -163,7 +182,7 @@ export const prosceniumTemplate: StageTemplate = {
     { key: 'pitDepth', label: 'Pit depth (front to back)', group: 'Wings and walls', type: 'number', default: 2.5, min: 1, max: 6, step: 0.1, visible: (p) => bool(p, 'pit') },
     // Seating
     { key: 'rows', label: 'Number of rows', group: 'Seating', type: 'number', unit: 'none', default: 15, min: 0, max: 50, step: 1 },
-    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, visible: showSeats },
+    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, help: 'Distance from one row to the next.', visible: showSeats },
     { key: 'rake', label: 'Rake (rise per row)', group: 'Seating', type: 'number', default: 0.15, min: 0, max: 0.5, step: 0.01, help: 'How much higher each row is than the one in front.', visible: showSeats },
     { key: 'curve', label: 'Seating curve', group: 'Seating', type: 'number', unit: 'none', default: 0.3, min: 0, max: 1, step: 0.05, help: '0 = straight rows, 1 = strongly curved.', visible: showSeats },
     { key: 'seatingWidth', label: 'Seating width', group: 'Seating', type: 'number', default: 18, min: 4, max: 60, step: 0.1, visible: showSeats },

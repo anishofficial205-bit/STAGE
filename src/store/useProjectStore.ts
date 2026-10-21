@@ -21,6 +21,14 @@ export interface ProjectFile {
   dataByTemplate: Record<string, unknown>;
 }
 
+/** State captured before a bulk change (preset, reset, template switch) so it can be undone. */
+interface Snapshot {
+  label: string;
+  templateId: string;
+  paramsByTemplate: Record<string, Params>;
+  dataByTemplate: Record<string, unknown>;
+}
+
 export interface ViewRequest {
   view: PresetView;
   instant: boolean;
@@ -38,6 +46,14 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   setUnits: (units: Units) => void;
   toggleLabels: () => void;
   setTemplate: (id: string) => void;
+  /** Switch template, either from defaults or carrying the stage width/depth/height across. */
+  switchTemplate: (id: string, mode: 'fresh' | 'similar') => void;
+  resetToDefaults: () => void;
+  applyPreset: (index: number) => void;
+  /** The last bulk change, which can be undone once. */
+  undoable: Snapshot | null;
+  undo: () => void;
+  dismissUndo: () => void;
   setParam: (key: string, value: Params[string]) => void;
   /** Update the active template's data. */
   setData: (update: (data: unknown) => unknown) => void;
@@ -100,17 +116,89 @@ function loadFromStorage() {
 
 let nonce = 0;
 
+const takeSnapshot = (s: Pick<ProjectState, 'templateId' | 'paramsByTemplate' | 'dataByTemplate'>, label: string): Snapshot => ({
+  label,
+  templateId: s.templateId,
+  paramsByTemplate: s.paramsByTemplate,
+  dataByTemplate: s.dataByTemplate,
+});
+
 export const useProjectStore = create<ProjectState>((set, get) => ({
   ...loadFromStorage(),
   dirty: false,
   lastSavedAt: null,
   viewRequest: null,
   viewportAspect: 1.6,
+  undoable: null,
 
   setProjectName: (projectName) => set({ projectName, dirty: true }),
   setUnits: (units) => set({ units, dirty: true }),
   toggleLabels: () => set((s) => ({ showLabels: !s.showLabels, dirty: true })),
   setTemplate: (templateId) => set({ templateId, dirty: true }),
+
+  switchTemplate: (id, mode) => {
+    const s = get();
+    const from = getTemplate(s.templateId)!;
+    const to = getTemplate(id)!;
+    const snapshot = takeSnapshot(s, `Switched to ${to.name}`);
+    let params: Params;
+    if (mode === 'fresh') {
+      params = applyConstraints(to, defaultParams(to));
+    } else {
+      // Start from the target's own settings and carry the shared dimensions across.
+      params = { ...s.paramsByTemplate[id] };
+      const src = s.paramsByTemplate[s.templateId];
+      for (const dim of ['width', 'depth', 'height'] as const) {
+        const a = from.dimensions?.[dim];
+        const b = to.dimensions?.[dim];
+        if (a && b) params[b] = src[a];
+      }
+      params = applyConstraints(to, params);
+    }
+    set({
+      templateId: id,
+      paramsByTemplate: { ...s.paramsByTemplate, [id]: params },
+      dataByTemplate: to.data ? { ...s.dataByTemplate, [id]: mode === 'fresh' ? to.data.initial(params) : to.data.sanitize(s.dataByTemplate[id], params) } : s.dataByTemplate,
+      undoable: snapshot,
+      dirty: true,
+    });
+  },
+
+  resetToDefaults: () => {
+    const s = get();
+    const t = getTemplate(s.templateId)!;
+    const params = applyConstraints(t, defaultParams(t));
+    set({
+      paramsByTemplate: { ...s.paramsByTemplate, [t.id]: params },
+      dataByTemplate: t.data ? { ...s.dataByTemplate, [t.id]: t.data.initial(params) } : s.dataByTemplate,
+      undoable: takeSnapshot(s, `Reset ${t.name} to defaults`),
+      dirty: true,
+    });
+  },
+
+  applyPreset: (index) => {
+    const s = get();
+    const t = getTemplate(s.templateId)!;
+    const preset = t.presets?.[index];
+    if (!preset) return;
+    const prev = s.paramsByTemplate[t.id];
+    const params = applyConstraints(t, { ...prev, ...preset.params });
+    let data = s.dataByTemplate[t.id];
+    if (t.data) data = preset.resetData ? t.data.initial(params) : t.data.onParamsChange ? t.data.onParamsChange(params, prev, data) : data;
+    set({
+      paramsByTemplate: { ...s.paramsByTemplate, [t.id]: params },
+      dataByTemplate: t.data ? { ...s.dataByTemplate, [t.id]: data } : s.dataByTemplate,
+      undoable: takeSnapshot(s, `Applied “${preset.name}”`),
+      dirty: true,
+    });
+  },
+
+  undo: () => {
+    const u = get().undoable;
+    if (!u) return;
+    set({ templateId: u.templateId, paramsByTemplate: u.paramsByTemplate, dataByTemplate: u.dataByTemplate, undoable: null, dirty: true });
+  },
+  dismissUndo: () => set({ undoable: null }),
 
   setParam: (key, value) => {
     const { templateId, paramsByTemplate, dataByTemplate } = get();
@@ -144,7 +232,7 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   /** Throws with a readable message if the data isn't a valid project. */
-  loadFile: (data) => set({ ...parseProject(data), dirty: true }),
+  loadFile: (data) => set({ ...parseProject(data), undoable: null, dirty: true }),
 }));
 
 /** Params of the active template. */

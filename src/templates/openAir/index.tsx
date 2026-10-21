@@ -294,13 +294,32 @@ export const openAirTemplate: StageTemplate = {
   description: 'Outdoor stage with truss',
   audienceSides: ['front'],
 
+  dimensions: { width: 'platformWidth', depth: 'platformDepth', height: 'platformHeight' },
+  presets: [
+    {
+      name: 'Garden wedding',
+      description: 'Low platform with a backdrop and seated guests.',
+      params: { groundWidth: 40, groundLength: 40, groundType: 'grass', platformWidth: 6, platformDepth: 4, platformHeight: 0.5, structure: 'none', towers: false, backdrop: true, backdropMatch: true, audienceType: 'seated', audienceWidth: 14, audienceDepth: 14, rows: 12, foh: false },
+    },
+    {
+      name: 'Local festival',
+      description: 'Goalpost truss stage for a few thousand people.',
+      params: { groundWidth: 70, groundLength: 70, platformWidth: 12, platformDepth: 8, platformHeight: 1.2, structure: 'goalpost', trussHeight: 7, trussMatch: true, towers: false, audienceType: 'standing', audienceWidth: 35, audienceDepth: 30, foh: true },
+    },
+    {
+      name: 'Major festival',
+      description: 'Roofed main stage with LED screen towers and a huge crowd.',
+      params: { groundWidth: 140, groundLength: 140, platformWidth: 24, platformDepth: 16, platformHeight: 2.2, structure: 'roofed', trussHeight: 14, trussMatch: true, towers: true, towerHeight: 12, screenWidth: 8, audienceType: 'standing', audienceWidth: 80, audienceDepth: 70, foh: true },
+    },
+  ],
+
   params: [
     { key: 'groundWidth', label: 'Ground area width', group: 'Ground', type: 'number', default: 60, min: 20, max: 300, step: 1 },
     { key: 'groundLength', label: 'Ground area length', group: 'Ground', type: 'number', default: 60, min: 20, max: 300, step: 1 },
     { key: 'groundType', label: 'Ground type', group: 'Ground', type: 'select', default: 'grass', options: [{ value: 'grass', label: 'Grass' }, { value: 'paved', label: 'Paved' }, { value: 'sand', label: 'Sand' }] },
     { key: 'platformWidth', label: 'Platform width', group: 'Stage platform', type: 'number', default: 14, min: 4, max: 50, step: 0.1 },
     { key: 'platformDepth', label: 'Platform depth', group: 'Stage platform', type: 'number', default: 10, min: 3, max: 30, step: 0.1 },
-    { key: 'platformHeight', label: 'Platform height', group: 'Stage platform', type: 'number', default: 1.5, min: 0, max: 3, step: 0.05 },
+    { key: 'platformHeight', label: 'Platform height', group: 'Stage platform', type: 'number', default: 1.5, min: 0, max: 3, step: 0.05, help: 'Height of the stage floor above the ground.' },
     { key: 'steps', label: 'Steps at front', group: 'Stage platform', type: 'boolean', default: true },
     { key: 'ramp', label: 'Ramp at side', group: 'Stage platform', type: 'boolean', default: false, help: 'A 1:8 ramp along the right side of the stage.' },
     {
@@ -330,7 +349,7 @@ export const openAirTemplate: StageTemplate = {
     { key: 'audienceWidth', label: 'Audience area width', group: 'Audience', type: 'number', default: 40, min: 5, max: 300, step: 0.5 },
     { key: 'audienceDepth', label: 'Audience area depth', group: 'Audience', type: 'number', default: 30, min: 5, max: 300, step: 0.5 },
     { key: 'rows', label: 'Rows', group: 'Audience', type: 'number', unit: 'none', default: 20, min: 1, max: 100, step: 1, visible: isSeated },
-    { key: 'rowSpacing', label: 'Row spacing', group: 'Audience', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, visible: isSeated },
+    { key: 'rowSpacing', label: 'Row spacing', group: 'Audience', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, help: 'Distance from one row to the next.', visible: isSeated },
     { key: 'foh', label: 'Front-of-house desk', group: 'Audience', type: 'boolean', default: true, help: 'The sound and lighting control position.' },
     { key: 'timeOfDay', label: 'Time of day', group: 'Environment', type: 'select', default: 'day', options: [{ value: 'day', label: 'Day' }, { value: 'sunset', label: 'Sunset' }, { value: 'night', label: 'Night' }] },
     { key: 'background', label: 'Background', group: 'Environment', type: 'select', default: 'trees', options: [{ value: 'open', label: 'Open' }, { value: 'trees', label: 'Trees' }, { value: 'city', label: 'City skyline' }] },

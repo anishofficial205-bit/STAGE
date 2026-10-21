@@ -11,6 +11,8 @@ export function PropertiesPanel() {
   const templateId = useProjectStore((s) => s.templateId);
   const units = useProjectStore((s) => s.units);
   const setParam = useProjectStore((s) => s.setParam);
+  const applyPreset = useProjectStore((s) => s.applyPreset);
+  const resetToDefaults = useProjectStore((s) => s.resetToDefaults);
   const params = useActiveParams();
   const data = useActiveData();
   const template = getTemplate(templateId)!;
@@ -26,8 +28,28 @@ export function PropertiesPanel() {
   const Extra = template.Panel;
 
   return (
-    <aside className="sidebar sidebar--right">
-      <h2 className="panel-title">{template.name}</h2>
+    <aside className="sidebar sidebar--right" data-tour="panel">
+      <div className="panel-head">
+        <h2 className="panel-title">{template.name}</h2>
+        <button className="btn btn--link" onClick={resetToDefaults} title="Put every setting of this stage back to its default">
+          Reset to defaults
+        </button>
+      </div>
+      {template.presets && template.presets.length > 0 && (
+        <section className="presets">
+          <h3 className="group__title">Size presets</h3>
+          <div className="chips">
+            {template.presets.map((preset, i) => {
+              const active = Object.entries(preset.params).every(([k, v]) => params[k] === v);
+              return (
+                <button key={preset.name} className={`chip ${active ? 'is-active' : ''}`} onClick={() => applyPreset(i)} title={preset.description}>
+                  {preset.name}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
       {messages.map((m, i) => (
         <p key={i} className={`panel-msg panel-msg--${m.kind}`}>
           {m.text}

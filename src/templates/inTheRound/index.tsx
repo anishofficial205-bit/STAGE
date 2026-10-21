@@ -149,6 +149,25 @@ export const inTheRoundTemplate: StageTemplate = {
   description: 'Audience on all sides',
   audienceSides: ['front', 'left', 'right', 'back'],
 
+  dimensions: { width: 'stageSize', depth: 'stageLength', height: 'stageHeight' },
+  presets: [
+    {
+      name: 'Studio in-the-round',
+      description: 'Small circular floor with a few rows all round.',
+      params: { shape: 'circle', stageSize: 6, stageHeight: 0, sections: 4, rows: 6, gap: 1, aisleWidth: 1.2, gridHeight: 5 },
+    },
+    {
+      name: 'Boxing ring',
+      description: 'Regulation-size raised square, four seating banks.',
+      params: { shape: 'square', stageSize: 6.1, stageHeight: 1.2, sections: 4, rows: 15, gap: 2.5, aisleWidth: 1.5, gridHeight: 8 },
+    },
+    {
+      name: 'Arena concert',
+      description: 'Big central stage, eight sections, high rig.',
+      params: { shape: 'octagon', stageSize: 16, stageHeight: 1.8, sections: 8, rows: 30, gap: 4, aisleWidth: 2, rake: 0.3, gridHeight: 14 },
+    },
+  ],
+
   params: [
     {
       key: 'shape',
@@ -165,10 +184,10 @@ export const inTheRoundTemplate: StageTemplate = {
     },
     { key: 'stageSize', label: 'Stage size', group: 'Stage', type: 'number', default: 8, min: 3, max: 30, step: 0.1, help: 'Diameter of a circle, side length of a square, width across an octagon or rectangle.' },
     { key: 'stageLength', label: 'Stage length', group: 'Stage', type: 'number', default: 12, min: 3, max: 40, step: 0.1, visible: (p) => str(p, 'shape') === 'rectangle' },
-    { key: 'stageHeight', label: 'Stage height', group: 'Stage', type: 'number', default: 0.3, min: 0, max: 1.5, step: 0.05 },
+    { key: 'stageHeight', label: 'Stage height', group: 'Stage', type: 'number', default: 0.3, min: 0, max: 1.5, step: 0.05, help: 'Height of the stage floor above the audience floor.' },
     { key: 'sections', label: 'Seating sections', group: 'Seating', type: 'number', unit: 'none', default: 4, min: 2, max: 8, step: 1 },
     { key: 'rows', label: 'Rows per section', group: 'Seating', type: 'number', unit: 'none', default: 10, min: 0, max: 40, step: 1 },
-    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05 },
+    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, help: 'Distance from one row to the next.' },
     { key: 'rake', label: 'Rake (rise per row)', group: 'Seating', type: 'number', default: 0.2, min: 0, max: 0.5, step: 0.01, help: 'How much higher each row is than the one in front.' },
     { key: 'gap', label: 'Gap to first row', group: 'Seating', type: 'number', default: 1.5, min: 0.5, max: 6, step: 0.1 },
     { key: 'aisleWidth', label: 'Aisle width', group: 'Seating', type: 'number', default: 1.5, min: 0.8, max: 4, step: 0.1, help: 'Width of the aisles between sections.' },

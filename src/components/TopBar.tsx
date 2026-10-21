@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../store/useProjectStore';
 import { useViews } from './useViews';
+import { TOUR_EVENT } from './Tour';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -64,7 +65,7 @@ export function TopBar() {
         />
       </div>
 
-      <nav className="topbar__views" aria-label="Camera views">
+      <nav className="topbar__views" aria-label="Camera views" data-tour="views">
         {views.map((v) => (
           <button key={v.id} className={`btn btn--ghost ${v.id === 'reset' ? 'btn--muted' : ''}`} onClick={() => s.requestView(v)}>
             {v.label}
@@ -83,6 +84,9 @@ export function TopBar() {
         </div>
         <button className={`btn ${s.showLabels ? 'is-active' : ''}`} onClick={s.toggleLabels} title="Show or hide dimension labels">
           Labels
+        </button>
+        <button className="btn btn--icon" onClick={() => window.dispatchEvent(new Event(TOUR_EVENT))} title="Show the quick tour" aria-label="Help">
+          ?
         </button>
         <span className="divider" />
         <button className="btn btn--primary" onClick={save} title="Save (⌘S)">

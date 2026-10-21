@@ -12,7 +12,9 @@ Deploy: import the repo into Vercel (framework preset "Vite"); it builds `dist/`
 
 ## Structure
 
-- `src/templates/<stage>/` — one module per stage type, implementing `StageTemplate` (see `src/types.ts`)
+- `src/templates/<stage>/` — one module per stage type, implementing `StageTemplate` (see `src/types.ts`):
+  Proscenium, End Stage, Thrust, In-the-Round, Traverse, Black Box, Open-Air. Each can declare size presets,
+  shared dimensions (for switching templates), extra data (Black Box blocks) and an environment (Open-Air sky).
 - `src/templates/registry.ts` — list of available templates; add new ones here
 - `src/helpers/` — shared seating generator, dimension labels, floor grid, views, param utilities
 - `src/components/` — top bar, stage picker, auto-generated properties panel, 3D viewport

@@ -4,6 +4,9 @@ import { StagePicker } from './components/StagePicker';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { Viewport } from './components/Viewport';
 import { useProjectStore } from './store/useProjectStore';
+import { ThumbnailRenderer } from './components/Thumbnails';
+import { UndoToast } from './components/UndoToast';
+import { Tour } from './components/Tour';
 
 export default function App() {
   // Warn before leaving with unsaved changes.
@@ -23,6 +26,9 @@ export default function App() {
         <Viewport />
       </main>
       <PropertiesPanel />
+      <UndoToast />
+      <Tour />
+      <ThumbnailRenderer />
     </div>
   );
 }

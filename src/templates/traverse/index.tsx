@@ -100,11 +100,30 @@ export const traverseTemplate: StageTemplate = {
   description: 'Long runway, audience on two sides',
   audienceSides: ['left', 'right'],
 
+  dimensions: { width: 'stageWidth', depth: 'stageLength', height: 'stageHeight' },
+  presets: [
+    {
+      name: 'Studio traverse',
+      description: 'Floor-level playing strip between two small banks.',
+      params: { stageLength: 12, stageWidth: 5, raised: false, wallA: true, wallB: true, entrance: true, rows1: 4, rows2: 4, truss: false },
+    },
+    {
+      name: 'Fashion show',
+      description: 'Narrow raised runway with front-row seating and a lighting truss.',
+      params: { stageLength: 25, stageWidth: 3, raised: true, stageHeight: 0.6, wallA: true, wallB: false, entrance: true, entranceWidth: 3, rows1: 3, rows2: 3, rake: 0.25, gap: 0.6, truss: true, trussHeight: 6 },
+    },
+    {
+      name: 'Catwalk gala',
+      description: 'Long, wide runway for a big event.',
+      params: { stageLength: 35, stageWidth: 4, raised: true, stageHeight: 0.8, wallA: true, wallB: false, entrance: true, entranceWidth: 4, rows1: 6, rows2: 6, truss: true, trussHeight: 7 },
+    },
+  ],
+
   params: [
     { key: 'stageLength', label: 'Stage length', group: 'Stage', type: 'number', default: 20, min: 6, max: 60, step: 0.1 },
     { key: 'stageWidth', label: 'Stage width', group: 'Stage', type: 'number', default: 4, min: 1.5, max: 15, step: 0.1 },
     { key: 'raised', label: 'Raised runway', group: 'Stage', type: 'boolean', default: true, help: 'Off: the playing area is at floor level.' },
-    { key: 'stageHeight', label: 'Stage height', group: 'Stage', type: 'number', default: 0.6, min: 0, max: 1.5, step: 0.05, visible: (p) => bool(p, 'raised') },
+    { key: 'stageHeight', label: 'Stage height', group: 'Stage', type: 'number', default: 0.6, min: 0, max: 1.5, step: 0.05, help: 'Height of the stage floor above the audience floor.', visible: (p) => bool(p, 'raised') },
     { key: 'wallA', label: 'End wall at end A', group: 'End walls', type: 'boolean', default: true },
     { key: 'wallB', label: 'End wall at end B', group: 'End walls', type: 'boolean', default: false },
     { key: 'wallHeight', label: 'End wall height', group: 'End walls', type: 'number', default: 6, min: 3, max: 15, step: 0.1, visible: (p) => bool(p, 'wallA') || bool(p, 'wallB') },
@@ -112,7 +131,7 @@ export const traverseTemplate: StageTemplate = {
     { key: 'entranceWidth', label: 'Entrance width', group: 'End walls', type: 'number', default: 3, min: 1, max: 16, step: 0.1, help: 'At most the stage width plus 1 m.', visible: (p) => bool(p, 'wallA') && bool(p, 'entrance') },
     { key: 'rows1', label: 'Rows on side 1', group: 'Seating', type: 'number', unit: 'none', default: 6, min: 0, max: 30, step: 1 },
     { key: 'rows2', label: 'Rows on side 2', group: 'Seating', type: 'number', unit: 'none', default: 6, min: 0, max: 30, step: 1 },
-    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05 },
+    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, help: 'Distance from one row to the next.' },
     { key: 'rake', label: 'Rake (rise per row)', group: 'Seating', type: 'number', default: 0.2, min: 0, max: 0.5, step: 0.01, help: 'How much higher each row is than the one in front.' },
     { key: 'gap', label: 'Gap to first row', group: 'Seating', type: 'number', default: 1, min: 0.3, max: 5, step: 0.1 },
     { key: 'matchLength', label: 'Seating length matches stage', group: 'Seating', type: 'boolean', default: true },

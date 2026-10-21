@@ -187,6 +187,25 @@ export const thrustTemplate: StageTemplate = {
   description: 'Projects into the audience on three sides',
   audienceSides: ['front', 'left', 'right'],
 
+  dimensions: { width: 'thrustWidth', depth: 'thrustLength', height: 'stageHeight' },
+  presets: [
+    {
+      name: 'Studio thrust',
+      description: 'Small, intimate thrust with a few rows on each side.',
+      params: { upstageWidth: 8, upstageDepth: 3, backWallHeight: 5, thrustWidth: 5, thrustLength: 5, stageHeight: 0.4, rowsFront: 6, rowsLeft: 5, rowsRight: 5 },
+    },
+    {
+      name: 'Regional theatre',
+      description: 'Mid-size thrust with an angled front.',
+      params: { upstageWidth: 13, upstageDepth: 5, backWallHeight: 9, thrustWidth: 9, thrustLength: 9, thrustShape: 'angled', stageHeight: 0.8, rowsFront: 12, rowsLeft: 10, rowsRight: 10 },
+    },
+    {
+      name: 'Shakespeare-style',
+      description: 'High, square platform with steep galleries close in.',
+      params: { upstageWidth: 14, upstageDepth: 4, backWallHeight: 10, thrustWidth: 13, thrustLength: 8.5, thrustShape: 'square', stageHeight: 1.5, rowsFront: 14, rowsLeft: 12, rowsRight: 12, rake: 0.3, gap: 1 },
+    },
+  ],
+
   params: [
     { key: 'upstageWidth', label: 'Upstage width', group: 'Main stage', type: 'number', default: 12, min: 4, max: 30, step: 0.1 },
     { key: 'upstageDepth', label: 'Upstage depth', group: 'Main stage', type: 'number', default: 4, min: 0, max: 15, step: 0.1, help: 'The area behind the thrust, in front of the back wall.' },
@@ -205,11 +224,11 @@ export const thrustTemplate: StageTemplate = {
         { value: 'angled', label: 'Angled (hexagonal) front' },
       ],
     },
-    { key: 'stageHeight', label: 'Stage height', group: 'Thrust', type: 'number', default: 0.8, min: 0, max: 2, step: 0.05 },
+    { key: 'stageHeight', label: 'Stage height', group: 'Thrust', type: 'number', default: 0.8, min: 0, max: 2, step: 0.05, help: 'Height of the stage floor above the audience floor.' },
     { key: 'rowsFront', label: 'Rows on front side', group: 'Seating', type: 'number', unit: 'none', default: 10, min: 0, max: 40, step: 1 },
     { key: 'rowsLeft', label: 'Rows on left side', group: 'Seating', type: 'number', unit: 'none', default: 8, min: 0, max: 40, step: 1, help: 'House left, as seen from the audience.' },
     { key: 'rowsRight', label: 'Rows on right side', group: 'Seating', type: 'number', unit: 'none', default: 8, min: 0, max: 40, step: 1 },
-    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, visible: seatParam },
+    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, help: 'Distance from one row to the next.', visible: seatParam },
     { key: 'rake', label: 'Rake (rise per row)', group: 'Seating', type: 'number', default: 0.2, min: 0, max: 0.5, step: 0.01, help: 'How much higher each row is than the one in front.', visible: seatParam },
     { key: 'gap', label: 'Gap to first row', group: 'Seating', type: 'number', default: 1.5, min: 0.5, max: 6, step: 0.1, visible: seatParam },
     {

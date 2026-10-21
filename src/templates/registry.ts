@@ -4,7 +4,6 @@
  * needs to change: the picker, properties panel and views read from here.
  */
 import type { StageTemplate } from '../types';
-import { placeholderTemplate } from './placeholder';
 import { prosceniumTemplate } from './proscenium';
 import { endStageTemplate } from './endStage';
 import { thrustTemplate } from './thrust';
@@ -13,6 +12,6 @@ import { traverseTemplate } from './traverse';
 import { openAirTemplate } from './openAir';
 import { blackBoxTemplate } from './blackBox';
 
-export const templates: StageTemplate[] = [placeholderTemplate, prosceniumTemplate, endStageTemplate, thrustTemplate, inTheRoundTemplate, traverseTemplate, blackBoxTemplate, openAirTemplate];
+export const templates: StageTemplate[] = [prosceniumTemplate, endStageTemplate, thrustTemplate, inTheRoundTemplate, traverseTemplate, blackBoxTemplate, openAirTemplate];
 
 export const getTemplate = (id: string) => templates.find((t) => t.id === id);

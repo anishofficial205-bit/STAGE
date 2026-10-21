@@ -59,6 +59,7 @@ export function CameraRig() {
       ref={controls}
       makeDefault
       enableDamping
+      regress
       dampingFactor={0.08}
       minDistance={1}
       maxDistance={400}

@@ -98,10 +98,29 @@ export const endStageTemplate: StageTemplate = {
   description: 'Audience in front, no arch',
   audienceSides: ['front'],
 
+  dimensions: { width: 'stageWidth', depth: 'stageDepth', height: 'stageHeight' },
+  presets: [
+    {
+      name: 'Conference room',
+      description: 'Low platform, flat floor, straight rows.',
+      params: { stageWidth: 6, stageDepth: 3.5, stageHeight: 0.4, backWallHeight: 4, roomWidth: 15, roomLength: 22, rows: 14, rake: 0, curve: 0, seatingWidth: 11, gap: 2 },
+    },
+    {
+      name: 'School hall',
+      description: 'Classic hall stage with a flat floor of chairs.',
+      params: { stageWidth: 9, stageDepth: 6, stageHeight: 0.9, backWallHeight: 6, roomWidth: 18, roomLength: 30, rows: 20, rake: 0, curve: 0, seatingWidth: 14, gap: 2 },
+    },
+    {
+      name: 'Auditorium',
+      description: 'Large raked auditorium with gently curved rows.',
+      params: { stageWidth: 16, stageDepth: 10, stageHeight: 1, backWallHeight: 10, roomWidth: 30, roomLength: 45, rows: 30, rake: 0.2, curve: 0.2, seatingWidth: 24, gap: 2.5 },
+    },
+  ],
+
   params: [
     { key: 'stageWidth', label: 'Stage width', group: 'Stage', type: 'number', default: 12, min: 3, max: 40, step: 0.1, help: 'Can never be wider than the room.' },
     { key: 'stageDepth', label: 'Stage depth', group: 'Stage', type: 'number', default: 8, min: 2, max: 25, step: 0.1 },
-    { key: 'stageHeight', label: 'Stage height', group: 'Stage', type: 'number', default: 0.9, min: 0, max: 2, step: 0.05 },
+    { key: 'stageHeight', label: 'Stage height', group: 'Stage', type: 'number', default: 0.9, min: 0, max: 2, step: 0.05, help: 'Height of the stage floor above the audience floor.' },
     { key: 'frontShape', label: 'Front edge shape', group: 'Stage', type: 'select', default: 'straight', options: [{ value: 'straight', label: 'Straight' }, { value: 'curved', label: 'Curved' }] },
     { key: 'backWallHeight', label: 'Back wall height', group: 'Room', type: 'number', default: 8, min: 3, max: 20, step: 0.1 },
     { key: 'sideWalls', label: 'Side walls', group: 'Room', type: 'boolean', default: true },
@@ -109,7 +128,7 @@ export const endStageTemplate: StageTemplate = {
     { key: 'roomLength', label: 'Room length', group: 'Room', type: 'number', default: 35, min: 10, max: 80, step: 0.1, help: 'From the back wall behind the stage to the rear wall.' },
     { key: 'masking', label: 'Side masking curtains', group: 'Room', type: 'boolean', default: false, help: 'Vertical panels at the stage edges that hide performers waiting to enter.' },
     { key: 'rows', label: 'Number of rows', group: 'Seating', type: 'number', unit: 'none', default: 15, min: 0, max: 50, step: 1 },
-    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, visible: hasRows },
+    { key: 'rowSpacing', label: 'Row spacing', group: 'Seating', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, help: 'Distance from one row to the next.', visible: hasRows },
     { key: 'rake', label: 'Rake (rise per row)', group: 'Seating', type: 'number', default: 0.15, min: 0, max: 0.5, step: 0.01, help: 'How much higher each row is than the one in front.', visible: hasRows },
     { key: 'curve', label: 'Seating curve', group: 'Seating', type: 'number', unit: 'none', default: 0.2, min: 0, max: 1, step: 0.05, help: '0 = straight rows, 1 = strongly curved.', visible: hasRows },
     { key: 'seatingWidth', label: 'Seating width', group: 'Seating', type: 'number', default: 16, min: 4, max: 60, step: 0.1, visible: hasRows },
@@ -150,7 +169,7 @@ export const endStageTemplate: StageTemplate = {
     const midRow = rowCentre(s, mid);
     return [
       { id: 'front-row', label: 'Front row', position: seat(0), target },
-      { id: 'middle', label: 'Middle', position: seat(mid), target },
+      { id: 'middle', label: 'Middle of house', position: seat(mid), target },
       { id: 'back-row', label: 'Back row', position: seat(s.rows - 1), target },
       { id: 'side-aisle', label: 'Side aisle', position: [aisleX, midRow[1] + 1.6, midRow[2]], target },
     ];

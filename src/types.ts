@@ -105,6 +105,26 @@ export interface TemplateDataHooks {
   onParamsChange?: (next: Params, prev: Params, data: unknown) => unknown;
 }
 
+/** A named set of realistic dimensions, e.g. "School auditorium". */
+export interface SizePreset {
+  name: string;
+  description: string;
+  /** Params to apply on top of the current ones. */
+  params: Params;
+  /** Also rebuild the template's data (e.g. re-place Black Box blocks for the new room). */
+  resetData?: boolean;
+}
+
+/**
+ * Which params mean "stage width / depth / height" in this template, so
+ * dimensions can be carried across when switching templates.
+ */
+export interface SharedDimensions {
+  width?: string;
+  depth?: string;
+  height?: string;
+}
+
 /**
  * The contract every stage template implements. A template is a plain object,
  * registered in templates/registry.ts. The app never special-cases a template:
@@ -133,4 +153,6 @@ export interface StageTemplate {
   data?: TemplateDataHooks;
   /** Extra controls shown in the properties panel above the params (e.g. block editing). */
   Panel?: ComponentType;
+  presets?: SizePreset[];
+  dimensions?: SharedDimensions;
 }

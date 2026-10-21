@@ -24,6 +24,12 @@ export const blackBoxTemplate: StageTemplate = {
   description: 'Flexible room, arrange it yourself',
   audienceSides: ['custom'],
 
+  presets: [
+    { name: 'Studio', description: 'Small studio theatre, about 60 seats.', params: { roomWidth: 12, roomLength: 15, roomHeight: 6 }, resetData: true },
+    { name: 'Medium flexible', description: 'Typical flexible theatre, about 120 seats.', params: { roomWidth: 15, roomLength: 20, roomHeight: 7 }, resetData: true },
+    { name: 'Large flexible', description: 'Large flexible space for bigger layouts.', params: { roomWidth: 22, roomLength: 28, roomHeight: 9 }, resetData: true },
+  ],
+
   params: [
     { key: 'roomWidth', label: 'Room width', group: 'Room', type: 'number', default: 15, min: 6, max: 40, step: 0.1 },
     { key: 'roomLength', label: 'Room length', group: 'Room', type: 'number', default: 20, min: 6, max: 50, step: 0.1 },

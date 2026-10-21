@@ -1,8 +1,10 @@
+import { useContext } from 'react';
 import { Html, Line } from '@react-three/drei';
 import { useProjectStore } from '../store/useProjectStore';
 import { formatLength } from '../units';
 import type { Vec3 } from '../types';
 import { COLORS } from './materials';
+import { SceneModeContext } from '../components/StageScene';
 
 interface Props {
   start: Vec3;
@@ -22,7 +24,8 @@ const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 export function DimensionLabel({ start, end, offset = [0, 0, 0], label }: Props) {
   const show = useProjectStore((s) => s.showLabels);
   const units = useProjectStore((s) => s.units);
-  if (!show) return null;
+  const { thumbnail } = useContext(SceneModeContext);
+  if (!show || thumbnail) return null;
 
   const a = add(start, offset);
   const b = add(end, offset);
