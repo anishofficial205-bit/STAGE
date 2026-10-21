@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 /**
  * Coordinate convention used by every template:
@@ -78,6 +78,33 @@ export interface PanelMessage {
   text: string;
 }
 
+/** Sky, lighting and ground. Templates may override any part (e.g. time of day outdoors). */
+export interface Environment {
+  background: string;
+  /** Physical sky instead of a flat background colour. */
+  sky?: { sunPosition: Vec3; turbidity?: number; rayleigh?: number };
+  stars?: boolean;
+  fog: string;
+  ground: string;
+  grid: { cell: string; section: string };
+  hemisphere: { sky: string; ground: string; intensity: number };
+  ambient: number;
+  /** Key light. `direction` points from the scene towards the light. */
+  sun: { color: string; intensity: number; direction: Vec3 };
+}
+
+/**
+ * Optional free-form data a template keeps beside its params (e.g. the Black
+ * Box's movable blocks). It is saved, exported and imported with the project.
+ */
+export interface TemplateDataHooks {
+  initial: (params: Params) => unknown;
+  /** Turn stored or imported data back into something usable. */
+  sanitize: (raw: unknown, params: Params) => unknown;
+  /** Runs after every param change: return updated data (e.g. regenerate a layout, keep blocks in the room). */
+  onParamsChange?: (next: Params, prev: Params, data: unknown) => unknown;
+}
+
 /**
  * The contract every stage template implements. A template is a plain object,
  * registered in templates/registry.ts. The app never special-cases a template:
@@ -91,14 +118,19 @@ export interface StageTemplate {
   params: ParamDef[];
   /** Takes (already range-clamped) params, returns corrected params. Runs on every change. */
   constraints: (params: Params) => Params;
-  /** Returns the 3D scene for these params. */
-  build: (params: Params) => ReactNode;
+  /** Returns the 3D scene for these params (and the template's data, if it has any). */
+  build: (params: Params, data?: unknown) => ReactNode;
   audienceSides: AudienceSide[];
   /** Template-specific camera views. "Top view" and "Reset view" are added by the app. */
-  presetViews: (params: Params) => PresetView[];
-  surfaces: (params: Params) => Surface[];
+  presetViews: (params: Params, data?: unknown) => PresetView[];
+  surfaces: (params: Params, data?: unknown) => Surface[];
   /** Rough extent of everything in the scene; used for top view, reset view and shadows. */
-  bounds: (params: Params) => Bounds;
+  bounds: (params: Params, data?: unknown) => Bounds;
   /** Optional notes/warnings shown at the top of the properties panel. */
-  messages?: (params: Params) => PanelMessage[];
+  messages?: (params: Params, data?: unknown) => PanelMessage[];
+  /** Override parts of the default sky, lighting and ground. */
+  environment?: (params: Params) => Partial<Environment>;
+  data?: TemplateDataHooks;
+  /** Extra controls shown in the properties panel above the params (e.g. block editing). */
+  Panel?: ComponentType;
 }

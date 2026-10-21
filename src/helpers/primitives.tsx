@@ -4,6 +4,7 @@
  */
 import { useMemo } from 'react';
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Vec3 } from '../types';
 import { ROUGHNESS } from './materials';
 import type { Pt } from './shapes';
@@ -184,6 +185,63 @@ export function Beam({ from, to, size = 0.3, color, opacity }: { from: Vec3; to:
     <mesh position={a.add(b).multiplyScalar(0.5)} quaternion={quaternion} castShadow receiveShadow>
       <boxGeometry args={[size, size, len]} />
       <Mat color={color} opacity={opacity} />
+    </mesh>
+  );
+}
+
+/** Thin box between two local points, for building lattices. */
+function strut(a: THREE.Vector3, b: THREE.Vector3, t: number) {
+  const len = a.distanceTo(b);
+  const g = new THREE.BoxGeometry(t, t, len);
+  const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), b.clone().sub(a).normalize());
+  g.applyQuaternion(q);
+  const mid = a.clone().add(b).multiplyScalar(0.5);
+  g.translate(mid.x, mid.y, mid.z);
+  return g;
+}
+
+const trussCache = new Map<string, THREE.BufferGeometry>();
+
+/** Lattice geometry of a square truss of length `len` along +Z (cached; shared between instances). */
+function trussGeometry(len: number, size: number) {
+  const key = `${len.toFixed(2)}:${size}`;
+  const hit = trussCache.get(key);
+  if (hit) return hit;
+  const h = size / 2;
+  const chord = size * 0.12;
+  const lace = size * 0.06;
+  const corners = [[-h, -h], [h, -h], [h, h], [-h, h]];
+  const parts: THREE.BufferGeometry[] = corners.map(([x, y]) => strut(new THREE.Vector3(x, y, 0), new THREE.Vector3(x, y, len), chord));
+  const steps = Math.max(1, Math.round(len / size));
+  const step = len / steps;
+  for (let f = 0; f < 4; f++) {
+    const [ax, ay] = corners[f];
+    const [bx, by] = corners[(f + 1) % 4];
+    for (let k = 0; k < steps; k++) {
+      // Zig-zag lacing between neighbouring chords.
+      const [x0, y0, x1, y1] = k % 2 === 0 ? [ax, ay, bx, by] : [bx, by, ax, ay];
+      parts.push(strut(new THREE.Vector3(x0, y0, k * step), new THREE.Vector3(x1, y1, (k + 1) * step), lace));
+    }
+  }
+  const merged = mergeGeometries(parts)!;
+  parts.forEach((g) => g.dispose());
+  trussCache.set(key, merged);
+  return merged;
+}
+
+/** A lattice box truss between two points in any direction (one merged mesh). */
+export function Truss({ from, to, size = 0.4, color }: { from: Vec3; to: Vec3; size?: number; color: string }) {
+  const a = new THREE.Vector3(...from);
+  const b = new THREE.Vector3(...to);
+  const len = a.distanceTo(b);
+  const quaternion = useMemo(
+    () => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), b.clone().sub(a).normalize()),
+    [from.join(), to.join()], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  if (len < 0.05) return null;
+  return (
+    <mesh geometry={trussGeometry(len, size)} position={a} quaternion={quaternion} castShadow>
+      <meshStandardMaterial color={color} roughness={0.45} metalness={0.6} />
     </mesh>
   );
 }

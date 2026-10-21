@@ -9,7 +9,8 @@ import { prosceniumTemplate } from './proscenium';
 import { endStageTemplate } from './endStage';
 import { thrustTemplate } from './thrust';
 import { inTheRoundTemplate } from './inTheRound';
+import { traverseTemplate } from './traverse';
 
-export const templates: StageTemplate[] = [placeholderTemplate, prosceniumTemplate, endStageTemplate, thrustTemplate, inTheRoundTemplate];
+export const templates: StageTemplate[] = [placeholderTemplate, prosceniumTemplate, endStageTemplate, thrustTemplate, inTheRoundTemplate, traverseTemplate];
 
 export const getTemplate = (id: string) => templates.find((t) => t.id === id);
