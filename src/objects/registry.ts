@@ -13,6 +13,13 @@ import { platformObject } from './platform';
 import { roundPlatformObject } from './roundPlatform';
 import { stepsObject } from './steps';
 import { rampObject } from './ramp';
+import { columnObject } from './column';
+import { archFrameObject } from './archFrame';
+import { curvedWallObject } from './curvedWall';
+import { cycloramaObject } from './cyclorama';
+import { doorFrameObject } from './doorFrame';
+import { windowFrameObject } from './windowFrame';
+import { staircaseObject } from './staircase';
 
 export const objectTypes: SetObjectType[] = [
   boxObject,
@@ -24,6 +31,13 @@ export const objectTypes: SetObjectType[] = [
   roundPlatformObject,
   stepsObject,
   rampObject,
+  columnObject,
+  archFrameObject,
+  curvedWallObject,
+  cycloramaObject,
+  doorFrameObject,
+  windowFrameObject,
+  staircaseObject,
 ];
 
 /** Old type ids still found in saved projects. */

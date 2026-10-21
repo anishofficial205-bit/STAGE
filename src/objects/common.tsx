@@ -17,8 +17,45 @@ export const SET = {
   dark: '#4a4f57',
 };
 
+/**
+ * Dev-only UV check: with `window.__uvTest = true` (set before load), every
+ * object surface shows a gradient + grid, so you can see how a graphic will
+ * wrap across flat and curved faces.
+ */
+let uvTestTexture: THREE.Texture | null = null;
+function uvTest(): THREE.Texture | null {
+  if (!import.meta.env.DEV || !(window as unknown as { __uvTest?: boolean }).__uvTest) return null;
+  if (uvTestTexture) return uvTestTexture;
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  const g = c.getContext('2d')!;
+  const grad = g.createLinearGradient(0, 0, 512, 0);
+  grad.addColorStop(0, '#e63946');
+  grad.addColorStop(0.5, '#f4d35e');
+  grad.addColorStop(1, '#1d6fde');
+  g.fillStyle = grad;
+  g.fillRect(0, 0, 512, 512);
+  g.strokeStyle = 'rgba(0,0,0,0.6)';
+  g.lineWidth = 3;
+  for (let i = 0; i <= 8; i++) {
+    g.beginPath();
+    g.moveTo(i * 64, 0);
+    g.lineTo(i * 64, 512);
+    g.moveTo(0, i * 64);
+    g.lineTo(512, i * 64);
+    g.stroke();
+  }
+  g.fillStyle = '#000';
+  g.font = 'bold 90px sans-serif';
+  g.fillText('F', 40, 120); // shows orientation: should read correctly, top-left
+  uvTestTexture = new THREE.CanvasTexture(c);
+  uvTestTexture.colorSpace = THREE.SRGBColorSpace;
+  return uvTestTexture;
+}
+
 export function Mat({ color = SET.body, side, opacity = 1 }: { color?: string; side?: THREE.Side; opacity?: number }) {
-  return <meshStandardMaterial color={color} roughness={ROUGHNESS} side={side} transparent={opacity < 1} opacity={opacity} />;
+  const map = uvTest();
+  return <meshStandardMaterial color={map ? '#ffffff' : color} map={map} roughness={ROUGHNESS} side={side} transparent={opacity < 1} opacity={opacity} />;
 }
 
 /** Box from its centre and size, with shadows. */
