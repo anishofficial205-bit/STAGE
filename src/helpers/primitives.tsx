@@ -169,3 +169,21 @@ export function OpeningFrame({
     </mesh>
   );
 }
+
+/** A square-section bar between two points in any direction (truss, rails, frames). */
+export function Beam({ from, to, size = 0.3, color, opacity }: { from: Vec3; to: Vec3; size?: number } & MatProps) {
+  const a = new THREE.Vector3(...from);
+  const b = new THREE.Vector3(...to);
+  const len = a.distanceTo(b);
+  const quaternion = useMemo(
+    () => new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), b.clone().sub(a).normalize()),
+    [from.join(), to.join()], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  if (len < 1e-4) return null;
+  return (
+    <mesh position={a.add(b).multiplyScalar(0.5)} quaternion={quaternion} castShadow receiveShadow>
+      <boxGeometry args={[size, size, len]} />
+      <Mat color={color} opacity={opacity} />
+    </mesh>
+  );
+}

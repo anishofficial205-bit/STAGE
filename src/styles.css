@@ -47,9 +47,11 @@ button, input, select { font: inherit; color: inherit; }
   display: flex;
   gap: 4px;
   overflow-x: auto;
-  justify-content: center;
-  scrollbar-width: none;
+  scrollbar-width: thin;
 }
+/* Centre the buttons, but keep the first one reachable when they overflow (unlike justify-content: center). */
+.topbar__views > :first-child { margin-left: auto; }
+.topbar__views > :last-child { margin-right: auto; }
 .brand { font-weight: 650; letter-spacing: -0.01em; }
 .project-name {
   border: 1px solid transparent;
