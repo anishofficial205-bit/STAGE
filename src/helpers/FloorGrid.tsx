@@ -3,6 +3,7 @@ import { useProjectStore } from '../store/useProjectStore';
 import { M_PER_FT } from '../units';
 import type { Environment } from '../types';
 import { ROUGHNESS } from './materials';
+import { useExportState } from '../export/state';
 
 /**
  * Ground plane plus a subtle grid: 1 m cells (5 m sections) in metres,
@@ -10,6 +11,7 @@ import { ROUGHNESS } from './materials';
  */
 export function FloorGrid({ env }: { env: Environment }) {
   const units = useProjectStore((s) => s.units);
+  const exporting = useExportState((s) => s.exporting);
   const cell = units === 'ft' ? M_PER_FT : 1;
   const section = units === 'ft' ? M_PER_FT * 10 : 5;
   return (
@@ -19,6 +21,7 @@ export function FloorGrid({ env }: { env: Environment }) {
         <meshStandardMaterial color={env.ground} roughness={ROUGHNESS} />
       </mesh>
       <Grid
+        visible={!exporting}
         position={[0, 0.001, 0]}
         args={[10, 10]}
         infiniteGrid

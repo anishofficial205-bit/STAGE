@@ -524,3 +524,10 @@ button, input, select { font: inherit; color: inherit; }
 .saved-view { display: inline-flex; align-items: center; }
 .saved-view__x { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 0 4px; margin-left: -6px; }
 .saved-view__x:hover { color: #b4232a; }
+
+/* Export dialog */
+.export-form { margin-bottom: 14px; }
+.segmented--3 { grid-template-columns: repeat(3, 1fr); }
+.export-custom { display: flex; gap: 6px; align-items: center; margin: -4px 0 12px; }
+.export-custom input { width: 90px; border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; }
+.export-actions { display: grid; gap: 8px; }

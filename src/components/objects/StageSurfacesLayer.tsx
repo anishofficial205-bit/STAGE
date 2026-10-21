@@ -17,6 +17,7 @@ import { updatePlacement } from '../../graphics/library';
 import { panBy } from '../../graphics/placement';
 import type { GraphicPlacement } from '../../graphics/types';
 import { shaderKey } from '../../objects/faceMaterial';
+import { useExportState } from '../../export/state';
 
 const OFFSET = 0.004; // metres in front of the real surface
 
@@ -107,12 +108,13 @@ export function StageSurfacesLayer() {
   const styles = useProjectStore((s) => s.surfaceStylesByTemplate[s.templateId]);
   const hover = useObjectUI((s) => (s.hoverFace?.objectId === SURFACE ? s.hoverFace.face : null));
   const picked = useObjectUI((s) => (s.selectedFace?.objectId === SURFACE ? s.selectedFace.face : null));
+  const exporting = useExportState((s) => s.exporting);
   const surfaces = useMemo(() => getTemplate(templateId)!.surfaces(params, data).filter((s) => s.width > 0.01 && s.height > 0.01), [templateId, params, data]);
   return (
     <>
       {surfaces.map((s) => {
         const style = styles?.[s.id];
-        const highlight = hover === s.id || picked === s.id;
+        const highlight = !exporting && (hover === s.id || picked === s.id);
         if (!style && !highlight) return null;
         return <Overlay key={s.id} surface={s} style={style} highlight={highlight} />;
       })}

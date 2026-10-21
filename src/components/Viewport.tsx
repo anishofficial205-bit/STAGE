@@ -15,9 +15,11 @@ import { pickFace } from '../objects/pick';
 import { assignGraphic, importFiles, importOnto } from '../graphics/library';
 import { FaceContextMenu } from './graphics/FaceContextMenu';
 import { SeatLayer } from './sightlines/SeatLayer';
+import { Capturer } from './export/Capturer';
 import { SeatPanel, ViewTools } from './sightlines/SeatPanel';
 import { goToSeat } from './sightlines/seatActions';
 import { useSightlines } from '../sightlines/store';
+import { useExportState } from '../export/state';
 import { addObjectAt, currentStage } from '../objects/actions';
 import { floorHeightAt } from '../helpers/stageInfo';
 import * as THREE from 'three';
@@ -67,6 +69,7 @@ export function Viewport() {
   const data = useActiveData();
   const objects = useActiveObjects();
   const surfaceStyles = useProjectStore((s) => s.surfaceStylesByTemplate[s.templateId]);
+  const presentation = useExportState((s) => s.presentation);
   const template = getTemplate(templateId)!;
 
   const rightDown = useRef<[number, number] | null>(null);
@@ -159,8 +162,9 @@ export function Viewport() {
       </SceneBoundary>
       <StageSurfacesLayer />
       <SeatLayer />
+      <Capturer />
       <Reflections />
-      <ShadowsOnChange deps={[template, params, data, units, objects, surfaceStyles]} />
+      <ShadowsOnChange deps={[template, params, data, units, objects, surfaceStyles, presentation]} />
       <AdaptiveDpr pixelated />
       <CameraRig />
       <ViewportSync />

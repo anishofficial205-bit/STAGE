@@ -11,6 +11,7 @@ import { useSightlines } from '../../sightlines/store';
 import { collectOccluders, computeAll } from '../../sightlines/compute';
 import type { SeatInfo } from '../../types';
 import { useStageSeats } from './useStageSeats';
+import { useExportState } from '../../export/state';
 
 const HOVER_RADIUS = 0.35;
 
@@ -116,10 +117,11 @@ export function SeatLayer() {
     if (!seatView) useSightlines.getState().set({ hovered: null });
   }, [seatView]);
 
+  const exporting = useExportState((s) => s.exporting);
   return (
     <>
-      {seatView && hovered && <HoverMarker seat={hovered} />}
-      {on && results && <SightlineDots seats={seats} results={results} />}
+      {!exporting && seatView && hovered && <HoverMarker seat={hovered} />}
+      {!exporting && on && results && <SightlineDots seats={seats} results={results} />}
       <SightlineRunner seats={seats} />
     </>
   );

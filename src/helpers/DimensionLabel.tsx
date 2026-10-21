@@ -1,4 +1,5 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
+import { labelRegistry, useExportState } from '../export/state';
 import { Html, Line } from '@react-three/drei';
 import { useProjectStore } from '../store/useProjectStore';
 import { formatLength } from '../units';
@@ -25,7 +26,18 @@ export function DimensionLabel({ start, end, offset = [0, 0, 0], label }: Props)
   const show = useProjectStore((s) => s.showLabels);
   const units = useProjectStore((s) => s.units);
   const { thumbnail } = useContext(SceneModeContext);
-  if (!show || thumbnail) return null;
+  const exporting = useExportState((s) => s.exporting);
+  // Exports draw labels themselves (the on-screen labels are HTML, not part of the 3D image).
+  const key = `${start}|${end}|${offset}|${label}`;
+  useEffect(() => {
+    if (!show || thumbnail) return;
+    const entry = { a: add(start, offset), b: add(end, offset), label };
+    labelRegistry.add(entry);
+    return () => {
+      labelRegistry.delete(entry);
+    };
+  }, [key, show, thumbnail]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!show || thumbnail || exporting) return null;
 
   const a = add(start, offset);
   const b = add(end, offset);

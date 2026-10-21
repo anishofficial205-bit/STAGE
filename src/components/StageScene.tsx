@@ -4,12 +4,18 @@ import { Sky, Stars } from '@react-three/drei';
 import { FloorGrid } from '../helpers/FloorGrid';
 import { DEFAULT_ENVIRONMENT } from '../helpers/environment';
 import type { Bounds, Environment, Params, StageTemplate } from '../types';
+import { useExportState } from '../export/state';
 
 /** Lets shared helpers know they're drawing a picker thumbnail (e.g. to hide labels). */
 export const SceneModeContext = createContext({ thumbnail: false });
 
 /** Soft key light whose shadow camera is sized to the current scene. */
-function Lights({ bounds, env }: { bounds: Bounds; env: Environment }) {
+function Lights({ bounds, env: base }: { bounds: Bounds; env: Environment }) {
+  // Presentation lighting: warmer key light and more fill, so shadows are softer.
+  const presentation = useExportState((s) => s.presentation);
+  const env: Environment = presentation
+    ? { ...base, sun: { ...base.sun, color: '#ffe9cf', intensity: base.sun.intensity * 0.8 }, hemisphere: { ...base.hemisphere, sky: '#fff3e2', intensity: base.hemisphere.intensity * 1.35 }, ambient: base.ambient * 1.4 }
+    : base;
   const size = Math.max(bounds.max[0] - bounds.min[0], bounds.max[2] - bounds.min[2]) / 2 + 8;
   const cx = (bounds.min[0] + bounds.max[0]) / 2;
   const cz = (bounds.min[2] + bounds.max[2]) / 2;
@@ -26,7 +32,7 @@ function Lights({ bounds, env }: { bounds: Bounds; env: Environment }) {
         shadow-mapSize={[2048, 2048]}
         shadow-bias={-0.001}
         shadow-normalBias={0.06}
-        shadow-radius={4}
+        shadow-radius={presentation ? 10 : 4}
         shadow-camera-left={-size}
         shadow-camera-right={size}
         shadow-camera-top={size}

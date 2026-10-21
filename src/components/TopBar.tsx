@@ -4,6 +4,7 @@ import { useViews } from './useViews';
 import { TOUR_EVENT } from './Tour';
 import { exportZip, importZip } from '../graphics/library';
 import { PrintCheckDialog } from './graphics/PrintCheck';
+import { ExportDialog } from './export/ExportDialog';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -11,6 +12,7 @@ export function TopBar() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [printCheck, setPrintCheck] = useState(false);
+  const [render, setRender] = useState(false);
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -120,6 +122,9 @@ export function TopBar() {
         <button className="btn btn--primary" onClick={save} title="Save (⌘S)">
           {s.dirty ? 'Save •' : 'Save'}
         </button>
+        <button className="btn" onClick={() => setRender(true)} title="Export images, all views, a presentation sheet or a turntable video">
+          Render
+        </button>
         <button className="btn" onClick={() => setPrintCheck(true)} title="Check graphics resolution and export the spec sheet">
           Print check
         </button>
@@ -143,6 +148,7 @@ export function TopBar() {
       </div>
       {toast && <div className="toast">{toast}</div>}
       {printCheck && <PrintCheckDialog onClose={() => setPrintCheck(false)} />}
+      {render && <ExportDialog onClose={() => setRender(false)} />}
     </header>
   );
 }

@@ -23,6 +23,7 @@ import { rotateSelection } from '../../objects/arrange';
 import type { SetObject } from '../../objects/types';
 import { ObjectFaces } from '../../objects/faceMaterial';
 import { useSightlines } from '../../sightlines/store';
+import { useExportState } from '../../export/state';
 import { useTallWarnings } from '../sightlines/useTallWarnings';
 import { updatePlacement } from '../../graphics/library';
 import { panBy } from '../../graphics/placement';
@@ -324,6 +325,7 @@ interface DragState {
 }
 
 function ObjectView({ p, selected, offStage, rigging, locked, flagged }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][]; locked: boolean; flagged: boolean }) {
+  const exporting = useExportState((s) => s.exporting);
   const { obj, type, size } = p;
   const built = useMemo(() => type.build(obj.params), [type, obj.params]);
   const faceCtx = useMemo(() => {
@@ -391,7 +393,7 @@ function ObjectView({ p, selected, offStage, rigging, locked, flagged }: { p: Pl
     <>
       <group position={[p.wx, p.baseY, p.wz]} rotation-y={toRad(obj.rotation)} userData={{ objectId: obj.id }} {...interactive}>
         <ObjectFaces.Provider value={faceCtx}>{built}</ObjectFaces.Provider>
-        {(selected || offStage || flagged) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={flagged ? BLOCK : selected ? (offStage ? WARN : SELECT) : WARN} />}
+        {!exporting && (selected || offStage || flagged) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={flagged ? BLOCK : selected ? (offStage ? WARN : SELECT) : WARN} />}
       </group>
       {placementOf(type, obj.params) === 'hanging' && <Cables p={p} lines={rigging} />}
     </>
@@ -422,6 +424,7 @@ export function SetObjectsLayer() {
   const blockingIds = useSightlines((s) => s.blocking?.ids);
   const tall = useTallWarnings();
   const flagged = useMemo(() => new Set([...(blockingIds ?? []), ...tall.map((w) => w.objectId)]), [blockingIds, tall]);
+  const exporting = useExportState((s) => s.exporting);
   const multi = selectedIds.length > 1 ? placed.filter((p) => selectedIds.includes(p.obj.id) && !hidden.has(p.obj.id)) : [];
   // Everything a piece can hang from: the stage's own rigging plus placed truss.
   const rigging = useMemo(() => [...(info.rigging ?? []), ...placed.filter((p) => !inherited(p.obj, objects, 'hidden')).flatMap(worldHangLines)], [info, placed, objects]);
@@ -433,9 +436,9 @@ export function SetObjectsLayer() {
         .map((p) => (
           <ObjectView key={p.obj.id} p={p} rigging={rigging} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} flagged={flagged.has(p.obj.id)} />
         ))}
-      {single && !locked.has(single.obj.id) && !hidden.has(single.obj.id) && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
-      {multi.length > 1 && !multi.some((p) => locked.has(p.obj.id)) && <SelectionHandles members={multi} key={multi.map((p) => p.obj.id).join()} />}
-      {guides.map(([a, b], i) => (
+      {!exporting && single && !locked.has(single.obj.id) && !hidden.has(single.obj.id) && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
+      {!exporting && multi.length > 1 && !multi.some((p) => locked.has(p.obj.id)) && <SelectionHandles members={multi} key={multi.map((p) => p.obj.id).join()} />}
+      {!exporting && guides.map(([a, b], i) => (
         <Line key={i} points={[a, b]} color={GUIDE} lineWidth={1.2} depthTest={false} renderOrder={997} />
       ))}
     </group>
