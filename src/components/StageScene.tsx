@@ -41,7 +41,7 @@ function Lights({ bounds, env }: { bounds: Bounds; env: Environment }) {
 }
 
 /** Keeps a failing template from blanking the whole viewport; it retries when the scene changes. */
-class SceneBoundary extends Component<{ resetKey: unknown; children: ReactNode }, { failed: boolean; key: unknown }> {
+export class SceneBoundary extends Component<{ resetKey: unknown; children: ReactNode }, { failed: boolean; key: unknown }> {
   state = { failed: false, key: this.props.resetKey };
   static getDerivedStateFromError() {
     return { failed: true };

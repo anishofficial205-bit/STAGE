@@ -5,6 +5,9 @@ import { getTemplate, templates } from '../templates/registry';
 import { getObjectType } from '../objects/registry';
 import type { SetObject } from '../objects/types';
 import { applyConstraints, defaultParams } from '../helpers/params';
+import { newObjectId } from './ids';
+import { GROUP_TYPE } from '../objects/types';
+import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
 
 const STORAGE_KEY = 'stage-builder:project';
 const FILE_VERSION = 2;
@@ -78,6 +81,9 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   updateObjects: (update: (objects: SetObject[]) => SetObject[], key?: string) => void;
   removeObjects: (ids: string[]) => void;
   duplicateObjects: (ids: string[]) => void;
+  /** Group the selection (⌘G) / dissolve its groups (⇧⌘G). */
+  groupSelection: () => void;
+  ungroupSelection: () => void;
 
   requestView: (view: PresetView, instant?: boolean) => void;
   setViewportAspect: (aspect: number) => void;
@@ -106,6 +112,10 @@ function sanitizeObjects(raw: unknown): SetObject[] {
   if (!Array.isArray(raw)) return [];
   const out: SetObject[] = [];
   for (const o of raw as Partial<SetObject>[]) {
+    if (o && o.type === GROUP_TYPE && typeof o.id === 'string') {
+      out.push({ id: o.id, type: GROUP_TYPE, name: typeof o.name === 'string' ? o.name : 'Group', params: {}, x: 0, z: 0, elevation: 0, rotation: 0, hidden: !!o.hidden, locked: !!o.locked, parent: typeof o.parent === 'string' ? o.parent : undefined });
+      continue;
+    }
     const type = o && typeof o.type === 'string' ? getObjectType(o.type) : undefined;
     if (!type || !o) continue;
     out.push({
@@ -119,9 +129,12 @@ function sanitizeObjects(raw: unknown): SetObject[] {
       rotation: isNum(o.rotation) ? o.rotation : 0,
       hidden: !!o.hidden,
       locked: !!o.locked,
+      parent: typeof o.parent === 'string' ? o.parent : undefined,
     });
   }
-  return out;
+  // Drop dangling parent links, then empty groups.
+  const ids = new Set(out.map((o) => o.id));
+  return pruneGroups(out.map((o) => (o.parent && !ids.has(o.parent) ? { ...o, parent: undefined } : o)));
 }
 
 /** Validate an unknown object (from storage or an imported file) into a project. */
@@ -165,8 +178,7 @@ function loadFromStorage() {
 }
 
 let nonce = 0;
-let idCounter = 0;
-export const newObjectId = () => `o${Date.now().toString(36)}${(idCounter++).toString(36)}`;
+export { newObjectId };
 
 /** Name like "Flat 3": one more than the highest number already used for that type. */
 function nextName(base: string, objects: SetObject[]) {
@@ -359,23 +371,39 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     removeObjects: (ids) => {
       if (!ids.length) return;
       commit();
-      setActiveObjects(activeObjects().filter((o) => !ids.includes(o.id)));
+      setActiveObjects(pruneGroups(activeObjects().filter((o) => !ids.includes(o.id))));
       set((s) => ({ selectedIds: s.selectedIds.filter((id) => !ids.includes(id)) }));
     },
 
     duplicateObjects: (ids) => {
       const objects = activeObjects();
-      const sources = objects.filter((o) => ids.includes(o.id));
-      if (!sources.length) return;
+      const units = unitsOf(ids, objects);
+      if (!units.length) return;
       commit();
-      const all = [...objects];
-      const copies = sources.map((o) => {
-        const copy = { ...o, id: newObjectId(), name: nextName(o.name.replace(/ \d+$/, ''), all), x: o.x + 0.5, z: o.z + 0.5, locked: false };
-        all.push(copy);
-        return copy;
+      const names = [...objects];
+      // Copies whole units (groups included), offset a little so they're visible.
+      const { list, leaves } = copyUnits(objects, units, (o) => ({ ...o, x: o.x + 0.5, z: o.z + 0.5 }), (o) => {
+        const n = nextName(o.name.replace(/ \d+$/, ''), names);
+        names.push({ ...o, name: n });
+        return n;
       });
-      setActiveObjects(all);
-      set({ selectedIds: copies.map((c) => c.id) });
+      setActiveObjects(list);
+      set({ selectedIds: leaves });
+    },
+
+    groupSelection: () => {
+      const { list, groupId } = groupUnits(activeObjects(), get().selectedIds);
+      if (!groupId) return;
+      commit();
+      setActiveObjects(list);
+    },
+
+    ungroupSelection: () => {
+      const before = activeObjects();
+      const list = ungroupUnits(before, get().selectedIds);
+      if (list === before) return;
+      commit();
+      setActiveObjects(list);
     },
 
     requestView: (view, instant = false) => set({ viewRequest: { view, instant, nonce: ++nonce } }),

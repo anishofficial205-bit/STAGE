@@ -8,7 +8,7 @@ const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRigh
 /**
  * App-wide keyboard shortcuts:
  *   ⌘/Ctrl+Z undo · ⌘/Ctrl+Shift+Z (or Ctrl+Y) redo
- *   With objects selected: Delete removes · ⌘/Ctrl+D duplicates · arrows nudge (Shift = bigger steps) · Esc deselects
+ *   With objects selected: Delete removes · ⌘/Ctrl+D duplicates · ⌘/Ctrl+G groups (Shift: ungroups) · arrows nudge (Shift = bigger steps) · Esc deselects
  */
 export function Shortcuts() {
   useEffect(() => {
@@ -27,6 +27,13 @@ export function Shortcuts() {
         return;
       }
       if (typing || !s.selectedIds.length) return;
+
+      if (mod && key === 'g') {
+        e.preventDefault();
+        if (e.shiftKey) s.ungroupSelection();
+        else s.groupSelection();
+        return;
+      }
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();

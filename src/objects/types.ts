@@ -79,7 +79,12 @@ export interface SetObject {
   rotation: number;
   hidden?: boolean;
   locked?: boolean;
+  /** Id of the group this object (or group) belongs to. */
+  parent?: string;
 }
+
+/** Group entries live in the same list as objects, with this type. They are never drawn themselves. */
+export const GROUP_TYPE = '@group';
 
 export function resizeRule(type: SetObjectType, params: Params, axis: 'width' | 'depth'): { key: string; scale: number } | null {
   const map = typeof type.resize === 'function' ? type.resize(params) : type.resize;

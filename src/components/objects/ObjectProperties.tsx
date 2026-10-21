@@ -6,6 +6,7 @@ import { effectiveElevation } from '../../objects/geometry';
 import { setElevation, setParams, setProps, setRotation } from '../../objects/actions';
 import type { NumberParam, ParamDef, ParamValue } from '../../types';
 import { useOffStageIds } from './LayersPanel';
+import { ArrayTool, MultiProperties } from './ArrangeTools';
 
 const pos = (key: string, label: string, help?: string): NumberParam => ({ key, label, group: 'Position', type: 'number', default: 0, min: -200, max: 200, step: 0.05, help });
 
@@ -18,27 +19,7 @@ export function ObjectProperties() {
   const offStage = useOffStageIds();
   const selected = objects.filter((o) => selectedIds.includes(o.id));
 
-  if (selected.length > 1) {
-    return (
-      <div className="obj-props">
-        <div className="panel-head">
-          <h2 className="panel-title">{selected.length} objects</h2>
-          <button className="btn btn--link" onClick={() => select([])}>
-            Deselect
-          </button>
-        </div>
-        <p className="hint">Drag any of them to move them together. Shift-click to add or remove from the selection.</p>
-        <div className="btn-row">
-          <button className="btn" onClick={() => duplicateObjects(selectedIds)}>
-            Duplicate
-          </button>
-          <button className="btn btn--danger" onClick={() => removeObjects(selectedIds)}>
-            Delete
-          </button>
-        </div>
-      </div>
-    );
-  }
+  if (selected.length > 1) return <MultiProperties />;
 
   const o = selected[0];
   const type = o && getObjectType(o.type);
@@ -92,6 +73,8 @@ export function ObjectProperties() {
           ))}
         </section>
       ))}
+
+      <ArrayTool />
 
       <div className="btn-row">
         <button className="btn" onClick={() => duplicateObjects([o.id])} title="Duplicate (⌘D)">

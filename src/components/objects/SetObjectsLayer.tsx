@@ -12,12 +12,15 @@ import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } fro
 import { getTemplate } from '../../templates/registry';
 import { getStageInfo } from '../../helpers/stageInfo';
 import type { Vec3 } from '../../types';
-import { isOffStage, place, rotateXZ, unrotateXZ, worldHangLines, type Placed } from '../../objects/geometry';
+import { aabb, isOffStage, place, rotateXZ, unrotateXZ, worldHangLines, type Placed } from '../../objects/geometry';
 import { moveSelection, resizeFromEdge, setElevation, setRotation } from '../../objects/actions';
 import { useObjectUI } from '../../objects/ui';
 import { getObjectType } from '../../objects/registry';
 import { placementOf, resizeRule } from '../../objects/types';
 import { useBlackBoxUI } from '../../templates/blackBox/blocks';
+import { inherited, leafIds, topAncestor } from '../../objects/groups';
+import { rotateSelection } from '../../objects/arrange';
+import type { SetObject } from '../../objects/types';
 
 const SELECT = '#2f6fde';
 const WARN = '#f08c00';
@@ -150,6 +153,53 @@ function EdgeHandle({ p, axis, sign, y }: { p: Placed; axis: 'x' | 'z'; sign: 1 
   );
 }
 
+/** Several objects selected (or a group): a box round them all with a rotate handle that turns them together. */
+function SelectionHandles({ members }: { members: Placed[] }) {
+  const box = members.reduce(
+    (b, p) => {
+      const a = aabb(p);
+      return { minX: Math.min(b.minX, a.minX), maxX: Math.max(b.maxX, a.maxX), minZ: Math.min(b.minZ, a.minZ), maxZ: Math.max(b.maxZ, a.maxZ), y0: Math.min(b.y0, p.baseY), y1: Math.max(b.y1, p.baseY + p.size.height) };
+    },
+    { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity, y0: Infinity, y1: -Infinity },
+  );
+  const cx = (box.minX + box.maxX) / 2;
+  const cz = (box.minZ + box.maxZ) / 2;
+  const rotate = useDrag({
+    start: (e) => {
+      if (!e.ray.intersectPlane(horizontal(box.y0), tmp)) return null;
+      const s = useProjectStore.getState();
+      const list = s.objectsByTemplate[s.templateId] ?? [];
+      const starts: SetObject[] = list.filter((o) => s.selectedIds.includes(o.id));
+      return { starts, a0: Math.atan2(tmp.x - cx, tmp.z - cz) };
+    },
+    move: (e, s) => {
+      if (!e.ray.intersectPlane(horizontal(box.y0), tmp)) return;
+      let deg = ((Math.atan2(tmp.x - cx, tmp.z - cz) - s.a0) * 180) / Math.PI;
+      if (!e.shiftKey) deg = Math.round(deg / 15) * 15;
+      rotateSelection(s.starts, [cx, cz], deg, `rot-sel:${s.starts.map((o) => o.id).join()}`);
+    },
+  });
+  return (
+    <group>
+      <group position={[cx, box.y0, cz]}>
+        <BoxOutline w={box.maxX - box.minX + 0.1} d={box.maxZ - box.minZ + 0.1} h={box.y1 - box.y0 + 0.05} color={SELECT} />
+      </group>
+      <ScreenSized position={[cx, box.y0 + 0.03, box.maxZ + 0.5]}>
+        <group {...rotate} onPointerOver={() => (document.body.style.cursor = 'grab')} onPointerOut={() => (document.body.style.cursor = '')}>
+          <mesh rotation-x={-Math.PI / 2} renderOrder={1000}>
+            <torusGeometry args={[0.7, 0.18, 8, 32]} />
+            {handleMat()}
+          </mesh>
+          <mesh renderOrder={1000}>
+            <sphereGeometry args={[0.35, 12, 12]} />
+            {handleMat('#ffffff')}
+          </mesh>
+        </group>
+      </ScreenSized>
+    </group>
+  );
+}
+
 /** True while the camera looks (almost) straight down — the height handle can't be dragged usefully then. */
 function useTopDown() {
   const [topDown, setTopDown] = useState(false);
@@ -246,22 +296,25 @@ function Handles({ p }: { p: Placed }) {
   );
 }
 
-function ObjectView({ p, selected, offStage, rigging }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][] }) {
+function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][]; locked: boolean }) {
   const { obj, type, size } = p;
   const built = useMemo(() => type.build(obj.params), [type, obj.params]);
   const drag = useDrag({
     start: (e) => {
       const store = useProjectStore.getState();
       useBlackBoxUI.getState().select(null);
+      const list = store.objectsByTemplate[store.templateId] ?? [];
+      // Clicking part of a group picks the whole group (double-click picks just this piece).
+      const unit = leafIds(topAncestor(obj.id, list), list);
       if (e.shiftKey) {
-        store.select([obj.id], true);
+        const all = unit.every((id) => store.selectedIds.includes(id));
+        store.select(all ? store.selectedIds.filter((id) => !unit.includes(id)) : [...new Set([...store.selectedIds, ...unit])]);
         return null;
       }
-      if (!store.selectedIds.includes(obj.id)) store.select([obj.id]);
+      if (!store.selectedIds.includes(obj.id)) store.select(unit);
       if (!e.ray.intersectPlane(horizontal(p.baseY), tmp)) return null;
       const ids = useProjectStore.getState().selectedIds;
-      const list = store.objectsByTemplate[store.templateId] ?? [];
-      const starts = Object.fromEntries(list.filter((o) => ids.includes(o.id) && !o.locked).map((o) => [o.id, { x: o.x, z: o.z }]));
+      const starts = Object.fromEntries(list.filter((o) => ids.includes(o.id) && !inherited(o, list, 'locked')).map((o) => [o.id, { x: o.x, z: o.z }]));
       if (!starts[obj.id]) return null;
       return { off: [p.wx - tmp.x, p.wz - tmp.z] as const, starts };
     },
@@ -272,7 +325,11 @@ function ObjectView({ p, selected, offStage, rigging }: { p: Placed; selected: b
     },
     end: () => useObjectUI.getState().setGuides([]),
   });
-  const interactive = obj.locked ? {} : { ...drag, onPointerOver: () => (document.body.style.cursor = 'move'), onPointerOut: () => (document.body.style.cursor = '') };
+  const onDoubleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    useProjectStore.getState().select([obj.id]);
+  };
+  const interactive = locked ? {} : { ...drag, onDoubleClick, onPointerOver: () => (document.body.style.cursor = 'move'), onPointerOut: () => (document.body.style.cursor = '') };
   return (
     <>
       <group position={[p.wx, p.baseY, p.wz]} rotation-y={toRad(obj.rotation)} {...interactive}>
@@ -294,17 +351,21 @@ export function SetObjectsLayer() {
   const info = useMemo(() => getStageInfo(getTemplate(templateId)!, params, data), [templateId, params, data]);
   const placed = useMemo(() => objects.map((o) => place(o, info)).filter((p): p is Placed => !!p), [objects, info]);
   const single = selectedIds.length === 1 ? placed.find((p) => p.obj.id === selectedIds[0]) : undefined;
+  const hidden = useMemo(() => new Set(objects.filter((o) => inherited(o, objects, 'hidden')).map((o) => o.id)), [objects]);
+  const locked = useMemo(() => new Set(objects.filter((o) => inherited(o, objects, 'locked')).map((o) => o.id)), [objects]);
+  const multi = selectedIds.length > 1 ? placed.filter((p) => selectedIds.includes(p.obj.id) && !hidden.has(p.obj.id)) : [];
   // Everything a piece can hang from: the stage's own rigging plus placed truss.
-  const rigging = useMemo(() => [...(info.rigging ?? []), ...placed.filter((p) => !p.obj.hidden).flatMap(worldHangLines)], [info, placed]);
+  const rigging = useMemo(() => [...(info.rigging ?? []), ...placed.filter((p) => !inherited(p.obj, objects, 'hidden')).flatMap(worldHangLines)], [info, placed, objects]);
 
   return (
     <group>
       {placed
-        .filter((p) => !p.obj.hidden)
+        .filter((p) => !hidden.has(p.obj.id))
         .map((p) => (
-          <ObjectView key={p.obj.id} p={p} rigging={rigging} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} />
+          <ObjectView key={p.obj.id} p={p} rigging={rigging} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} />
         ))}
-      {single && !single.obj.locked && !single.obj.hidden && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
+      {single && !locked.has(single.obj.id) && !hidden.has(single.obj.id) && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
+      {multi.length > 1 && !multi.some((p) => locked.has(p.obj.id)) && <SelectionHandles members={multi} key={multi.map((p) => p.obj.id).join()} />}
       {guides.map(([a, b], i) => (
         <Line key={i} points={[a, b]} color={GUIDE} lineWidth={1.2} depthTest={false} renderOrder={997} />
       ))}

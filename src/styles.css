@@ -425,3 +425,11 @@ button, input, select { font: inherit; color: inherit; }
 .field-pair .field__slider { display: none; }
 .btn:disabled { opacity: 0.4; cursor: default; }
 .viewport__drop { position: absolute; inset: 0; }
+
+/* Layer tree and arrange tools */
+.layers__children { list-style: none; margin: 0; padding: 0; }
+.layer__chevron, .layer__chevron-space { width: 14px; flex-shrink: 0; }
+.layer__chevron { border: 0; background: transparent; padding: 0; color: var(--muted); cursor: pointer; font-size: 10px; transition: transform 0.12s; }
+.layer__chevron.is-open { transform: rotate(90deg); }
+.tool-row { display: flex; gap: 4px; margin-bottom: 10px; }
+.btn--tool { width: 34px; height: 30px; color: #4a5260; }

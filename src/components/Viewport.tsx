@@ -5,7 +5,7 @@ import { getTemplate } from '../templates/registry';
 import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } from '../store/useProjectStore';
 import { CAMERA_FOV, resetView } from '../helpers/views';
 import { CameraRig } from './CameraRig';
-import { ShadowsOnChange, StageScene } from './StageScene';
+import { SceneBoundary, ShadowsOnChange, StageScene } from './StageScene';
 import { SetObjectsLayer, handlesFirst } from './objects/SetObjectsLayer';
 import { OBJECT_DRAG_TYPE, useObjectUI, viewportBridge } from '../objects/ui';
 import { addObjectAt, currentStage } from '../objects/actions';
@@ -92,7 +92,9 @@ export function Viewport() {
       gl={{ antialias: true }}
     >
       <StageScene template={template} params={params} data={data} />
-      <SetObjectsLayer />
+      <SceneBoundary resetKey={objects}>
+        <SetObjectsLayer />
+      </SceneBoundary>
       <ShadowsOnChange deps={[template, params, data, units, objects]} />
       <AdaptiveDpr pixelated />
       <CameraRig />

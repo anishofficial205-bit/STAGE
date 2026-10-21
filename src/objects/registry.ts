@@ -27,6 +27,7 @@ import { projectionScreenObject } from './projectionScreen';
 import { bannerObject } from './banner';
 import { hangingPanelObject } from './hangingPanel';
 import { fixtureObject } from './fixture';
+import { propObjects } from './props';
 
 export const objectTypes: SetObjectType[] = [
   boxObject,
@@ -52,6 +53,7 @@ export const objectTypes: SetObjectType[] = [
   bannerObject,
   hangingPanelObject,
   fixtureObject,
+  ...propObjects,
 ];
 
 /** Old type ids still found in saved projects. */
