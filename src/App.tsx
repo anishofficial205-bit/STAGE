@@ -7,6 +7,7 @@ import { useProjectStore } from './store/useProjectStore';
 import { ThumbnailRenderer } from './components/Thumbnails';
 import { UndoToast } from './components/UndoToast';
 import { Tour } from './components/Tour';
+import { Shortcuts } from './components/Shortcuts';
 
 export default function App() {
   // Warn before leaving with unsaved changes.
@@ -27,6 +28,7 @@ export default function App() {
       </main>
       <PropertiesPanel />
       <UndoToast />
+      <Shortcuts />
       <Tour />
       <ThumbnailRenderer />
     </div>

@@ -1,5 +1,8 @@
 import { getTemplate } from '../templates/registry';
-import { useActiveData, useActiveParams, useProjectStore } from '../store/useProjectStore';
+import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } from '../store/useProjectStore';
+import { Collapsible } from './Collapsible';
+import { LayersPanel } from './objects/LayersPanel';
+import { ObjectProperties } from './objects/ObjectProperties';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
 
@@ -7,7 +10,7 @@ import { Field } from './fields';
  * Generated entirely from the active template's params schema — templates never
  * need to touch this file. Params are grouped by their `group` field in order.
  */
-export function PropertiesPanel() {
+function TemplateProperties() {
   const templateId = useProjectStore((s) => s.templateId);
   const units = useProjectStore((s) => s.units);
   const setParam = useProjectStore((s) => s.setParam);
@@ -28,7 +31,7 @@ export function PropertiesPanel() {
   const Extra = template.Panel;
 
   return (
-    <aside className="sidebar sidebar--right" data-tour="panel">
+    <>
       <div className="panel-head">
         <h2 className="panel-title">{template.name}</h2>
         <button className="btn btn--link" onClick={resetToDefaults} title="Put every setting of this stage back to its default">
@@ -64,6 +67,20 @@ export function PropertiesPanel() {
           ))}
         </section>
       ))}
+    </>
+  );
+}
+
+/** Right-hand side: the layers list, then properties of the selection (or of the stage when nothing is selected). */
+export function PropertiesPanel() {
+  const hasSelection = useProjectStore((s) => s.selectedIds.length > 0);
+  const count = useActiveObjects().length;
+  return (
+    <aside className="sidebar sidebar--right" data-tour="panel">
+      <Collapsible id="layers" title={`Layers${count ? ` (${count})` : ''}`}>
+        <LayersPanel />
+      </Collapsible>
+      <div className="props">{hasSelection ? <ObjectProperties /> : <TemplateProperties />}</div>
     </aside>
   );
 }

@@ -11,6 +11,7 @@ import { Beam, Panel } from '../../helpers/primitives';
 import { COLORS, ROUGHNESS } from '../../helpers/materials';
 import { footprint, overlappingIds, roomOf, useBlackBoxUI, ROW_DEPTH, type BlackBoxData, type Block } from './blocks';
 import { blockActions } from './actions';
+import { useProjectStore } from '../../store/useProjectStore';
 
 export const WALL_COLORS: Record<string, { wall: string; floor: string; grid: string }> = {
   black: { wall: '#2a2c30', floor: '#34363b', grid: '#1b1c1f' },
@@ -31,6 +32,7 @@ function useDrag(block: Block) {
     onPointerDown: (e: ThreeEvent<PointerEvent>) => {
       e.stopPropagation();
       useBlackBoxUI.getState().select(block.id);
+      useProjectStore.getState().select([]); // one selection at a time: blocks or set objects
       if (!e.ray.intersectPlane(floorPlane, hit)) return;
       drag.current = { dx: block.x - hit.x, dz: block.z - hit.z };
       (e.target as unknown as Element).setPointerCapture(e.pointerId);
@@ -138,7 +140,10 @@ export function BlackBoxScene({ p, data }: { p: Params; data: BlackBoxData }) {
         position-y={0.004}
         receiveShadow
         onClick={(e) => {
-          if (e.delta < 4) useBlackBoxUI.getState().select(null);
+          if (e.delta < 4) {
+            useBlackBoxUI.getState().select(null);
+            useProjectStore.getState().select([]);
+          }
         }}
       >
         <planeGeometry args={[halfW * 2, halfL * 2]} />

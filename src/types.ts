@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
+import type { Pt } from './helpers/shapes';
 
 /**
  * Coordinate convention used by every template:
@@ -105,6 +106,19 @@ export interface TemplateDataHooks {
   onParamsChange?: (next: Params, prev: Params, data: unknown) => unknown;
 }
 
+/**
+ * Where set objects can go. Objects are positioned relative to `centre`, so
+ * they keep their place on the stage when its dimensions change.
+ */
+export interface StageInfo {
+  /** Stage centre on the floor plan, [x, z]. */
+  centre: [number, number];
+  /** Areas you can stand on and their floor heights (stage, apron, platforms...). */
+  floors: { outline: Pt[]; height: number }[];
+  /** Overhead bars and truss lines that hanging pieces can attach to. */
+  rigging?: [Vec3, Vec3][];
+}
+
 /** A named set of realistic dimensions, e.g. "School auditorium". */
 export interface SizePreset {
   name: string;
@@ -155,4 +169,6 @@ export interface StageTemplate {
   Panel?: ComponentType;
   presets?: SizePreset[];
   dimensions?: SharedDimensions;
+  /** Stage floor areas and rigging, for placing set objects. */
+  stage?: (params: Params, data?: unknown) => StageInfo;
 }

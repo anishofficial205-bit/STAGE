@@ -304,6 +304,11 @@ export const thrustTemplate: StageTemplate = {
     ];
   },
 
+  stage: (p) => {
+    const L = layout(p);
+    return { centre: [0, (L.tl - L.ud) / 2], floors: [{ outline: L.floor, height: L.h }] };
+  },
+
   bounds: (p): Bounds => {
     const L = layout(p);
     const reach = (rows: number) => L.gap + rows * L.rowSpacing;

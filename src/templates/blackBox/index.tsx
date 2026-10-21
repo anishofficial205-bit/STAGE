@@ -10,11 +10,12 @@
  * at z = -roomLength / 2 (starting layouts put the stage there).
  */
 import type { Bounds, PanelMessage, PresetView, StageTemplate, Surface, Vec3 } from '../../types';
-import { num, str } from '../../helpers/params';
+import { bool, num, str } from '../../helpers/params';
 import { EYE_HEIGHT } from '../../helpers/views';
 import { clampToRoom, footprint, makeLayout, overlappingIds, roomOf, sanitizeData, toWorld, ROW_DEPTH, type BlackBoxData } from './blocks';
 import { BlackBoxScene } from './Scene';
 import { BlackBoxPanel } from './Panel';
+import { rect } from '../../helpers/stageInfo';
 
 const blocksOf = (data: unknown) => (data as BlackBoxData | undefined)?.blocks ?? [];
 
@@ -133,6 +134,24 @@ export const blackBoxTemplate: StageTemplate = {
         );
       });
     return out;
+  },
+
+  stage: (p, data) => {
+    const { halfW, halfL, height } = roomOf(p);
+    const floors = [{ outline: rect(-halfW, -halfL, halfW, halfL), height: 0 }];
+    for (const b of blocksOf(data)) {
+      if (b.kind !== 'platform') continue;
+      const c = [[-b.width / 2, -b.depth / 2], [b.width / 2, -b.depth / 2], [b.width / 2, b.depth / 2], [-b.width / 2, b.depth / 2]] as const;
+      floors.push({ outline: c.map(([x, z]) => toWorld(b.x, b.z, b.rotation, x, z)), height: b.height });
+    }
+    // The lighting grid pipes (same spacing as drawn in the scene).
+    const rigging: [Vec3, Vec3][] = [];
+    if (bool(p, 'lightingGrid')) {
+      const y = height - 0.6;
+      for (let x = -halfW + 0.5; x <= halfW - 0.5 + 1e-6; x += 1.5) rigging.push([[x, y, -halfL + 0.3], [x, y, halfL - 0.3]]);
+      for (let z = -halfL + 0.5; z <= halfL - 0.5 + 1e-6; z += 1.5) rigging.push([[-halfW + 0.3, y, z], [halfW - 0.3, y, z]]);
+    }
+    return { centre: [0, 0], floors, rigging };
   },
 
   bounds: (p): Bounds => {

@@ -4,6 +4,8 @@ import { useProjectStore } from '../store/useProjectStore';
 import type { StageTemplate } from '../types';
 import { useThumbnails } from './Thumbnails';
 import { Modal } from './Modal';
+import { Collapsible } from './Collapsible';
+import { ObjectLibrary } from './objects/ObjectLibrary';
 
 const DIM_NAMES = { width: 'width', depth: 'depth', height: 'height' } as const;
 
@@ -47,8 +49,9 @@ export function StagePicker() {
   const images = useThumbnails((s) => s.images);
   const [pending, setPending] = useState<StageTemplate | null>(null);
   return (
-    <aside className="sidebar sidebar--left" data-tour="picker">
-      <h2 className="panel-title">Stage type</h2>
+    <aside className="sidebar sidebar--left">
+      <div data-tour="picker">
+      <Collapsible id="picker" title="Stage type">
       <ul className="picker">
         {templates.map((t) => (
           <li key={t.id}>
@@ -64,6 +67,11 @@ export function StagePicker() {
           </li>
         ))}
       </ul>
+      </Collapsible>
+      </div>
+      <Collapsible id="library" title="Add objects">
+        <ObjectLibrary />
+      </Collapsible>
       {pending && <SwitchDialog to={pending} onClose={() => setPending(null)} />}
     </aside>
   );

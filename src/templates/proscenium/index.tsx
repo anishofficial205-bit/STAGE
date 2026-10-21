@@ -19,6 +19,7 @@ import { Box, OpeningFrame, Slab, WallWithOpening, archOutline } from '../../hel
 import { bulgedRect } from '../../helpers/shapes';
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
+import { rect } from '../../helpers/stageInfo';
 
 const WALL = 0.3; // thickness of back and side walls
 const PROS_WALL = 0.6; // thickness of the proscenium wall
@@ -240,6 +241,13 @@ export const prosceniumTemplate: StageTemplate = {
       { id: 'left-wing-wall', label: 'Stage left wing wall', position: [L.houseW / 2, L.h + L.houseTop / 2, -L.stageD / 2], rotation: [0, -Math.PI / 2, 0], width: L.stageD, height: L.houseTop },
       { id: 'right-wing-wall', label: 'Stage right wing wall', position: [-L.houseW / 2, L.h + L.houseTop / 2, -L.stageD / 2], rotation: [0, Math.PI / 2, 0], width: L.stageD, height: L.houseTop },
     ];
+  },
+
+  stage: (p) => {
+    const L = layout(p);
+    const floors = [{ outline: rect(-L.houseW / 2, -L.stageD, L.houseW / 2, 0), height: L.h }];
+    if (L.apron > 0.01) floors.push({ outline: bulgedRect(L.apronW, -0.01, L.apron, L.bulge), height: L.h });
+    return { centre: [0, -L.stageD / 2], floors };
   },
 
   bounds: (p): Bounds => {

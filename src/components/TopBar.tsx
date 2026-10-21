@@ -63,6 +63,12 @@ export function TopBar() {
           aria-label="Project name"
           spellCheck={false}
         />
+        <button className="btn btn--icon" onClick={s.undo} disabled={!s.past.length} title="Undo (⌘Z)" aria-label="Undo">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
+        </button>
+        <button className="btn btn--icon" onClick={s.redo} disabled={!s.future.length} title="Redo (⇧⌘Z)" aria-label="Redo">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" /></svg>
+        </button>
       </div>
 
       <nav className="topbar__views" aria-label="Camera views" data-tour="views">
@@ -84,6 +90,9 @@ export function TopBar() {
         </div>
         <button className={`btn ${s.showLabels ? 'is-active' : ''}`} onClick={s.toggleLabels} title="Show or hide dimension labels">
           Labels
+        </button>
+        <button className={`btn ${s.snapping ? 'is-active' : ''}`} onClick={s.toggleSnapping} title="Snap objects to the grid, stage edges and each other (hold Alt while dragging to place freely)">
+          Snap
         </button>
         <button className="btn btn--icon" onClick={() => window.dispatchEvent(new Event(TOUR_EVENT))} title="Show the quick tour" aria-label="Help">
           ?

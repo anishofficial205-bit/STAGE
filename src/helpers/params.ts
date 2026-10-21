@@ -1,4 +1,10 @@
-import type { NumberParam, Params, StageTemplate } from '../types';
+import type { NumberParam, ParamDef, Params } from '../types';
+
+/** Anything described by a params schema: stage templates and set objects. */
+interface Schema {
+  params: ParamDef[];
+  constraints: (params: Params) => Params;
+}
 
 export const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
 
@@ -9,7 +15,7 @@ export const str = (p: Params, key: string) => String(p[key]);
 
 const isInteger = (d: NumberParam) => d.unit === 'none' && Number.isInteger(d.step);
 
-export function defaultParams(template: StageTemplate): Params {
+export function defaultParams(template: Schema): Params {
   return Object.fromEntries(template.params.map((d) => [d.key, d.default]));
 }
 
@@ -18,7 +24,7 @@ export function defaultParams(template: StageTemplate): Params {
  * min/max. Then run the template's own constraints. Used on every edit and on
  * load/import, so stored data from older versions is always made valid.
  */
-export function applyConstraints(template: StageTemplate, input: Params): Params {
+export function applyConstraints(template: Schema, input: Params): Params {
   const out: Params = {};
   for (const d of template.params) {
     const raw = input[d.key];

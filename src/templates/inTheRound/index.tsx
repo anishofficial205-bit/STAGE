@@ -19,6 +19,7 @@ import { Beam, Box, Slab } from '../../helpers/primitives';
 import { angleOf, offsetPolygon, rayToPolygon, regularPolygon, type Pt } from '../../helpers/shapes';
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
+import { loopSegments } from '../../helpers/stageInfo';
 
 const TAU = Math.PI * 2;
 const VOM_WIDTH = 2.4;
@@ -241,6 +242,13 @@ export const inTheRoundTemplate: StageTemplate = {
       { id: 'stage-edge', label: 'Stage edge', position: [0, L.h / 2, d / 2], rotation: [0, 0, 0], width: edgeLength, height: L.h },
       { id: 'overhead-grid', label: 'Overhead grid', position: [0, L.gridH, 0], rotation: [Math.PI / 2, 0, 0], width: gridW, height: gridD },
     ];
+  },
+
+  stage: (p) => {
+    const L = layout(p);
+    const outline = L.polygon ?? regularPolygon(64, L.radius, 0);
+    const grid = L.polygon ? offsetPolygon(L.polygon, GRID_MARGIN).points : regularPolygon(48, L.radius + GRID_MARGIN, 0);
+    return { centre: [0, 0], floors: [{ outline, height: L.h }], rigging: bool(p, 'lightingGrid') ? loopSegments(grid, L.gridH) : [] };
   },
 
   bounds: (p): Bounds => {

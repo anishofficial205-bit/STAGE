@@ -190,6 +190,11 @@ export const endStageTemplate: StageTemplate = {
     ];
   },
 
+  stage: (p) => {
+    const L = layout(p);
+    return { centre: [0, -L.stageD / 2], floors: [{ outline: bulgedRect(L.stageW, -L.stageD, 0, L.bulge), height: L.h }] };
+  },
+
   bounds: (p): Bounds => {
     const L = layout(p);
     return { min: [-L.roomW / 2 - WALL, 0, -L.stageD - WALL], max: [L.roomW / 2 + WALL, L.wallH, L.roomFront] };

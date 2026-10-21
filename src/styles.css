@@ -273,7 +273,7 @@ button, input, select { font: inherit; color: inherit; }
 }
 .chip:hover { background: #f2f4f7; }
 .chip.is-active { background: var(--accent-soft); border-color: #c7d7f7; color: var(--accent); }
-.btn--icon { width: 30px; padding: 5px 0; text-align: center; font-weight: 600; color: var(--muted); }
+.btn--icon { width: 30px; padding: 5px 0; text-align: center; font-weight: 600; color: var(--muted); display: inline-grid; place-items: center; }
 
 /* Modal */
 .modal-backdrop {
@@ -334,3 +334,94 @@ button, input, select { font: inherit; color: inherit; }
 .tour__title { font-weight: 650; font-size: 15px; margin: 4px 0 6px; }
 .tour__text { margin: 0 0 12px; line-height: 1.45; color: #444b55; }
 .tour__actions { display: flex; justify-content: flex-end; gap: 6px; }
+
+/* Collapsible sidebar sections */
+.collapsible + .collapsible, [data-tour] + .collapsible { margin-top: 6px; border-top: 1px solid var(--border); padding-top: 8px; }
+.collapsible__head { display: flex; align-items: center; justify-content: space-between; }
+.collapsible__toggle {
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.collapsible__chevron { display: inline-block; transition: transform 0.15s; font-size: 10px; }
+.collapsible.is-open .collapsible__chevron { transform: rotate(90deg); }
+.collapsible__body { padding: 6px 0 4px; }
+
+/* Object library */
+.library__group + .library__group { margin-top: 8px; }
+.library__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tile {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 8px;
+  padding: 8px 4px 6px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  cursor: grab;
+  font-size: 11px;
+  color: var(--text);
+}
+.tile:hover { border-color: #c7d7f7; background: #f7f9fe; }
+.tile:active { cursor: grabbing; }
+.tile__icon { width: 26px; height: 26px; color: #4a5260; }
+.tile__icon svg { width: 100%; height: 100%; }
+.tile__name { text-align: center; line-height: 1.2; }
+
+/* Layers */
+.sidebar--right { display: flex; flex-direction: column; padding-top: 10px; }
+.sidebar--right > .collapsible { flex-shrink: 0; }
+.layers { list-style: none; margin: 0; padding: 0; max-height: 32vh; overflow-y: auto; }
+.layers__empty { margin: 0; }
+.layer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: default;
+  user-select: none;
+}
+.layer:hover { background: #f2f4f7; }
+.layer.is-selected { background: var(--accent-soft); }
+.layer.is-hidden .layer__name, .layer.is-hidden .layer__icon { opacity: 0.45; }
+.layer.is-dragging { opacity: 0.4; }
+.layer__icon { width: 16px; height: 16px; flex-shrink: 0; color: #5d6573; }
+.layer__icon svg { width: 100%; height: 100%; }
+.layer__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layer__input { flex: 1; min-width: 0; border: 1px solid var(--accent); border-radius: 4px; padding: 1px 4px; }
+.layer__warn {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #f08c00;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}
+.layer__btn { border: 0; background: transparent; color: #9aa3ad; padding: 2px; cursor: pointer; display: grid; opacity: 0; }
+.layer:hover .layer__btn, .layer__btn.is-on { opacity: 1; }
+.layer__btn.is-on { color: var(--accent); }
+.props { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; }
+
+/* Object properties */
+.obj-props__name { flex: 1; font-size: 15px; font-weight: 600; border: 1px solid transparent; border-radius: 6px; padding: 3px 6px; margin-left: -6px; }
+.obj-props__name:hover { border-color: var(--border); }
+.obj-props__name:focus { outline: none; border-color: var(--accent); }
+.obj-props__type { margin-top: -6px; }
+.field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-pair .field__row { grid-template-columns: 1fr; }
+.field-pair .field__slider { display: none; }
+.btn:disabled { opacity: 0.4; cursor: default; }
+.viewport__drop { position: absolute; inset: 0; }

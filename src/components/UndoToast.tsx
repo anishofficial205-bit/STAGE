@@ -3,9 +3,9 @@ import { useProjectStore } from '../store/useProjectStore';
 
 /** "Applied City theatre · Undo" — shown after presets, resets and template switches. */
 export function UndoToast() {
-  const undoable = useProjectStore((s) => s.undoable);
+  const undoable = useProjectStore((s) => s.lastAction);
   const undo = useProjectStore((s) => s.undo);
-  const dismiss = useProjectStore((s) => s.dismissUndo);
+  const dismiss = useProjectStore((s) => s.dismissLastAction);
   useEffect(() => {
     if (!undoable) return;
     const t = window.setTimeout(dismiss, 8000);

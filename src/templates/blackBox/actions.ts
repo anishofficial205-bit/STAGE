@@ -22,25 +22,27 @@ import {
 /** Snap grid: 0.5 m, or 2 ft when working in feet. */
 export const gridSize = () => (useProjectStore.getState().units === 'ft' ? 2 * M_PER_FT : 0.5);
 
-function update(fn: (blocks: Block[], room: Room, grid: number) => Block[]) {
+/** `key` merges rapid edits of the same kind (e.g. one drag) into a single undo step. */
+function update(fn: (blocks: Block[], room: Room, grid: number) => Block[], key?: string) {
   const s = useProjectStore.getState();
   const room = roomOf(s.paramsByTemplate[s.templateId]);
-  s.setData((d) => ({ blocks: fn((d as BlackBoxData).blocks, room, gridSize()) }));
+  s.setData((d) => ({ blocks: fn((d as BlackBoxData).blocks, room, gridSize()) }), key);
 }
 
 /** Apply a change to one block, then re-snap it against the others. */
-function edit(id: string, change: (b: Block) => Block) {
+function edit(id: string, change: (b: Block) => Block, key?: string) {
   update((blocks, room, grid) => {
     const others = blocks.filter((b) => b.id !== id);
     return blocks.map((b) => (b.id === id ? snapAndClamp(change(b), others, room, grid) : b));
-  });
+  }, key);
 }
 
 const select = (id: string | null) => useBlackBoxUI.getState().select(id);
 
 export const blockActions = {
-  move: (id: string, x: number, z: number) => edit(id, (b) => ({ ...b, x, z })),
-  patch: (id: string, changes: Partial<PlatformBlock> | Partial<SeatingBlock>) => edit(id, (b) => ({ ...b, ...changes }) as Block),
+  move: (id: string, x: number, z: number) => edit(id, (b) => ({ ...b, x, z }), `block-move:${id}`),
+  patch: (id: string, changes: Partial<PlatformBlock> | Partial<SeatingBlock>) =>
+    edit(id, (b) => ({ ...b, ...changes }) as Block, `block-patch:${id}:${Object.keys(changes).join()}`),
   rotate: (id: string, degrees: number) => edit(id, (b) => ({ ...b, rotation: (((b.rotation + degrees) % 360) + 360) % 360 })),
   remove: (id: string) => {
     update((blocks) => blocks.filter((b) => b.id !== id));

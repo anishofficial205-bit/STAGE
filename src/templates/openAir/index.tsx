@@ -18,6 +18,7 @@ import { Seating, type SeatingOptions } from '../../helpers/Seating';
 import { Box, Panel, Slab, Truss } from '../../helpers/primitives';
 import { COLORS, ROUGHNESS } from '../../helpers/materials';
 import { Crowd, Skyline, Trees } from './scenery';
+import { rect } from '../../helpers/stageInfo';
 
 const GROUND_BEHIND = 8; // ground behind the stage
 const BARRIER_Z = 1.5;
@@ -397,6 +398,19 @@ export const openAirTemplate: StageTemplate = {
       { id: 'left-screen', label: 'Left screen', position: [-L.towerX, screenY, -0.17], rotation: [0, 0, 0], width: L.sw, height: L.sh },
       { id: 'right-screen', label: 'Right screen', position: [L.towerX, screenY, -0.17], rotation: [0, 0, 0], width: L.sw, height: L.sh },
     ];
+  },
+
+  stage: (p) => {
+    const L = layout(p);
+    const rigging: [Vec3, Vec3][] = [];
+    const x = L.tw / 2;
+    const y = L.trussH;
+    if (L.structure === 'goalpost') rigging.push([[-x, y, L.upZ], [x, y, L.upZ]]);
+    if (L.structure === 'box' || L.structure === 'roofed') {
+      rigging.push([[-x, y, L.upZ], [x, y, L.upZ]], [[-x, y, L.frontZ], [x, y, L.frontZ]], [[-x, y, L.upZ], [-x, y, L.frontZ]], [[x, y, L.upZ], [x, y, L.frontZ]], [[0, y, L.upZ], [0, y, L.frontZ]]);
+    }
+    if (L.towers) for (const s of [-1, 1]) rigging.push([[s * L.towerX - L.sw / 2, L.towerH, -0.5], [s * L.towerX + L.sw / 2, L.towerH, -0.5]]);
+    return { centre: [0, -L.pd / 2], floors: [{ outline: rect(-L.pw / 2, -L.pd, L.pw / 2, 0), height: L.ph }], rigging };
   },
 
   bounds: (p): Bounds => {

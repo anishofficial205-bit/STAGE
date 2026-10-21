@@ -16,6 +16,7 @@ import { Seating, type SeatingOptions } from '../../helpers/Seating';
 import { Box, Panel, Slab, Truss, WallWithOpening, archOutline } from '../../helpers/primitives';
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
+import { rect } from '../../helpers/stageInfo';
 
 const WALL = 0.3;
 const END_B_CLEARANCE = 3; // space beyond end B (photographers' pit)
@@ -173,6 +174,22 @@ export const traverseTemplate: StageTemplate = {
       { id: 'end-wall-b', label: 'End wall B', position: [0, L.wallH / 2, L.zB], rotation: [0, Math.PI, 0], width: 2 * L.halfRoom, height: L.wallH },
       { id: 'truss', label: 'Truss', position: [0, trussH, 0], rotation: [Math.PI / 2, 0, 0], width: L.w + 0.6, height: L.len },
     ];
+  },
+
+  stage: (p) => {
+    const L = layout(p);
+    const rigging: [Vec3, Vec3][] = [];
+    if (bool(p, 'truss')) {
+      const y = num(p, 'trussHeight');
+      const tx = L.w / 2 + 0.3;
+      rigging.push([[-tx, y, L.zA], [-tx, y, L.len / 2]], [[tx, y, L.zA], [tx, y, L.len / 2]]);
+      const n = Math.max(2, Math.round(L.len / 5) + 1);
+      for (let i = 0; i < n; i++) {
+        const z = L.zA + (L.len * i) / (n - 1);
+        rigging.push([[-tx, y, z], [tx, y, z]]);
+      }
+    }
+    return { centre: [0, 0], floors: [{ outline: rect(-L.w / 2, L.zA, L.w / 2, L.len / 2), height: L.h }], rigging };
   },
 
   bounds: (p): Bounds => {
