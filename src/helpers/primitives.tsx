@@ -172,7 +172,7 @@ export function OpeningFrame({
 }
 
 /** A square-section bar between two points in any direction (truss, rails, frames). */
-export function Beam({ from, to, size = 0.3, color, opacity }: { from: Vec3; to: Vec3; size?: number } & MatProps) {
+export function Beam({ from, to, size = 0.3, color, opacity, castShadow = true }: { from: Vec3; to: Vec3; size?: number; castShadow?: boolean } & MatProps) {
   const a = new THREE.Vector3(...from);
   const b = new THREE.Vector3(...to);
   const len = a.distanceTo(b);
@@ -182,7 +182,7 @@ export function Beam({ from, to, size = 0.3, color, opacity }: { from: Vec3; to:
   );
   if (len < 1e-4) return null;
   return (
-    <mesh position={a.add(b).multiplyScalar(0.5)} quaternion={quaternion} castShadow receiveShadow>
+    <mesh position={a.add(b).multiplyScalar(0.5)} quaternion={quaternion} castShadow={castShadow} receiveShadow>
       <boxGeometry args={[size, size, len]} />
       <Mat color={color} opacity={opacity} />
     </mesh>

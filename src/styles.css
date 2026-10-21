@@ -220,3 +220,19 @@ button, input, select { font: inherit; color: inherit; }
   border: 1px solid #d0d5dc;
 }
 .scene-tag--warn { color: #b4232a; border-color: #f2b8bb; }
+
+/* Template-provided panel pieces */
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.btn--link { border: 0; background: transparent; color: var(--accent); padding: 4px 0; }
+.btn--link:hover { background: transparent; text-decoration: underline; }
+.btn--danger { color: #b4232a; border-color: #f2c4c6; }
+.btn--danger:hover { background: #fdf0f0; }
+.hint { color: var(--muted); margin: 0 0 10px; line-height: 1.45; }
+.block-editor {
+  border: 1px solid #c7d7f7;
+  background: #f7f9fe;
+  border-radius: var(--radius);
+  padding: 10px;
+  margin-bottom: 10px;
+}
+.block-editor__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }

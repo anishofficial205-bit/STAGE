@@ -64,6 +64,9 @@ function ViewportSync() {
   const height = useThree((s) => s.size.height);
   const setAspect = useProjectStore((s) => s.setViewportAspect);
   const framed = useRef(false);
+  // Dev-only hooks for automated checks (camera + store); stripped from production builds.
+  const three = useThree();
+  if (import.meta.env.DEV) Object.assign(window, { __three: three, __store: useProjectStore });
   useEffect(() => {
     if (width <= 0 || height <= 0) return;
     setAspect(width / height);
