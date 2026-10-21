@@ -3,6 +3,7 @@ import { Field } from '../fields';
 import { useProjectStore } from '../../store/useProjectStore';
 import { ACCEPT, assignGraphic, importOnto, matchImageProportions, removeFaceGraphic, updatePlacement, useGraphicUrl } from '../../graphics/library';
 import { FLOOR_DECAL } from '../../objects/ui';
+import { FaceBadge } from './PrintCheck';
 import { useObjectUI, type FaceRef } from '../../objects/ui';
 import type { FitMode, GraphicPlacement } from '../../graphics/types';
 
@@ -67,6 +68,7 @@ export function GraphicControls({ target, graphic }: { target: FaceRef; graphic?
   return (
     <div className="graphic-controls">
       <h4 className="subhead">Graphic</h4>
+      <FaceBadge target={target} />
       <div className="graphic-current">
         <span className="graphic__thumb">{url && <img src={url} alt="" />}</span>
         <span className="graphic__info">

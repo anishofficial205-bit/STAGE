@@ -19,6 +19,8 @@ export interface GraphicPlacement {
   opacity: number;
   /** Colour of the empty area in Fit mode. */
   background: string;
+  /** What it will be printed on (for the spec sheet), e.g. "flex", "fabric", "vinyl". */
+  substrate?: string;
 }
 
 /** A graphic in the project's library. The image itself lives in IndexedDB under `id`. */

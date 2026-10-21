@@ -73,6 +73,7 @@ export const ledWallObject: SetObjectType = {
     { key: 'panelsWide', label: 'Panels wide', group: 'Size', type: 'number', unit: 'none', default: 8, min: 1, max: 80, step: 1 },
     { key: 'panelsHigh', label: 'Panels high', group: 'Size', type: 'number', unit: 'none', default: 5, min: 1, max: 40, step: 1 },
     { key: 'panelSize', label: 'Panel size', group: 'Size', type: 'number', default: 0.5, min: 0.25, max: 1.5, step: 0.05, help: 'Width and height of one square LED panel.' },
+    { key: 'pixelsPerPanel', label: 'Pixels per panel', group: 'Screen', type: 'number', unit: 'none', default: 128, min: 16, max: 1024, step: 1, help: 'Resolution of one panel (e.g. 128 means 128 × 128). Used to check graphics have enough pixels.' },
     { key: 'frame', label: 'Frame', group: 'Build', type: 'boolean', default: true },
     {
       key: 'mount',

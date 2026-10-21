@@ -3,12 +3,14 @@ import { useProjectStore } from '../store/useProjectStore';
 import { useViews } from './useViews';
 import { TOUR_EVENT } from './Tour';
 import { exportZip, importZip } from '../graphics/library';
+import { PrintCheckDialog } from './graphics/PrintCheck';
 
 export function TopBar() {
   const s = useProjectStore();
   const views = useViews();
   const fileInput = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [printCheck, setPrintCheck] = useState(false);
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -107,6 +109,9 @@ export function TopBar() {
         <button className="btn btn--primary" onClick={save} title="Save (⌘S)">
           {s.dirty ? 'Save •' : 'Save'}
         </button>
+        <button className="btn" onClick={() => setPrintCheck(true)} title="Check graphics resolution and export the spec sheet">
+          Print check
+        </button>
         <button className="btn" onClick={() => void exportZipFile()} title="Download the project and its images as a .zip">
           Export
         </button>
@@ -126,6 +131,7 @@ export function TopBar() {
         />
       </div>
       {toast && <div className="toast">{toast}</div>}
+      {printCheck && <PrintCheckDialog onClose={() => setPrintCheck(false)} />}
     </header>
   );
 }

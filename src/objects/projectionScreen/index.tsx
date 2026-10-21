@@ -41,6 +41,19 @@ export const projectionScreenObject: SetObjectType = {
       ],
     },
     { key: 'customHeight', label: 'Height', group: 'Size', type: 'number', default: 2.5, min: 0.3, max: 20, step: 0.1, visible: (p) => str(p, 'aspect') === 'custom' },
+    {
+      key: 'resolution',
+      label: 'Projector resolution',
+      group: 'Screen',
+      type: 'select',
+      default: '1920x1080',
+      options: [
+        { value: '1280x800', label: 'WXGA (1280 × 800)' },
+        { value: '1920x1080', label: 'Full HD (1920 × 1080)' },
+        { value: '1920x1200', label: 'WUXGA (1920 × 1200)' },
+        { value: '3840x2160', label: '4K (3840 × 2160)' },
+      ],
+    },
     { key: 'frame', label: 'Frame', group: 'Build', type: 'boolean', default: true },
     {
       key: 'mount',
