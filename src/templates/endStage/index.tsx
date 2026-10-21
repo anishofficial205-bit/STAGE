@@ -19,6 +19,8 @@ import { Box, Panel, Slab } from '../../helpers/primitives';
 import { bulgedRect, type Pt } from '../../helpers/shapes';
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
+import { generateSeats } from '../../helpers/Seating';
+import { blockSeats } from '../../helpers/seats';
 
 const WALL = 0.3;
 const REAR_AISLE = 1; // walkway kept free behind the last row
@@ -202,6 +204,8 @@ export const endStageTemplate: StageTemplate = {
     const L = layout(p);
     return { centre: [0, -L.stageD / 2], floors: [{ outline: bulgedRect(L.stageW, -L.stageD, 0, L.bulge), height: L.h }] };
   },
+
+  seats: (p) => blockSeats(generateSeats(layout(p).seating), [0, 0, 0], 0, ''),
 
   bounds: (p): Bounds => {
     const L = layout(p);

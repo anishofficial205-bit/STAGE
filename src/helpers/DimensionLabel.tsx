@@ -35,7 +35,7 @@ export function DimensionLabel({ start, end, offset = [0, 0, 0], label }: Props)
   const hasOffset = offset.some((v) => v !== 0);
 
   return (
-    <group>
+    <group userData={{ noOcclude: true }}>
       <Line points={[a, b]} color={COLORS.dimension} lineWidth={1.5} />
       {hasOffset && (
         <>

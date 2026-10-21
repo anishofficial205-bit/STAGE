@@ -17,6 +17,8 @@ import { Box, Panel, Slab, Truss, WallWithOpening, archOutline } from '../../hel
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
 import { rect } from '../../helpers/stageInfo';
+import { generateSeats } from '../../helpers/Seating';
+import { blockSeats } from '../../helpers/seats';
 
 const WALL = 0.3;
 const END_B_CLEARANCE = 3; // space beyond end B (photographers' pit)
@@ -190,6 +192,11 @@ export const traverseTemplate: StageTemplate = {
       }
     }
     return { centre: [0, 0], floors: [{ outline: rect(-L.w / 2, L.zA, L.w / 2, L.len / 2), height: L.h }], rigging };
+  },
+
+  seats: (p) => {
+    const L = layout(p);
+    return [...blockSeats(generateSeats(L.side1), [-L.w / 2, 0, 0], -Math.PI / 2, 'Side 1'), ...blockSeats(generateSeats(L.side2), [L.w / 2, 0, 0], Math.PI / 2, 'Side 2')];
   },
 
   bounds: (p): Bounds => {

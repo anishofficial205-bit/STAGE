@@ -37,10 +37,12 @@ export interface ProjectFile {
   surfaceStylesByTemplate: Record<string, Record<string, FaceStyle>>;
   /** Graphics library (metadata; the image files live in IndexedDB). */
   graphics: Record<string, GraphicMeta>;
+  /** Favourite seat views per template (shown beside the preset views). */
+  savedViewsByTemplate: Record<string, PresetView[]>;
 }
 
 /** The parts of the project that undo/redo restores. */
-type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics'>;
+type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics' | 'savedViewsByTemplate'>;
 
 export interface ViewRequest {
   view: PresetView;
@@ -98,6 +100,8 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   updateGraphic: (meta: GraphicMeta) => void;
   /** Remove from the library and from every face and surface that uses it. */
   removeGraphic: (id: string) => void;
+  saveView: (view: PresetView) => void;
+  deleteView: (id: string) => void;
 
   requestView: (view: PresetView, instant?: boolean) => void;
   setViewportAspect: (aspect: number) => void;
@@ -118,6 +122,7 @@ function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
     objectsByTemplate: {},
     surfaceStylesByTemplate: {},
     graphics: {},
+    savedViewsByTemplate: {},
   };
 }
 
@@ -204,6 +209,14 @@ function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
     objectsByTemplate: Object.fromEntries(templates.map((t) => [t.id, sanitizeObjects(savedObjects[t.id])])),
     surfaceStylesByTemplate: Object.fromEntries(templates.map((t) => [t.id, sanitizeStyles(d.surfaceStylesByTemplate?.[t.id])])),
     graphics: sanitizeGraphics(d.graphics),
+    savedViewsByTemplate: Object.fromEntries(
+      templates.map((t) => [
+        t.id,
+        (Array.isArray(d.savedViewsByTemplate?.[t.id]) ? d.savedViewsByTemplate![t.id] : []).filter(
+          (v) => v && typeof v.id === 'string' && typeof v.label === 'string' && Array.isArray(v.position) && Array.isArray(v.target),
+        ),
+      ]),
+    ),
   };
 }
 
@@ -231,7 +244,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   const doc = (): Doc => {
     const s = get();
-    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics };
+    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics, savedViewsByTemplate: s.savedViewsByTemplate };
   };
 
   /** Record the current state as an undo step before a change. */
@@ -454,6 +467,15 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       });
     },
 
+    saveView: (view) => {
+      commit();
+      set((s) => ({ savedViewsByTemplate: { ...s.savedViewsByTemplate, [s.templateId]: [...(s.savedViewsByTemplate[s.templateId] ?? []), view] }, dirty: true }));
+    },
+    deleteView: (id) => {
+      commit();
+      set((s) => ({ savedViewsByTemplate: { ...s.savedViewsByTemplate, [s.templateId]: (s.savedViewsByTemplate[s.templateId] ?? []).filter((v) => v.id !== id) }, dirty: true }));
+    },
+
     addGraphics: (metas) => {
       if (!metas.length) return;
       commit();
@@ -507,8 +529,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setViewportAspect: (viewportAspect) => set({ viewportAspect }),
 
     toFile: () => {
-      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics } = get();
-      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics };
+      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate } = get();
+      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate };
     },
 
     save: () => {

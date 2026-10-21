@@ -20,6 +20,8 @@ import { bulgedRect } from '../../helpers/shapes';
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
 import { rect } from '../../helpers/stageInfo';
+import { generateSeats } from '../../helpers/Seating';
+import { blockSeats } from '../../helpers/seats';
 
 const WALL = 0.3; // thickness of back and side walls
 const PROS_WALL = 0.6; // thickness of the proscenium wall
@@ -260,6 +262,12 @@ export const prosceniumTemplate: StageTemplate = {
     const floors = [{ outline: rect(-L.houseW / 2, -L.stageD, L.houseW / 2, 0), height: L.h }];
     if (L.apron > 0.01) floors.push({ outline: bulgedRect(L.apronW, -0.01, L.apron, L.bulge), height: L.h });
     return { centre: [0, -L.stageD / 2], floors };
+  },
+
+  seats: (p) => {
+    const L = layout(p);
+    const stalls = blockSeats(generateSeats(L.stalls), [0, 0, L.seatingZ], 0, 'Stalls');
+    return L.balcony ? [...stalls, ...blockSeats(generateSeats(L.balcony), [0, 0, L.seatingZ], 0, 'Balcony')] : stalls;
   },
 
   bounds: (p): Bounds => {

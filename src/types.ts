@@ -124,6 +124,22 @@ export interface StageInfo {
   rigging?: [Vec3, Vec3][];
 }
 
+/** One audience seat in world space, for seat view and sightline checks. */
+export interface SeatInfo {
+  x: number;
+  /** Height of the floor the seat stands on. */
+  y: number;
+  z: number;
+  /** Direction the seat faces (radians about Y; the seat looks along (-sin, -cos)). */
+  facing: number;
+  /** Seating block or section, e.g. "Stalls", "Left", "Section A". */
+  block: string;
+  row: number;
+  num: number;
+  /** Human label, e.g. "Stalls B12". */
+  label: string;
+}
+
 /** A named set of realistic dimensions, e.g. "School auditorium". */
 export interface SizePreset {
   name: string;
@@ -176,4 +192,6 @@ export interface StageTemplate {
   dimensions?: SharedDimensions;
   /** Stage floor areas and rigging, for placing set objects. */
   stage?: (params: Params, data?: unknown) => StageInfo;
+  /** Every audience seat (for seat view and sightlines). */
+  seats?: (params: Params, data?: unknown) => SeatInfo[];
 }

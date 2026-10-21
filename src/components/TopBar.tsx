@@ -80,11 +80,22 @@ export function TopBar() {
       </div>
 
       <nav className="topbar__views" aria-label="Camera views" data-tour="views">
-        {views.map((v) => (
-          <button key={v.id} className={`btn btn--ghost ${v.id === 'reset' ? 'btn--muted' : ''}`} onClick={() => s.requestView(v)}>
-            {v.label}
-          </button>
-        ))}
+        {views.map((v) =>
+          v.id.startsWith('saved-') ? (
+            <span key={v.id} className="saved-view">
+              <button className="btn btn--ghost" onClick={() => s.requestView(v)}>
+                {v.label}
+              </button>
+              <button className="saved-view__x" onClick={() => s.deleteView(v.id)} title="Remove this saved view" aria-label={`Remove ${v.label}`}>
+                ×
+              </button>
+            </span>
+          ) : (
+            <button key={v.id} className={`btn btn--ghost ${v.id === 'reset' ? 'btn--muted' : ''}`} onClick={() => s.requestView(v)}>
+              {v.label}
+            </button>
+          ),
+        )}
       </nav>
 
       <div className="topbar__right">

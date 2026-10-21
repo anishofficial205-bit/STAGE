@@ -54,6 +54,9 @@ export interface SeatPlacement {
   depth: number;
   /** Bottom of the riser under this seat. */
   floor: number;
+  /** Row index (0 = front row) and seat number within the row (1-based, left to right from the stage). */
+  row?: number;
+  seat?: number;
 }
 
 export const DEFAULT_SEAT_WIDTH = 0.55;
@@ -109,6 +112,7 @@ export function generateSeats(o: SeatingOptions): SeatPlacement[] {
     const perBlock = o.seatsPerRow && !arc && !o.flare ? Math.floor(o.seatsPerRow / blocks) : Math.floor(blockLen / seatWidth);
     if (perBlock <= 0) continue;
 
+    let seatNo = 0;
     for (let b = 0; b < blocks; b++) {
       const blockStart = start + (closed ? aisleWidth / 2 : 0) + b * (blockLen + aisleWidth);
       const first = blockStart + (blockLen - perBlock * seatWidth) / 2 + seatWidth / 2;
@@ -116,9 +120,9 @@ export function generateSeats(o: SeatingOptions): SeatPlacement[] {
         const along = first + s * seatWidth;
         if (arc) {
           const a = along / r;
-          out.push({ x: r * Math.sin(a), y, z: arc.cz + r * Math.cos(a), rotY: a, width: seatWidth, depth: o.rowSpacing, floor });
+          out.push({ x: r * Math.sin(a), y, z: arc.cz + r * Math.cos(a), rotY: a, width: seatWidth, depth: o.rowSpacing, floor, row: i, seat: ++seatNo });
         } else {
-          out.push({ x: along, y, z: d, rotY: 0, width: seatWidth, depth: o.rowSpacing, floor });
+          out.push({ x: along, y, z: d, rotY: 0, width: seatWidth, depth: o.rowSpacing, floor, row: i, seat: ++seatNo });
         }
       }
     }
@@ -208,7 +212,7 @@ export function generateContourSeats(o: ContourSeatingOptions): SeatPlacement[] 
     return dirs.some(([ux, uz]) => x * ux + z * uz > 0 && Math.abs(x * uz - z * ux) < half + sw * 0.45);
   };
   const push = (x: number, z: number, rotY: number, y: number, row: number) => {
-    if (!inAisle(x, z, row)) out.push({ x, y, z, rotY, width: sw, depth: o.rowSpacing, floor: 0 });
+    if (!inAisle(x, z, row)) out.push({ x, y, z, rotY, width: sw, depth: o.rowSpacing, floor: 0, row });
   };
 
   for (let i = 0; i < rows; i++) {
@@ -302,10 +306,10 @@ export function SeatInstances({ seats }: { seats: SeatPlacement[] }) {
   return (
     <>
       {seats.length > 0 && (
-        <instancedMesh key={`c${seats.length}`} ref={chairs} args={[chairGeometry, chairMaterial, seats.length]} castShadow receiveShadow />
+        <instancedMesh key={`c${seats.length}`} ref={chairs} args={[chairGeometry, chairMaterial, seats.length]} castShadow receiveShadow userData={{ noOcclude: true }} />
       )}
       {raised.length > 0 && (
-        <instancedMesh key={`r${raised.length}`} ref={risers} args={[riserGeometry, riserMaterial, raised.length]} castShadow receiveShadow />
+        <instancedMesh key={`r${raised.length}`} ref={risers} args={[riserGeometry, riserMaterial, raised.length]} castShadow receiveShadow userData={{ noOcclude: true }} />
       )}
     </>
   );

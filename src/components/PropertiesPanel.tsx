@@ -4,6 +4,7 @@ import { Collapsible } from './Collapsible';
 import { LayersPanel } from './objects/LayersPanel';
 import { ObjectProperties } from './objects/ObjectProperties';
 import { SurfacesSection } from './objects/FacesSection';
+import { SightlineWarnings } from './sightlines/SightlineWarnings';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
 
@@ -82,6 +83,7 @@ export function PropertiesPanel() {
       <Collapsible id="layers" title={`Layers${count ? ` (${count})` : ''}`}>
         <LayersPanel />
       </Collapsible>
+      <SightlineWarnings />
       <div className="props">{hasSelection ? <ObjectProperties /> : <TemplateProperties />}</div>
     </aside>
   );

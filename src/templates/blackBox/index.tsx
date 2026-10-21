@@ -16,6 +16,8 @@ import { clampToRoom, footprint, makeLayout, overlappingIds, roomOf, sanitizeDat
 import { BlackBoxScene } from './Scene';
 import { BlackBoxPanel } from './Panel';
 import { rect } from '../../helpers/stageInfo';
+import { generateSeats } from '../../helpers/Seating';
+import { blockSeats } from '../../helpers/seats';
 
 const blocksOf = (data: unknown) => (data as BlackBoxData | undefined)?.blocks ?? [];
 
@@ -152,6 +154,17 @@ export const blackBoxTemplate: StageTemplate = {
       for (let z = -halfL + 0.5; z <= halfL - 0.5 + 1e-6; z += 1.5) rigging.push([[-halfW + 0.3, y, z], [halfW - 0.3, y, z]]);
     }
     return { centre: [0, 0], floors, rigging };
+  },
+
+  seats: (_p, data) => {
+    let n = 0;
+    return blocksOf(data).flatMap((b) => {
+      if (b.kind !== 'seating') return [];
+      const { d } = footprint(b);
+      // Same layout as the scene: rows start 0.5 m behind the block's front edge.
+      const local = generateSeats({ rows: b.rows, seatsPerRow: b.seatsPerRow, firstRowDistance: 0.5, rowSpacing: ROW_DEPTH, rise: b.rake }).map((s) => ({ ...s, z: s.z - d / 2 }));
+      return blockSeats(local, [b.x, 0, b.z], (b.rotation * Math.PI) / 180, `Block ${++n}`);
+    });
   },
 
   bounds: (p): Bounds => {

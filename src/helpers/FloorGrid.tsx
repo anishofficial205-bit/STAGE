@@ -13,7 +13,7 @@ export function FloorGrid({ env }: { env: Environment }) {
   const cell = units === 'ft' ? M_PER_FT : 1;
   const section = units === 'ft' ? M_PER_FT * 10 : 5;
   return (
-    <>
+    <group userData={{ noOcclude: true }}>
       <mesh rotation-x={-Math.PI / 2} position-y={-0.002} receiveShadow>
         <planeGeometry args={[600, 600]} />
         <meshStandardMaterial color={env.ground} roughness={ROUGHNESS} />
@@ -31,6 +31,6 @@ export function FloorGrid({ env }: { env: Environment }) {
         fadeDistance={units === 'ft' ? 70 : 110}
         fadeStrength={1.5}
       />
-    </>
+    </group>
   );
 }

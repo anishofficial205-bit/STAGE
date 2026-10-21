@@ -11,7 +11,7 @@
  *   - Vomitories (entrance tunnels) widen the aisles through the front rows.
  */
 import { useMemo } from 'react';
-import type { Bounds, Params, PresetView, StageTemplate, Surface, Vec3 } from '../../types';
+import type { Bounds, Params, PresetView, SeatInfo, StageTemplate, Surface, Vec3 } from '../../types';
 import { bool, num, str } from '../../helpers/params';
 import { DimensionLabel } from '../../helpers/DimensionLabel';
 import { SeatInstances, generateContourSeats, type ContourSeatingOptions } from '../../helpers/Seating';
@@ -20,6 +20,7 @@ import { angleOf, offsetPolygon, rayToPolygon, regularPolygon, type Pt } from '.
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
 import { loopSegments } from '../../helpers/stageInfo';
+import { rowLetter } from '../../helpers/seats';
 
 const TAU = Math.PI * 2;
 const VOM_WIDTH = 2.4;
@@ -258,6 +259,40 @@ export const inTheRoundTemplate: StageTemplate = {
     const outline = L.polygon ?? regularPolygon(64, L.radius, 0);
     const grid = L.polygon ? offsetPolygon(L.polygon, GRID_MARGIN).points : regularPolygon(48, L.radius + GRID_MARGIN, 0);
     return { centre: [0, 0], floors: [{ outline, height: L.h }], rigging: bool(p, 'lightingGrid') ? loopSegments(grid, L.gridH) : [] };
+  },
+
+  seats: (p) => {
+    const L = layout(p);
+    const raw = generateContourSeats(L.seating);
+    // Each seat belongs to the section whose centre direction is nearest.
+    const angDist = (a: number, b: number) => Math.abs(((a - b + Math.PI * 3) % TAU) - Math.PI);
+    const tagged = raw.map((s) => {
+      const a = norm(Math.atan2(s.x, s.z));
+      let sec = 0;
+      L.centres.forEach((c, i) => {
+        if (angDist(a, c) < angDist(a, L.centres[sec])) sec = i;
+      });
+      // Position along the row, measured from the section's centre (for numbering left to right).
+      const rel = ((a - L.centres[sec] + Math.PI * 3) % TAU) - Math.PI;
+      return { s, sec, rel };
+    });
+    const out: SeatInfo[] = [];
+    const groups = new Map<string, typeof tagged>();
+    for (const t of tagged) {
+      const k = `${t.sec}:${t.s.row}`;
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(t);
+    }
+    for (const list of groups.values()) {
+      // Seen from the stage looking out, left to right is decreasing angle.
+      list.sort((a, b) => b.rel - a.rel);
+      list.forEach((t, i) => {
+        const row = t.s.row ?? 0;
+        const block = `Section ${letter(t.sec)}`;
+        out.push({ x: t.s.x, y: t.s.y, z: t.s.z, facing: t.s.rotY, block, row, num: i + 1, label: `${block} ${rowLetter(row)}${i + 1}` });
+      });
+    }
+    return out;
   },
 
   bounds: (p): Bounds => {

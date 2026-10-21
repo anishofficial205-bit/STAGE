@@ -22,6 +22,8 @@ import { inherited, leafIds, topAncestor } from '../../objects/groups';
 import { rotateSelection } from '../../objects/arrange';
 import type { SetObject } from '../../objects/types';
 import { ObjectFaces } from '../../objects/faceMaterial';
+import { useSightlines } from '../../sightlines/store';
+import { useTallWarnings } from '../sightlines/useTallWarnings';
 import { updatePlacement } from '../../graphics/library';
 import { panBy } from '../../graphics/placement';
 import type { GraphicPlacement } from '../../graphics/types';
@@ -37,6 +39,7 @@ export function faceAt(e: { object: THREE.Object3D; face?: THREE.Face | null }):
 const SELECT = '#2f6fde';
 const WARN = '#f08c00';
 const GUIDE = '#ff3d8b';
+const BLOCK = '#e5484d';
 const toRad = (deg: number) => (deg * Math.PI) / 180;
 const tmp = new THREE.Vector3();
 const horizontal = (y: number) => new THREE.Plane(new THREE.Vector3(0, 1, 0), -y);
@@ -320,7 +323,7 @@ interface DragState {
   pan?: { face: string; uv0: THREE.Vector2; g: GraphicPlacement; aspect: number; size: { w: number; h: number } };
 }
 
-function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][]; locked: boolean }) {
+function ObjectView({ p, selected, offStage, rigging, locked, flagged }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][]; locked: boolean; flagged: boolean }) {
   const { obj, type, size } = p;
   const built = useMemo(() => type.build(obj.params), [type, obj.params]);
   const faceCtx = useMemo(() => {
@@ -386,9 +389,9 @@ function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; sel
   const interactive = locked ? {} : { ...drag, onDoubleClick, onPointerOver: () => (document.body.style.cursor = 'move'), onPointerOut: () => (document.body.style.cursor = '') };
   return (
     <>
-      <group position={[p.wx, p.baseY, p.wz]} rotation-y={toRad(obj.rotation)} {...interactive}>
+      <group position={[p.wx, p.baseY, p.wz]} rotation-y={toRad(obj.rotation)} userData={{ objectId: obj.id }} {...interactive}>
         <ObjectFaces.Provider value={faceCtx}>{built}</ObjectFaces.Provider>
-        {(selected || offStage) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={selected ? (offStage ? WARN : SELECT) : WARN} />}
+        {(selected || offStage || flagged) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={flagged ? BLOCK : selected ? (offStage ? WARN : SELECT) : WARN} />}
       </group>
       {placementOf(type, obj.params) === 'hanging' && <Cables p={p} lines={rigging} />}
     </>
@@ -415,6 +418,10 @@ export function SetObjectsLayer() {
   }, [selectedIds]);
   const hidden = useMemo(() => new Set(objects.filter((o) => inherited(o, objects, 'hidden')).map((o) => o.id)), [objects]);
   const locked = useMemo(() => new Set(objects.filter((o) => inherited(o, objects, 'locked')).map((o) => o.id)), [objects]);
+  // Pieces blocking the current seat's view, or tall pieces blocking a section.
+  const blockingIds = useSightlines((s) => s.blocking?.ids);
+  const tall = useTallWarnings();
+  const flagged = useMemo(() => new Set([...(blockingIds ?? []), ...tall.map((w) => w.objectId)]), [blockingIds, tall]);
   const multi = selectedIds.length > 1 ? placed.filter((p) => selectedIds.includes(p.obj.id) && !hidden.has(p.obj.id)) : [];
   // Everything a piece can hang from: the stage's own rigging plus placed truss.
   const rigging = useMemo(() => [...(info.rigging ?? []), ...placed.filter((p) => !inherited(p.obj, objects, 'hidden')).flatMap(worldHangLines)], [info, placed, objects]);
@@ -424,7 +431,7 @@ export function SetObjectsLayer() {
       {placed
         .filter((p) => !hidden.has(p.obj.id))
         .map((p) => (
-          <ObjectView key={p.obj.id} p={p} rigging={rigging} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} />
+          <ObjectView key={p.obj.id} p={p} rigging={rigging} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} flagged={flagged.has(p.obj.id)} />
         ))}
       {single && !locked.has(single.obj.id) && !hidden.has(single.obj.id) && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
       {multi.length > 1 && !multi.some((p) => locked.has(p.obj.id)) && <SelectionHandles members={multi} key={multi.map((p) => p.obj.id).join()} />}

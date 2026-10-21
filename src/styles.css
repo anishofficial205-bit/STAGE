@@ -505,3 +505,22 @@ button, input, select { font: inherit; color: inherit; }
 .print-table .btn--link { padding: 0; font-weight: 600; }
 .print-table .badge { margin: 0; }
 .substrate { width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; }
+
+/* Seat view and sightlines */
+.view-tools { position: absolute; top: 10px; left: 10px; z-index: 5; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; max-width: calc(100% - 20px); }
+.view-tools .btn { background: rgba(255,255,255,0.94); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.view-tools .btn.is-active { background: var(--accent-soft); }
+.view-tools__hint { margin: 0; background: rgba(255,255,255,0.9); padding: 4px 8px; border-radius: 6px; }
+.legend { background: rgba(255,255,255,0.94); border-radius: 6px; padding: 4px 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; }
+.legend__bar { display: inline-block; width: 60px; height: 8px; border-radius: 4px; background: linear-gradient(90deg, #22b04b, #e8c21a, #e0312f); }
+.seat-tag { background: #1d2228; color: #fff; font-size: 11px; font-weight: 600; padding: 3px 7px; border-radius: 4px; white-space: nowrap; }
+.seat-panel { position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 6; background: var(--panel); border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.18); padding: 10px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; max-width: calc(100% - 24px); }
+.seat-panel__steps { display: flex; gap: 2px; }
+.seat-panel__save { display: flex; gap: 4px; }
+.seat-panel__save input { border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; width: 150px; }
+.seat-panel__result { flex-basis: 100%; color: #444b55; font-size: 12px; }
+.sight-warn { padding-top: 10px; }
+.sight-warn .panel-msg .btn--link { padding: 0; font-weight: 600; }
+.saved-view { display: inline-flex; align-items: center; }
+.saved-view__x { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 0 4px; margin-left: -6px; }
+.saved-view__x:hover { color: #b4232a; }

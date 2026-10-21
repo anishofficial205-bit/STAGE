@@ -19,6 +19,8 @@ import { Box, Panel, Slab, Truss } from '../../helpers/primitives';
 import { COLORS, ROUGHNESS } from '../../helpers/materials';
 import { Crowd, Skyline, Trees } from './scenery';
 import { rect } from '../../helpers/stageInfo';
+import { generateSeats } from '../../helpers/Seating';
+import { blockSeats } from '../../helpers/seats';
 
 const GROUND_BEHIND = 8; // ground behind the stage
 const BARRIER_Z = 1.5;
@@ -415,6 +417,11 @@ export const openAirTemplate: StageTemplate = {
     }
     if (L.towers) for (const s of [-1, 1]) rigging.push([[s * L.towerX - L.sw / 2, L.towerH, -0.5], [s * L.towerX + L.sw / 2, L.towerH, -0.5]]);
     return { centre: [0, -L.pd / 2], floors: [{ outline: rect(-L.pw / 2, -L.pd, L.pw / 2, 0), height: L.ph }], rigging };
+  },
+
+  seats: (p) => {
+    const L = layout(p);
+    return L.seated ? blockSeats(generateSeats(L.seating), [0, 0, 0], 0, '') : [];
   },
 
   bounds: (p): Bounds => {

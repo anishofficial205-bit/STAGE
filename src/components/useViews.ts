@@ -10,9 +10,10 @@ export function useViews(): PresetView[] {
   const params = useActiveParams();
   const data = useActiveData();
   const aspect = useProjectStore((s) => s.viewportAspect);
+  const saved = useProjectStore((s) => s.savedViewsByTemplate[s.templateId]);
   return useMemo(() => {
     const t = getTemplate(templateId)!;
     const b = t.bounds(params, data);
-    return [...t.presetViews(params, data), topView(b, aspect), resetView(b, aspect)];
-  }, [templateId, params, data, aspect]);
+    return [...t.presetViews(params, data), ...(saved ?? []), topView(b, aspect), resetView(b, aspect)];
+  }, [templateId, params, data, aspect, saved]);
 }

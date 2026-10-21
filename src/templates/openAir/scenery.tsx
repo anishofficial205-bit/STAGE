@@ -48,7 +48,7 @@ export function Scatter({ geometry, material, items }: { geometry: THREE.BufferG
     mesh.computeBoundingSphere();
   }, [items]);
   if (items.length === 0) return null;
-  return <instancedMesh key={items.length} ref={ref} args={[geometry, material, items.length]} castShadow receiveShadow />;
+  return <instancedMesh key={items.length} ref={ref} args={[geometry, material, items.length]} castShadow receiveShadow userData={{ noOcclude: true }} />;
 }
 
 // --- Crowd --------------------------------------------------------------------

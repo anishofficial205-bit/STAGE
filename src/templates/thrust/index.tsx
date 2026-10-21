@@ -21,6 +21,8 @@ import { Box, Panel, Slab } from '../../helpers/primitives';
 import type { Pt } from '../../helpers/shapes';
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
+import { generateSeats } from '../../helpers/Seating';
+import { blockSeats } from '../../helpers/seats';
 
 const WALL = 0.3;
 const T45 = 1; // tan(45°): mitre for a square corner
@@ -315,6 +317,11 @@ export const thrustTemplate: StageTemplate = {
   stage: (p) => {
     const L = layout(p);
     return { centre: [0, (L.tl - L.ud) / 2], floors: [{ outline: L.floor, height: L.h }] };
+  },
+
+  seats: (p) => {
+    const names: Record<string, string> = { front: 'Front', left: 'Left', right: 'Right', 'front-left': 'Front-left', 'front-right': 'Front-right' };
+    return layout(p).blocks.flatMap((b) => blockSeats(generateSeats(b.options), b.position, b.rotationY, names[b.id] ?? b.id));
   },
 
   bounds: (p): Bounds => {

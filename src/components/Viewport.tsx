@@ -14,6 +14,10 @@ import { GRAPHIC_DRAG_TYPE, OBJECT_DRAG_TYPE, useObjectUI, viewportBridge } from
 import { pickFace } from '../objects/pick';
 import { assignGraphic, importFiles, importOnto } from '../graphics/library';
 import { FaceContextMenu } from './graphics/FaceContextMenu';
+import { SeatLayer } from './sightlines/SeatLayer';
+import { SeatPanel, ViewTools } from './sightlines/SeatPanel';
+import { goToSeat } from './sightlines/seatActions';
+import { useSightlines } from '../sightlines/store';
 import { addObjectAt, currentStage } from '../objects/actions';
 import { floorHeightAt } from '../helpers/stageInfo';
 import * as THREE from 'three';
@@ -66,6 +70,7 @@ export function Viewport() {
   const template = getTemplate(templateId)!;
 
   const rightDown = useRef<[number, number] | null>(null);
+  const leftDown = useRef<[number, number] | null>(null);
 
   // Re-frame (animated) whenever the template changes. First load is framed by ViewportSync.
   const lastTemplate = useRef(templateId);
@@ -117,8 +122,16 @@ export function Viewport() {
       onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => {
         if (e.button === 2) rightDown.current = [e.clientX, e.clientY];
+        if (e.button === 0) leftDown.current = [e.clientX, e.clientY];
       }}
       onPointerUp={(e) => {
+        // Seat view: a click (not a drag) on a seat sits you there.
+        const l = leftDown.current;
+        leftDown.current = null;
+        if (e.button === 0 && l && Math.hypot(e.clientX - l[0], e.clientY - l[1]) < 4) {
+          const sl = useSightlines.getState();
+          if (sl.seatView && sl.hovered) goToSeat(sl.hovered);
+        }
         const start = rightDown.current;
         rightDown.current = null;
         if (e.button !== 2 || !start || Math.hypot(e.clientX - start[0], e.clientY - start[1]) > 4) return;
@@ -128,6 +141,8 @@ export function Viewport() {
       }}
     >
       <FaceContextMenu />
+      <ViewTools />
+      <SeatPanel />
     <Canvas
       events={(store) => ({ ...defaultEvents(store), filter: (hits) => handlesFirst(hits) })}
       onPointerMissed={() => useProjectStore.getState().select([])}
@@ -143,6 +158,7 @@ export function Viewport() {
         <SetObjectsLayer />
       </SceneBoundary>
       <StageSurfacesLayer />
+      <SeatLayer />
       <Reflections />
       <ShadowsOnChange deps={[template, params, data, units, objects, surfaceStyles]} />
       <AdaptiveDpr pixelated />
