@@ -5,25 +5,31 @@
  */
 import type { Params } from '../../types';
 import { bool, num, str } from '../../helpers/params';
-import { Icon } from '../common';
+import { Icon, type BoxFaces } from '../common';
 import type { SetObjectType } from '../types';
 import { Figure, PROP, PROP_DARK, PROP_LIGHT, PropMat } from './shared';
 
 type Size3 = [number, number, number];
 
-function B({ at, size, color = PROP }: { at: Size3; size: Size3; color?: string }) {
+/** Box with optional named faces (three.js order: +X, -X, +Y top, -Y, +Z front, -Z back). */
+function B({ at, size, color = PROP, faces }: { at: Size3; size: Size3; color?: string; faces?: BoxFaces }) {
   return (
     <mesh position={at} castShadow receiveShadow>
       <boxGeometry args={size} />
-      <PropMat color={color} />
+      {(['px', 'nx', 'py', 'ny', 'pz', 'nz'] as const).map((k, i) => (
+        <PropMat key={k} attach={`material-${i}`} color={color} face={faces?.[k]} />
+      ))}
     </mesh>
   );
 }
-function Cyl({ at, r, h, color = PROP, rTop, rotX = 0, seg = 24 }: { at: Size3; r: number; h: number; color?: string; rTop?: number; rotX?: number; seg?: number }) {
+/** Cylinder with optional named side and top faces. */
+function Cyl({ at, r, h, color = PROP, rTop, rotX = 0, seg = 24, side, top }: { at: Size3; r: number; h: number; color?: string; rTop?: number; rotX?: number; seg?: number; side?: string; top?: string }) {
   return (
     <mesh position={at} rotation-x={rotX} castShadow receiveShadow>
       <cylinderGeometry args={[rTop ?? r, r, h, seg]} />
-      <PropMat color={color} />
+      <PropMat attach="material-0" color={color} face={side} />
+      <PropMat attach="material-1" color={color} face={top} />
+      <PropMat attach="material-2" color={color} />
     </mesh>
   );
 }
@@ -55,16 +61,16 @@ export const chairObject: SetObjectType = {
       const W = w * 1.5;
       return (
         <>
-          <B at={[0, sh / 2, 0.05]} size={[W, sh, W - 0.1]} />
-          <B at={[0, sh + 0.25, -W / 2 + 0.1]} size={[W, 0.5, 0.2]} color={PROP_DARK} />
+          <B at={[0, sh / 2, 0.05]} size={[W, sh, W - 0.1]} faces={{ py: 'seat' }} />
+          <B at={[0, sh + 0.25, -W / 2 + 0.1]} size={[W, 0.5, 0.2]} color={PROP_DARK} faces={{ pz: 'back' }} />
           {[-1, 1].map((s) => <B key={s} at={[s * (W / 2 - 0.08), sh + 0.12, 0.05]} size={[0.16, 0.24, W - 0.1]} color={PROP_DARK} />)}
         </>
       );
     }
     return (
       <>
-        <B at={[0, sh, 0]} size={[w, 0.05, w]} />
-        <B at={[0, sh + 0.25, -w / 2 + 0.02]} size={[w, 0.45, 0.04]} color={PROP_DARK} />
+        <B at={[0, sh, 0]} size={[w, 0.05, w]} faces={{ py: 'seat' }} />
+        <B at={[0, sh + 0.25, -w / 2 + 0.02]} size={[w, 0.45, 0.04]} color={PROP_DARK} faces={{ pz: 'back' }} />
         {[[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, z], i) => <B key={i} at={[(x * (w - 0.05)) / 2, sh / 2, (z * (w - 0.05)) / 2]} size={[0.035, sh, 0.035]} color={PROP_DARK} />)}
       </>
     );
@@ -98,7 +104,7 @@ export const tableObject: SetObjectType = {
       const d = num(p, 'diameter');
       return (
         <>
-          <Cyl at={[0, h - 0.02, 0]} r={d / 2} h={0.04} seg={48} color={PROP_LIGHT} />
+          <Cyl at={[0, h - 0.02, 0]} r={d / 2} h={0.04} seg={48} color={PROP_LIGHT} top="top" />
           <Cyl at={[0, (h - 0.04) / 2, 0]} r={0.05} h={h - 0.04} color={PROP_DARK} />
           <Cyl at={[0, 0.015, 0]} r={Math.min(0.3, d / 3)} h={0.03} color={PROP_DARK} />
         </>
@@ -107,7 +113,7 @@ export const tableObject: SetObjectType = {
     const [w, d] = [num(p, 'width'), num(p, 'depth')];
     return (
       <>
-        <B at={[0, h - 0.02, 0]} size={[w, 0.04, d]} color={PROP_LIGHT} />
+        <B at={[0, h - 0.02, 0]} size={[w, 0.04, d]} color={PROP_LIGHT} faces={{ py: 'top' }} />
         {[[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([x, z], i) => <B key={i} at={[(x * (w - 0.1)) / 2, (h - 0.04) / 2, (z * (d - 0.1)) / 2]} size={[0.05, h - 0.04, 0.05]} color={PROP_DARK} />)}
       </>
     );
@@ -129,7 +135,7 @@ export const sofaObject: SetObjectType = {
     const [w, d, h] = [num(p, 'width'), num(p, 'depth'), num(p, 'height')];
     return (
       <>
-        <B at={[0, 0.21, 0.05]} size={[w - 0.3, 0.42, d - 0.1]} />
+        <B at={[0, 0.21, 0.05]} size={[w - 0.3, 0.42, d - 0.1]} faces={{ pz: 'front' }} />
         <B at={[0, h / 2, -d / 2 + 0.11]} size={[w, h, 0.22]} color={PROP_DARK} />
         {[-1, 1].map((s) => <B key={s} at={[s * (w / 2 - 0.08), 0.31, 0]} size={[0.16, 0.62, d]} color={PROP_DARK} />)}
       </>
@@ -154,9 +160,9 @@ export const bedObject: SetObjectType = {
     return (
       <>
         <B at={[0, 0.15, 0.04]} size={[w + 0.1, 0.3, l]} color={PROP_DARK} />
-        <B at={[0, 0.41, 0.04]} size={[w, 0.22, l - 0.04]} color={PROP_LIGHT} />
+        <B at={[0, 0.41, 0.04]} size={[w, 0.22, l - 0.04]} color={PROP_LIGHT} faces={{ py: 'cover' }} />
         <B at={[0, 0.58, -l / 2 + 0.3]} size={[w * 0.8, 0.12, 0.4]} />
-        <B at={[0, 0.5, -l / 2 + 0.02]} size={[w + 0.1, 1, 0.06]} color={PROP_DARK} />
+        <B at={[0, 0.5, -l / 2 + 0.02]} size={[w + 0.1, 1, 0.06]} color={PROP_DARK} faces={{ pz: 'headboard' }} />
       </>
     );
   },
@@ -180,7 +186,7 @@ export const lecternObject: SetObjectType = {
     const [w, h] = [num(p, 'width'), num(p, 'height')];
     return (
       <>
-        <B at={[0, (h - 0.1) / 2, 0]} size={[w, h - 0.1, 0.42]} />
+        <B at={[0, (h - 0.1) / 2, 0]} size={[w, h - 0.1, 0.42]} faces={{ pz: 'front' }} />
         {/* Sloped reading top, rising towards the speaker (back) */}
         <mesh position={[0, h - 0.05, 0]} rotation-x={-0.25} castShadow>
           <boxGeometry args={[w + 0.04, 0.03, 0.5]} />
@@ -205,7 +211,7 @@ export const stoolObject: SetObjectType = {
     const h = num(p, 'height');
     return (
       <>
-        <Cyl at={[0, h - 0.03, 0]} r={0.18} h={0.06} color={PROP_LIGHT} />
+        <Cyl at={[0, h - 0.03, 0]} r={0.18} h={0.06} color={PROP_LIGHT} top="seat" />
         {[0, 1, 2].map((i) => {
           const a = (i * Math.PI * 2) / 3;
           return (
@@ -242,7 +248,7 @@ export const plantObject: SetObjectType = {
     const blobs: Size3[] = [[0, h - r, 0], [r * 0.45, h - r * 1.5, r * 0.2], [-r * 0.45, h - r * 1.4, -r * 0.15], [0.05, h - r * 1.7, -r * 0.4]];
     return (
       <>
-        <Cyl at={[0, potH / 2, 0]} r={d * 0.4} rTop={d / 2} h={potH} color={PROP_DARK} />
+        <Cyl at={[0, potH / 2, 0]} r={d * 0.4} rTop={d / 2} h={potH} color={PROP_DARK} side="pot" />
         <Cyl at={[0, (potH + h - r) / 2, 0]} r={0.02} h={h - r - potH} color={PROP_DARK} seg={6} />
         {blobs.map((b, i) => (
           <mesh key={i} position={b} castShadow>
@@ -347,7 +353,7 @@ export const speakerObject: SetObjectType = {
     }
     return (
       <>
-        <B at={[0, h / 2, 0]} size={[w, h, d]} color={PROP_DARK} />
+        <B at={[0, h / 2, 0]} size={[w, h, d]} color={PROP_DARK} faces={{ pz: 'front' }} />
         <Cyl at={[0, h * 0.35, d / 2]} r={w * 0.32} h={0.02} rotX={Math.PI / 2} color="#5f646b" />
         <Cyl at={[0, h * 0.78, d / 2]} r={w * 0.13} h={0.02} rotX={Math.PI / 2} color="#5f646b" />
       </>
@@ -371,7 +377,7 @@ export const drumRiserObject: SetObjectType = {
     const [w, d, h] = [num(p, 'width'), num(p, 'depth'), num(p, 'height')];
     return (
       <>
-        <B at={[0, h / 2, 0]} size={[w, h, d]} color={PROP_LIGHT} />
+        <B at={[0, h / 2, 0]} size={[w, h, d]} color={PROP_LIGHT} faces={{ py: 'top', pz: 'front' }} />
         {bool(p, 'kit') && (
           <group position-y={h}>
             {/* Kick drum facing the audience, toms, snare, floor tom, cymbals, stool */}

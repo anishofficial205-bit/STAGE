@@ -67,6 +67,11 @@ export interface Surface {
   rotation: Vec3;
   width: number;
   height: number;
+  /** Non-rectangular surfaces: outline in the surface's own plane (x across, y up), centred on `position`. */
+  outline?: Pt[];
+  holes?: Pt[][];
+  /** A lit surface (LED screen): graphics on it glow. */
+  glow?: boolean;
 }
 
 export interface Bounds {

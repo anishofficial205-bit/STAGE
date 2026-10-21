@@ -46,20 +46,20 @@ export const columnObject: SetObjectType = {
       round ? (
         <mesh position-y={y} castShadow receiveShadow>
           <cylinderGeometry args={[d * 0.7, d * 0.7, BAND, 48]} />
-          <Mat color={SET.edge} />
+          <Mat color={SET.edge} face={y > BAND ? 'top' : 'base'} />
         </mesh>
       ) : (
-        <Cube at={[0, y, 0]} size={[d * 1.4, BAND, d * 1.4]} color={SET.edge} />
+        <Cube at={[0, y, 0]} size={[d * 1.4, BAND, d * 1.4]} color={SET.edge} face={y > BAND ? 'top' : 'base'} />
       );
     return (
       <>
         {round ? (
           <mesh position-y={y0 + shaftH / 2} castShadow receiveShadow>
             <cylinderGeometry args={[d / 2, d / 2, shaftH, 48]} />
-            <Mat color={SET.face} />
+            <Mat color={SET.face} face="body" />
           </mesh>
         ) : (
-          <Cube at={[0, y0 + shaftH / 2, 0]} size={[d, shaftH, d]} color={SET.face} />
+          <Cube at={[0, y0 + shaftH / 2, 0]} size={[d, shaftH, d]} color={SET.face} face="body" />
         )}
         {bands && band(BAND / 2)}
         {bands && band(h - BAND / 2)}

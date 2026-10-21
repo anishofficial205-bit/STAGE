@@ -29,7 +29,7 @@ export const backdropObject: SetObjectType = {
     const [w, h] = [num(p, 'width'), num(p, 'height')];
     return (
       <>
-        <Cube at={[0, h / 2, 0]} size={[w, h, 0.02]} color={SET.cloth} />
+        <Cube at={[0, h / 2, 0]} size={[w, h, 0.02]} color={SET.cloth} faces={{ pz: 'front', nz: 'back' }} />
         {/* Batten pipe along the top */}
         <mesh position={[0, h, 0]} rotation-z={Math.PI / 2} castShadow>
           <cylinderGeometry args={[0.024, 0.024, w + 0.2, 10]} />

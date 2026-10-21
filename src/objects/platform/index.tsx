@@ -10,6 +10,7 @@ import type { SetObjectType } from '../types';
 export const platformHeight = (p: Params) => (str(p, 'heightPreset') === 'custom' ? num(p, 'customHeight') : Number(str(p, 'heightPreset')));
 
 const DECK = 0.05;
+const SIDES = { py: 'top', pz: 'front', nz: 'back', nx: 'left', px: 'right' };
 const LEG = 0.08;
 
 export const platformObject: SetObjectType = {
@@ -59,7 +60,7 @@ export const platformObject: SetObjectType = {
   platformTop: platformHeight,
   build: (p) => {
     const [w, d, h] = [num(p, 'width'), num(p, 'depth'), platformHeight(p)];
-    if (str(p, 'construction') !== 'legs') return <Cube at={[0, h / 2, 0]} size={[w, h, d]} color={SET.body} />;
+    if (str(p, 'construction') !== 'legs') return <Cube at={[0, h / 2, 0]} size={[w, h, d]} color={SET.body} faces={SIDES} />;
     // Legs at the corners, plus intermediate legs every ≤ 1.2 m along each side.
     const nx = Math.max(1, Math.ceil(w / 1.2));
     const nz = Math.max(1, Math.ceil(d / 1.2));
@@ -67,7 +68,7 @@ export const platformObject: SetObjectType = {
     for (let i = 0; i <= nx; i++) for (let j = 0; j <= nz; j++) if (i === 0 || i === nx || j === 0 || j === nz) legs.push([-w / 2 + LEG / 2 + ((w - LEG) * i) / nx, -d / 2 + LEG / 2 + ((d - LEG) * j) / nz]);
     return (
       <>
-        <Cube at={[0, h - DECK / 2, 0]} size={[w, DECK, d]} color={SET.body} />
+        <Cube at={[0, h - DECK / 2, 0]} size={[w, DECK, d]} color={SET.body} faces={SIDES} />
         {legs.map(([x, z], i) => (
           <Cube key={i} at={[x, (h - DECK) / 2, z]} size={[LEG, h - DECK, LEG]} color={SET.edge} />
         ))}

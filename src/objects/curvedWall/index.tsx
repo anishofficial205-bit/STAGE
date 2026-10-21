@@ -48,10 +48,10 @@ function CurvedWall({ p }: { p: Params }) {
   return (
     <group position-z={L.cz}>
       <mesh geometry={outer} position-y={h / 2} castShadow receiveShadow>
-        <Mat color={SET.body} />
+        <Mat color={SET.body} face="outer" />
       </mesh>
       <mesh geometry={inner} position-y={h / 2} castShadow receiveShadow>
-        <Mat color={SET.face} side={THREE.BackSide} />
+        <Mat color={SET.face} side={THREE.BackSide} face="inner" />
       </mesh>
       <mesh geometry={top} position-y={h} castShadow>
         <Mat color={SET.edge} side={THREE.DoubleSide} />

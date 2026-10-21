@@ -237,7 +237,16 @@ export const inTheRoundTemplate: StageTemplate = {
     const gridW = w + 2 * GRID_MARGIN;
     const gridD = d + 2 * GRID_MARGIN;
     return [
-      { id: 'stage-floor', label: 'Stage floor', position: [0, L.h, 0], rotation: [-Math.PI / 2, 0, 0], width: w, height: d },
+      {
+        id: 'stage-floor',
+        label: 'Stage floor',
+        position: [0, L.h + 0.001, 0],
+        rotation: [-Math.PI / 2, 0, 0],
+        width: w,
+        height: d,
+        // Floor surfaces: plane x = world x, plane y = world -z.
+        outline: (L.polygon ?? regularPolygon(96, L.radius, 0)).map(([x, z]) => [x, -z] as Pt),
+      },
       // The edge wraps right round the stage; width is its full unrolled length.
       { id: 'stage-edge', label: 'Stage edge', position: [0, L.h / 2, d / 2], rotation: [0, 0, 0], width: edgeLength, height: L.h },
       { id: 'overhead-grid', label: 'Overhead grid', position: [0, L.gridH, 0], rotation: [Math.PI / 2, 0, 0], width: gridW, height: gridD },

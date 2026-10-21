@@ -36,13 +36,13 @@ export const doorFrameObject: SetObjectType = {
     const angle = (num(p, 'doorAngle') * Math.PI) / 180;
     return (
       <>
-        <Cube at={[-w / 2 + ft / 2, h / 2, 0]} size={[ft, h, DEPTH]} color={SET.edge} />
-        <Cube at={[w / 2 - ft / 2, h / 2, 0]} size={[ft, h, DEPTH]} color={SET.edge} />
-        <Cube at={[0, h - ft / 2, 0]} size={[w, ft, DEPTH]} color={SET.edge} />
+        <Cube at={[-w / 2 + ft / 2, h / 2, 0]} size={[ft, h, DEPTH]} color={SET.edge} face="frame-front" />
+        <Cube at={[w / 2 - ft / 2, h / 2, 0]} size={[ft, h, DEPTH]} color={SET.edge} face="frame-front" />
+        <Cube at={[0, h - ft / 2, 0]} size={[w, ft, DEPTH]} color={SET.edge} face="frame-front" />
         {bool(p, 'doorPanel') && (
           // Hinged on the left jamb; opens away from the audience.
           <group position={[-w / 2 + ft, 0, 0]} rotation-y={angle}>
-            <Cube at={[cw / 2, (h - ft) / 2, 0]} size={[cw - 0.01, h - ft - 0.01, PANEL]} color={SET.face} />
+            <Cube at={[cw / 2, (h - ft) / 2, 0]} size={[cw - 0.01, h - ft - 0.01, PANEL]} color={SET.face} faces={{ pz: 'door-front', nz: 'door-back' }} />
             <Cube at={[cw - 0.09, (h - ft) * 0.47, PANEL / 2 + 0.02]} size={[0.03, 0.12, 0.04]} color={SET.metal} />
           </group>
         )}

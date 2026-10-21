@@ -3,6 +3,7 @@ import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } fro
 import { Collapsible } from './Collapsible';
 import { LayersPanel } from './objects/LayersPanel';
 import { ObjectProperties } from './objects/ObjectProperties';
+import { SurfacesSection } from './objects/FacesSection';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
 
@@ -59,6 +60,7 @@ function TemplateProperties() {
         </p>
       ))}
       {Extra && <Extra />}
+      <SurfacesSection />
       {groups.map((g) => (
         <section key={g.name} className="group">
           <h3 className="group__title">{g.name}</h3>

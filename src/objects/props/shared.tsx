@@ -3,13 +3,15 @@
  * a low-poly human figure built from capsules.
  */
 import type { ReactNode } from 'react';
+import { FaceMat } from '../faceMaterial';
 
 export const PROP = '#b3b6bb';
 export const PROP_DARK = '#8b9097';
 export const PROP_LIGHT = '#c9ccd0';
 
-export function PropMat({ color = PROP }: { color?: string }) {
-  return <meshStandardMaterial color={color} roughness={0.8} />;
+/** Prop material; `face` makes it a named face that can take colour/graphics. */
+export function PropMat({ color = PROP, face, attach }: { color?: string; face?: string; attach?: string }) {
+  return <FaceMat attach={attach} face={face} color={color} roughness={0.8} />;
 }
 
 /** A capsule between two points in the YZ plane (x fixed). */

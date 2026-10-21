@@ -22,7 +22,14 @@ export const boxObject: SetObjectType = {
   constraints: (p) => p,
   size: (p) => ({ width: num(p, 'width'), depth: num(p, 'depth'), height: num(p, 'height') }),
   resize: { width: 'width', depth: 'depth' },
-  build: (p) => <Cube at={[0, num(p, 'height') / 2, 0]} size={[num(p, 'width'), num(p, 'height'), num(p, 'depth')]} color={SET.body} />,
+  build: (p) => (
+    <Cube
+      at={[0, num(p, 'height') / 2, 0]}
+      size={[num(p, 'width'), num(p, 'height'), num(p, 'depth')]}
+      color={SET.body}
+      faces={{ px: 'right', nx: 'left', py: 'top', pz: 'front', nz: 'back' }}
+    />
+  ),
   faces: (p) => {
     const [w, d, h] = [num(p, 'width'), num(p, 'depth'), num(p, 'height')];
     return [

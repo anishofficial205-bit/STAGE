@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { Params } from '../../types';
 import { bool, num, str } from '../../helpers/params';
 import { Cube, Icon, SET } from '../common';
+import { FaceMat } from '../faceMaterial';
 import type { SetObjectType } from '../types';
 
 const BASE = 0.15; // ground stack height when standing
@@ -107,8 +108,8 @@ export const ledWallObject: SetObjectType = {
           <meshStandardMaterial attach="material-2" color="#1a1d22" />
           <meshStandardMaterial attach="material-3" color="#1a1d22" />
           {/* Front: the lit screen */}
-          <meshStandardMaterial attach="material-4" map={map} emissiveMap={map} emissive="#ffffff" emissiveIntensity={0.85} roughness={0.35} />
-          <meshStandardMaterial attach="material-5" color="#22262c" roughness={0.6} />
+          <FaceMat attach="material-4" face="screen" color="#ffffff" map={map} emissiveMap={map} emissive="#ffffff" emissiveIntensity={0.85} roughness={0.35} />
+          <FaceMat attach="material-5" face="back" color="#22262c" roughness={0.6} />
         </mesh>
         {f > 0 && (
           <>

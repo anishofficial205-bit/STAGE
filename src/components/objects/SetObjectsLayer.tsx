@@ -21,6 +21,15 @@ import { useBlackBoxUI } from '../../templates/blackBox/blocks';
 import { inherited, leafIds, topAncestor } from '../../objects/groups';
 import { rotateSelection } from '../../objects/arrange';
 import type { SetObject } from '../../objects/types';
+import { ObjectFaces } from '../../objects/faceMaterial';
+
+/** The face id of the material hit by a pointer event (set by FaceMat), if any. */
+export function faceAt(e: { object: THREE.Object3D; face?: THREE.Face | null }): string | null {
+  const mesh = e.object as THREE.Mesh;
+  const mat = Array.isArray(mesh.material) ? mesh.material[e.face?.materialIndex ?? 0] : mesh.material;
+  const f = (mat as THREE.Material | undefined)?.userData?.face;
+  return typeof f === 'string' && f !== '*' ? f : null;
+}
 
 const SELECT = '#2f6fde';
 const WARN = '#f08c00';
@@ -30,12 +39,14 @@ const tmp = new THREE.Vector3();
 const horizontal = (y: number) => new THREE.Plane(new THREE.Vector3(0, 1, 0), -y);
 
 /** Pointer-capture drag: `start` returns drag state (or null to ignore), `move` receives it. Orbiting pauses meanwhile. */
-function useDrag<S>(opts: { start: (e: ThreeEvent<PointerEvent>) => S | null; move: (e: ThreeEvent<PointerEvent>, s: S) => void; end?: (s: S) => void }) {
+function useDrag<S>(opts: { start: (e: ThreeEvent<PointerEvent>) => S | null; move: (e: ThreeEvent<PointerEvent>, s: S) => void; end?: (s: S) => void; handle?: boolean }) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const state = useRef<S | null>(null);
   return {
     onPointerDown: (e: ThreeEvent<PointerEvent>) => {
       if (e.button !== 0) return;
+      // Alt-click is for picking faces: let it pass through handles to the object behind.
+      if (opts.handle && e.altKey) return;
       e.stopPropagation();
       const s = opts.start(e);
       if (s === null) return;
@@ -129,6 +140,7 @@ const handleMat = (color = SELECT) => <meshBasicMaterial color={color} depthTest
 function EdgeHandle({ p, axis, sign, y }: { p: Placed; axis: 'x' | 'z'; sign: 1 | -1; y: number }) {
   const { obj, size } = p;
   const drag = useDrag({
+    handle: true,
     start: () => ({ obj, size: axis === 'x' ? size.width : size.depth }),
     move: (e, s) => {
       if (!e.ray.intersectPlane(horizontal(p.baseY + y), tmp)) return;
@@ -165,6 +177,7 @@ function SelectionHandles({ members }: { members: Placed[] }) {
   const cx = (box.minX + box.maxX) / 2;
   const cz = (box.minZ + box.maxZ) / 2;
   const rotate = useDrag({
+    handle: true,
     start: (e) => {
       if (!e.ray.intersectPlane(horizontal(box.y0), tmp)) return null;
       const s = useProjectStore.getState();
@@ -222,6 +235,7 @@ function Handles({ p }: { p: Placed }) {
   const handlesZ = resizeRule(type, obj.params, 'depth') ? ([1, -1] as const) : [];
 
   const height = useDrag({
+    handle: true,
     start: (e) => {
       const n = new THREE.Vector3().subVectors(camera.position, new THREE.Vector3(p.wx, 0, p.wz)).setY(0).normalize();
       const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(n, new THREE.Vector3(p.wx, p.baseY, p.wz));
@@ -237,6 +251,7 @@ function Handles({ p }: { p: Placed }) {
   });
 
   const rotate = useDrag({
+    handle: true,
     start: () => ({}),
     move: (e) => {
       if (!e.ray.intersectPlane(horizontal(p.baseY), tmp)) return;
@@ -299,11 +314,23 @@ function Handles({ p }: { p: Placed }) {
 function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][]; locked: boolean }) {
   const { obj, type, size } = p;
   const built = useMemo(() => type.build(obj.params), [type, obj.params]);
+  const faceCtx = useMemo(() => {
+    const sizes: Record<string, { w: number; h: number }> = {};
+    for (const f of type.faces(obj.params)) sizes[f.id] = { w: f.width, h: f.height };
+    return { objectId: obj.id, styles: obj.faces ?? {}, sizes };
+  }, [type, obj.params, obj.faces, obj.id]);
   const drag = useDrag({
     start: (e) => {
       const store = useProjectStore.getState();
       useBlackBoxUI.getState().select(null);
       const list = store.objectsByTemplate[store.templateId] ?? [];
+      // Alt/Option-click picks the face under the cursor for colours, materials and graphics.
+      if (e.altKey) {
+        const face = faceAt(e);
+        store.select([obj.id]);
+        useObjectUI.getState().setSelectedFace(face ? { objectId: obj.id, face } : null);
+        return null;
+      }
       // Clicking part of a group picks the whole group (double-click picks just this piece).
       const unit = leafIds(topAncestor(obj.id, list), list);
       if (e.shiftKey) {
@@ -320,8 +347,8 @@ function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; sel
     },
     move: (e, s) => {
       if (!e.ray.intersectPlane(horizontal(p.baseY), tmp)) return;
-      // Hold Alt (Option) to place freely without snapping.
-      moveSelection(obj.id, [tmp.x + s.off[0], tmp.z + s.off[1]], s.starts, { snap: !e.altKey });
+      // Hold ⌘/Ctrl to place freely without snapping.
+      moveSelection(obj.id, [tmp.x + s.off[0], tmp.z + s.off[1]], s.starts, { snap: !(e.metaKey || e.ctrlKey) });
     },
     end: () => useObjectUI.getState().setGuides([]),
   });
@@ -333,7 +360,7 @@ function ObjectView({ p, selected, offStage, rigging, locked }: { p: Placed; sel
   return (
     <>
       <group position={[p.wx, p.baseY, p.wz]} rotation-y={toRad(obj.rotation)} {...interactive}>
-        {built}
+        <ObjectFaces.Provider value={faceCtx}>{built}</ObjectFaces.Provider>
         {(selected || offStage) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={selected ? (offStage ? WARN : SELECT) : WARN} />}
       </group>
       {placementOf(type, obj.params) === 'hanging' && <Cables p={p} lines={rigging} />}

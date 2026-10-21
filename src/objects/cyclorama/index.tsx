@@ -56,7 +56,7 @@ function Cyc({ p }: { p: Params }) {
   }, [w, h, rcIn]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <mesh geometry={geometry} castShadow receiveShadow>
-      <Mat color={SET.cloth} side={THREE.DoubleSide} />
+      <Mat color={SET.cloth} side={THREE.DoubleSide} face="front" />
     </mesh>
   );
 }

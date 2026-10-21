@@ -25,7 +25,7 @@ export const hangingPanelObject: SetObjectType = {
   constraints: (p) => p,
   size: (p) => ({ width: num(p, 'width'), depth: num(p, 'thickness'), height: num(p, 'height') }),
   resize: { width: 'width', depth: 'thickness' },
-  build: (p) => <Cube at={[0, num(p, 'height') / 2, 0]} size={[num(p, 'width'), num(p, 'height'), num(p, 'thickness')]} color={SET.face} />,
+  build: (p) => <Cube at={[0, num(p, 'height') / 2, 0]} size={[num(p, 'width'), num(p, 'height'), num(p, 'thickness')]} color={SET.face} faces={{ pz: 'front', nz: 'back' }} />,
   faces: (p) => [
     { id: 'front', name: 'Front', width: num(p, 'width'), height: num(p, 'height') },
     { id: 'back', name: 'Back', width: num(p, 'width'), height: num(p, 'height') },

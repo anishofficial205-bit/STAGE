@@ -49,7 +49,7 @@ export const archFrameObject: SetObjectType = {
     const [W, H] = [num(p, 'outerWidth'), num(p, 'outerHeight')];
     // The opening touches the floor, so it is traced into the outline rather than cut as a hole.
     const outline: Pt[] = [[-W / 2, 0], [-W / 2, H], [W / 2, H], [W / 2, 0], ...[...opening(p)].reverse()];
-    return <Extruded outline={outline} depth={num(p, 'thickness')} color={SET.face} />;
+    return <Extruded outline={outline} depth={num(p, 'thickness')} color={SET.face} faces={{ front: 'front', back: 'back', sides: 'inner' }} />;
   },
   faces: (p) => [
     { id: 'front', name: 'Front', width: num(p, 'outerWidth'), height: num(p, 'outerHeight') },

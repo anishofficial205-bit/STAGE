@@ -7,11 +7,27 @@ import { CAMERA_FOV, resetView } from '../helpers/views';
 import { CameraRig } from './CameraRig';
 import { SceneBoundary, ShadowsOnChange, StageScene } from './StageScene';
 import { SetObjectsLayer, handlesFirst } from './objects/SetObjectsLayer';
+import { StageSurfacesLayer } from './objects/StageSurfacesLayer';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { reflections, useReflectionsReady } from '../objects/materials';
 import { OBJECT_DRAG_TYPE, useObjectUI, viewportBridge } from '../objects/ui';
 import { addObjectAt, currentStage } from '../objects/actions';
 import { floorHeightAt } from '../helpers/stageInfo';
 import * as THREE from 'three';
 
+
+/** Builds a soft studio environment once, used only by reflective materials (metal, glass, mirror). */
+function Reflections() {
+  const gl = useThree((s) => s.gl);
+  useEffect(() => {
+    if (reflections.env) return;
+    const pmrem = new THREE.PMREMGenerator(gl);
+    reflections.env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
+    useReflectionsReady.setState({ ready: true });
+  }, [gl]);
+  return null;
+}
 
 /** Reports the canvas aspect ratio to the store and frames the stage on first load. */
 function ViewportSync() {
@@ -43,6 +59,7 @@ export function Viewport() {
   const params = useActiveParams();
   const data = useActiveData();
   const objects = useActiveObjects();
+  const surfaceStyles = useProjectStore((s) => s.surfaceStylesByTemplate[s.templateId]);
   const template = getTemplate(templateId)!;
 
   // Re-frame (animated) whenever the template changes. First load is framed by ViewportSync.
@@ -95,7 +112,9 @@ export function Viewport() {
       <SceneBoundary resetKey={objects}>
         <SetObjectsLayer />
       </SceneBoundary>
-      <ShadowsOnChange deps={[template, params, data, units, objects]} />
+      <StageSurfacesLayer />
+      <Reflections />
+      <ShadowsOnChange deps={[template, params, data, units, objects, surfaceStyles]} />
       <AdaptiveDpr pixelated />
       <CameraRig />
       <ViewportSync />

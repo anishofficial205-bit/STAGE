@@ -7,6 +7,7 @@ import type { SetObject } from '../objects/types';
 import { applyConstraints, defaultParams } from '../helpers/params';
 import { newObjectId } from './ids';
 import { GROUP_TYPE } from '../objects/types';
+import { MATERIALS, type FaceStyle } from '../objects/materials';
 import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
 
 const STORAGE_KEY = 'stage-builder:project';
@@ -31,10 +32,12 @@ export interface ProjectFile {
   dataByTemplate: Record<string, unknown>;
   /** The set built on each template. */
   objectsByTemplate: Record<string, SetObject[]>;
+  /** Colours/materials/graphics on each template's stage surfaces, by surface id. */
+  surfaceStylesByTemplate: Record<string, Record<string, FaceStyle>>;
 }
 
 /** The parts of the project that undo/redo restores. */
-type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate'>;
+type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate'>;
 
 export interface ViewRequest {
   view: PresetView;
@@ -84,6 +87,9 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   /** Group the selection (⌘G) / dissolve its groups (⇧⌘G). */
   groupSelection: () => void;
   ungroupSelection: () => void;
+  /** Set (or clear, with null) the style of an object face or a stage surface. `key` merges slider drags. */
+  setFaceStyle: (objectId: string, face: string, style: FaceStyle | null, key?: string) => void;
+  setSurfaceStyle: (surfaceId: string, style: FaceStyle | null, key?: string) => void;
 
   requestView: (view: PresetView, instant?: boolean) => void;
   setViewportAspect: (aspect: number) => void;
@@ -102,10 +108,22 @@ function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
     paramsByTemplate,
     dataByTemplate: Object.fromEntries(templates.filter((t) => t.data).map((t) => [t.id, t.data!.initial(paramsByTemplate[t.id])])),
     objectsByTemplate: {},
+    surfaceStylesByTemplate: {},
   };
 }
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+
+/** Keep only well-formed face styles. */
+function sanitizeStyles(raw: unknown): Record<string, FaceStyle> {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Record<string, FaceStyle> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, Partial<FaceStyle>>)) {
+    if (!v || typeof v !== 'object' || !MATERIALS.some((m) => m.id === v.material)) continue;
+    out[k] = { material: v.material!, color: typeof v.color === 'string' ? v.color : '#ffffff', roughness: isNum(v.roughness) ? v.roughness : 0.8, ...(v.graphic && typeof v.graphic === 'object' ? { graphic: v.graphic } : {}) };
+  }
+  return out;
+}
 
 /** Drop unknown object types and repair bad values in saved objects. */
 function sanitizeObjects(raw: unknown): SetObject[] {
@@ -130,6 +148,7 @@ function sanitizeObjects(raw: unknown): SetObject[] {
       hidden: !!o.hidden,
       locked: !!o.locked,
       parent: typeof o.parent === 'string' ? o.parent : undefined,
+      faces: sanitizeStyles(o.faces),
     });
   }
   // Drop dangling parent links, then empty groups.
@@ -164,6 +183,7 @@ function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
         }),
     ),
     objectsByTemplate: Object.fromEntries(templates.map((t) => [t.id, sanitizeObjects(savedObjects[t.id])])),
+    surfaceStylesByTemplate: Object.fromEntries(templates.map((t) => [t.id, sanitizeStyles(d.surfaceStylesByTemplate?.[t.id])])),
   };
 }
 
@@ -191,7 +211,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   const doc = (): Doc => {
     const s = get();
-    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate };
+    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate };
   };
 
   /** Record the current state as an undo step before a change. */
@@ -391,6 +411,29 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       set({ selectedIds: leaves });
     },
 
+    setFaceStyle: (objectId, face, style, key) => {
+      commit(key);
+      setActiveObjects(
+        activeObjects().map((o) => {
+          if (o.id !== objectId) return o;
+          const faces = { ...(o.faces ?? {}) };
+          if (style) faces[face] = style;
+          else delete faces[face];
+          return { ...o, faces };
+        }),
+      );
+    },
+
+    setSurfaceStyle: (surfaceId, style, key) => {
+      commit(key);
+      set((s) => {
+        const current = { ...(s.surfaceStylesByTemplate[s.templateId] ?? {}) };
+        if (style) current[surfaceId] = style;
+        else delete current[surfaceId];
+        return { surfaceStylesByTemplate: { ...s.surfaceStylesByTemplate, [s.templateId]: current }, dirty: true };
+      });
+    },
+
     groupSelection: () => {
       const { list, groupId } = groupUnits(activeObjects(), get().selectedIds);
       if (!groupId) return;
@@ -410,8 +453,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setViewportAspect: (viewportAspect) => set({ viewportAspect }),
 
     toFile: () => {
-      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate } = get();
-      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate };
+      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate } = get();
+      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate };
     },
 
     save: () => {

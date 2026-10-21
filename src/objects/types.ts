@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { ParamDef, Params, Vec3 } from '../types';
+import type { FaceStyle } from './materials';
 
 /**
  * Set objects: the pieces users place on a stage (flats, platforms, trusses...).
@@ -81,6 +82,8 @@ export interface SetObject {
   locked?: boolean;
   /** Id of the group this object (or group) belongs to. */
   parent?: string;
+  /** Colour / material / graphic per face id ('*' = all faces). */
+  faces?: Record<string, FaceStyle>;
 }
 
 /** Group entries live in the same list as objects, with this type. They are never drawn themselves. */

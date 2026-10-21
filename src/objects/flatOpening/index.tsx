@@ -76,7 +76,7 @@ export const flatOpeningObject: SetObjectType = {
     const outline: Pt[] = door ? [[-w / 2, 0], [-w / 2, h], [w / 2, h], [w / 2, 0], ...[...hole].reverse()] : [[-w / 2, 0], [-w / 2, h], [w / 2, h], [w / 2, 0]];
     return (
       <>
-        <Extruded outline={outline} holes={door ? [] : [hole]} depth={t} z={front - t / 2} color={SET.face} />
+        <Extruded outline={outline} holes={door ? [] : [hole]} depth={t} z={front - t / 2} color={SET.face} faces={{ front: 'front', back: 'back' }} />
         {bool(p, 'brace') && <Braces width={w} height={h} back={front - t} reach={reach - 0.05} />}
       </>
     );

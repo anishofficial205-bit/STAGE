@@ -6,7 +6,8 @@ import { useMemo } from 'react';
 import * as THREE from 'three';
 import type { Params } from '../../types';
 import { num, str } from '../../helpers/params';
-import { Icon, Mat, SET } from '../common';
+import { Icon, SET, groupByNormal } from '../common';
+import { FaceMat } from '../faceMaterial';
 import type { SetObjectType } from '../types';
 
 const half = (p: Params) => str(p, 'shape') === 'semicircle';
@@ -20,11 +21,12 @@ function HalfRound({ r, h }: { r: number; h: number }) {
     // Shape lies in XY with the curve towards +Y; lay it on the floor with the curve towards +Z.
     g.rotateX(Math.PI / 2);
     g.translate(0, h, -r / 2);
-    return g;
+    return groupByNormal(g, (n) => (n.y > 0.5 ? 0 : 1), 2);
   }, [r, h]);
   return (
     <mesh geometry={geometry} castShadow receiveShadow>
-      <Mat color={SET.body} />
+      <FaceMat attach="material-0" face="top" color={SET.body} />
+      <FaceMat attach="material-1" face="side" color={SET.body} />
     </mesh>
   );
 }
@@ -65,7 +67,9 @@ export const roundPlatformObject: SetObjectType = {
     return (
       <mesh position-y={h / 2} castShadow receiveShadow>
         <cylinderGeometry args={[dia / 2, dia / 2, h, 64]} />
-        <Mat color={SET.body} />
+        <FaceMat attach="material-0" face="side" color={SET.body} />
+        <FaceMat attach="material-1" face="top" color={SET.body} />
+        <FaceMat attach="material-2" color={SET.body} />
       </mesh>
     );
   },

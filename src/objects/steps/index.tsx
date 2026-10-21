@@ -35,7 +35,7 @@ export const stepsObject: SetObjectType = {
       <>
         {Array.from({ length: n }, (_, i) => {
           const h = (H * (i + 1)) / n;
-          return <Cube key={i} at={[0, h / 2, D / 2 - (i + 0.5) * sd]} size={[w, h, sd + 0.002]} color={i % 2 ? SET.body : '#d4d0c7'} />;
+          return <Cube key={i} at={[0, h / 2, D / 2 - (i + 0.5) * sd]} size={[w, h, sd + 0.002]} color={i % 2 ? SET.body : '#d4d0c7'} faces={{ py: 'treads', pz: 'risers', nx: 'sides', px: 'sides' }} />;
         })}
       </>
     );

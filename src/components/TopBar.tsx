@@ -91,7 +91,7 @@ export function TopBar() {
         <button className={`btn ${s.showLabels ? 'is-active' : ''}`} onClick={s.toggleLabels} title="Show or hide dimension labels">
           Labels
         </button>
-        <button className={`btn ${s.snapping ? 'is-active' : ''}`} onClick={s.toggleSnapping} title="Snap objects to the grid, stage edges and each other (hold Alt while dragging to place freely)">
+        <button className={`btn ${s.snapping ? 'is-active' : ''}`} onClick={s.toggleSnapping} title="Snap objects to the grid, stage edges and each other (hold ⌘/Ctrl while dragging to place freely)">
           Snap
         </button>
         <button className="btn btn--icon" onClick={() => window.dispatchEvent(new Event(TOUR_EVENT))} title="Show the quick tour" aria-label="Help">

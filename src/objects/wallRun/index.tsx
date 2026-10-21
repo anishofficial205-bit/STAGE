@@ -6,7 +6,8 @@
 import type { Params } from '../../types';
 import { num } from '../../helpers/params';
 import type { Pt } from '../../helpers/shapes';
-import { Icon, Mat, SET } from '../common';
+import { Icon, SET } from '../common';
+import { FaceMat } from '../faceMaterial';
 import type { SetObjectType } from '../types';
 
 /** Panel joint points, oriented so the run is centred and bends away from the audience (towards -Z). */
@@ -76,7 +77,9 @@ export const wallRunObject: SetObjectType = {
             <mesh key={i} position={[(x0 + x1) / 2, h / 2, (z0 + z1) / 2]} rotation-y={Math.atan2(-(z1 - z0), x1 - x0)} castShadow receiveShadow>
               {/* Slightly longer than the panel so corners close up. */}
               <boxGeometry args={[len + t * 0.9, h, t]} />
-              <Mat color={i % 2 ? SET.face : '#e3e0d8'} />
+              {(['', '', '', '', `panel-${i + 1}-front`, `panel-${i + 1}-back`] as const).map((f, k) => (
+                <FaceMat key={k} attach={`material-${k}`} face={f || undefined} color={i % 2 ? SET.face : '#e3e0d8'} />
+              ))}
             </mesh>
           );
         })}

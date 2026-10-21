@@ -7,7 +7,8 @@ import * as THREE from 'three';
 import type { Params, Vec3 } from '../../types';
 import { bool, num, str } from '../../helpers/params';
 import { Beam } from '../../helpers/primitives';
-import { Cube, Icon, Mat, SET } from '../common';
+import { Cube, Icon, SET, groupByNormal } from '../common';
+import { FaceMat } from '../faceMaterial';
 import type { SetObjectType } from '../types';
 
 const TREAD = 0.28;
@@ -39,7 +40,7 @@ function CurvedSteps({ p }: { p: Params }) {
         const g = new THREE.ExtrudeGeometry(shape, { depth: (H * (i + 1)) / n, bevelEnabled: false, curveSegments: 6 });
         // Shape in XY → floor (X, -Z), extruded upwards.
         g.rotateX(-Math.PI / 2);
-        return g;
+        return groupByNormal(g, (n) => (n.y > 0.5 ? 0 : 1), 2);
       }),
     [n, H, ro],
   );
@@ -52,7 +53,8 @@ function CurvedSteps({ p }: { p: Params }) {
     <group position={[-(box.minX + box.maxX) / 2, 0, -(box.minZ + box.maxZ) / 2]}>
       {geoms.map((g, i) => (
         <mesh key={i} geometry={g} castShadow receiveShadow>
-          <Mat color={i % 2 ? SET.body : '#d4d0c7'} />
+          <FaceMat attach="material-0" face="treads" color={i % 2 ? SET.body : '#d4d0c7'} />
+          <FaceMat attach="material-1" face="sides" color={i % 2 ? SET.body : '#d4d0c7'} />
         </mesh>
       ))}
       {bool(p, 'railing') && <Railing points={rail} />}
@@ -119,7 +121,7 @@ export const staircaseObject: SetObjectType = {
       <>
         {Array.from({ length: n }, (_, i) => {
           const h = (H * (i + 1)) / n;
-          return <Cube key={i} at={[0, h / 2, D / 2 - (i + 0.5) * TREAD]} size={[w, h, TREAD + 0.002]} color={i % 2 ? SET.body : '#d4d0c7'} />;
+          return <Cube key={i} at={[0, h / 2, D / 2 - (i + 0.5) * TREAD]} size={[w, h, TREAD + 0.002]} color={i % 2 ? SET.body : '#d4d0c7'} faces={{ py: 'treads', nx: 'sides', px: 'sides', pz: 'sides' }} />;
         })}
         {bool(p, 'railing') && <Railing points={rail} />}
       </>

@@ -7,6 +7,7 @@ import { setElevation, setParams, setProps, setRotation } from '../../objects/ac
 import type { NumberParam, ParamDef, ParamValue } from '../../types';
 import { useOffStageIds } from './LayersPanel';
 import { ArrayTool, MultiProperties } from './ArrangeTools';
+import { FacesSection } from './FacesSection';
 
 const pos = (key: string, label: string, help?: string): NumberParam => ({ key, label, group: 'Position', type: 'number', default: 0, min: -200, max: 200, step: 0.05, help });
 
@@ -74,6 +75,7 @@ export function ObjectProperties() {
         </section>
       ))}
 
+      <FacesSection o={o} />
       <ArrayTool />
 
       <div className="btn-row">

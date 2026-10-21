@@ -27,7 +27,7 @@ export const bannerObject: SetObjectType = {
     const [w, h] = [num(p, 'width'), num(p, 'height')];
     return (
       <>
-        <Cube at={[0, h / 2, 0]} size={[w, h, 0.008]} color={SET.cloth} />
+        <Cube at={[0, h / 2, 0]} size={[w, h, 0.008]} color={SET.cloth} faces={{ pz: 'front', nz: bool(p, 'doubleSided') ? 'back' : undefined }} />
         {[0.02, h - 0.02].map((y) => (
           <mesh key={y} position={[0, y, 0]} rotation-z={Math.PI / 2} castShadow>
             <cylinderGeometry args={[0.02, 0.02, w + 0.04, 8]} />

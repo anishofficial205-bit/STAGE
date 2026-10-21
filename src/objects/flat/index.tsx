@@ -37,7 +37,7 @@ export const flatObject: SetObjectType = {
     const front = (t + reach) / 2; // z of the front face
     return (
       <>
-        <Cube at={[0, h / 2, front - t / 2]} size={[w, h, t]} color={SET.face} />
+        <Cube at={[0, h / 2, front - t / 2]} size={[w, h, t]} color={SET.face} faces={{ pz: 'front', nz: 'back' }} />
         {reach > 0 && <Braces width={w} height={h} back={front - t} reach={reach - 0.05} />}
       </>
     );

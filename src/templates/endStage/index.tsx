@@ -16,7 +16,7 @@ import { bool, num, str } from '../../helpers/params';
 import { DimensionLabel } from '../../helpers/DimensionLabel';
 import { Seating, fitRowWidth, rowCentre, seatingExtent, type SeatingOptions } from '../../helpers/Seating';
 import { Box, Panel, Slab } from '../../helpers/primitives';
-import { bulgedRect } from '../../helpers/shapes';
+import { bulgedRect, type Pt } from '../../helpers/shapes';
 import { COLORS } from '../../helpers/materials';
 import { EYE_HEIGHT } from '../../helpers/views';
 
@@ -181,7 +181,15 @@ export const endStageTemplate: StageTemplate = {
     const legH = Math.max(1, Math.min(L.wallH - L.h - 0.5, 6));
     return [
       { id: 'back-wall', label: 'Back wall', position: [0, L.wallH / 2, -L.stageD], rotation: [0, 0, 0], width: L.roomW, height: L.wallH },
-      { id: 'stage-floor', label: 'Stage floor', position: [0, L.h, -L.stageD / 2], rotation: [-Math.PI / 2, 0, 0], width: L.stageW, height: L.stageD },
+      {
+        id: 'stage-floor',
+        label: 'Stage floor',
+        position: [0, L.h + 0.001, -L.stageD / 2],
+        rotation: [-Math.PI / 2, 0, 0],
+        width: L.stageW,
+        height: L.stageD,
+        outline: bulgedRect(L.stageW, -L.stageD, 0, L.bulge).map(([x, z]) => [x, -(z + L.stageD / 2)] as Pt),
+      },
       { id: 'stage-front', label: 'Stage front edge', position: [0, L.h / 2, 0], rotation: [0, 0, 0], width: L.stageW, height: L.h },
       { id: 'left-wall', label: 'Left side wall', position: [-L.roomW / 2, L.wallH / 2, zMid], rotation: [0, Math.PI / 2, 0], width: L.roomL, height: L.wallH },
       { id: 'right-wall', label: 'Right side wall', position: [L.roomW / 2, L.wallH / 2, zMid], rotation: [0, -Math.PI / 2, 0], width: L.roomL, height: L.wallH },

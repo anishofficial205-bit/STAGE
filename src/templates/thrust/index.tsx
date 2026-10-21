@@ -297,7 +297,15 @@ export const thrustTemplate: StageTemplate = {
     return [
       { id: 'back-wall', label: 'Back wall', position: [0, L.h + L.wallH / 2, -L.ud], rotation: [0, 0, 0], width: L.uw, height: L.wallH },
       { id: 'upstage-floor', label: 'Upstage floor', position: [0, L.h, -L.ud / 2], rotation: [-Math.PI / 2, 0, 0], width: L.uw, height: L.ud },
-      { id: 'thrust-floor', label: 'Thrust floor', position: [0, L.h, L.tl / 2], rotation: [-Math.PI / 2, 0, 0], width: L.tw, height: L.tl },
+      {
+        id: 'thrust-floor',
+        label: 'Thrust floor',
+        position: [0, L.h + 0.001, L.tl / 2],
+        rotation: [-Math.PI / 2, 0, 0],
+        width: L.tw,
+        height: L.tl,
+        outline: L.thrust.map(([x, z]) => [x, -(z - L.tl / 2)] as Pt),
+      },
       { id: 'thrust-front', label: 'Thrust front edge', position: [0, L.h / 2, L.tl], rotation: [0, 0, 0], width: frontW, height: L.h },
       { id: 'thrust-left', label: 'Thrust left edge', position: [-L.tw / 2, L.h / 2, L.sideEnd / 2], rotation: [0, -Math.PI / 2, 0], width: L.sideEnd, height: L.h },
       { id: 'thrust-right', label: 'Thrust right edge', position: [L.tw / 2, L.h / 2, L.sideEnd / 2], rotation: [0, Math.PI / 2, 0], width: L.sideEnd, height: L.h },

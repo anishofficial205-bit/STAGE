@@ -4,7 +4,8 @@
 import { useMemo } from 'react';
 import * as THREE from 'three';
 import { num } from '../../helpers/params';
-import { Icon, Mat, SET } from '../common';
+import { Icon, SET, groupByNormal } from '../common';
+import { FaceMat } from '../faceMaterial';
 import type { SetObjectType } from '../types';
 
 function Wedge({ w, l, h }: { w: number; l: number; h: number }) {
@@ -15,11 +16,14 @@ function Wedge({ w, l, h }: { w: number; l: number; h: number }) {
     // Shape x → world z, extrusion → world x.
     g.rotateY(-Math.PI / 2);
     g.translate(w / 2, 0, 0);
-    return g;
+    // Sloped top / the two sides / everything else.
+    return groupByNormal(g, (n) => (n.y > 0.3 ? 0 : Math.abs(n.x) > 0.7 ? 1 : 2), 3);
   }, [w, l, h]);
   return (
     <mesh geometry={geometry} castShadow receiveShadow>
-      <Mat color={SET.body} />
+      <FaceMat attach="material-0" face="top" color={SET.body} />
+      <FaceMat attach="material-1" face="sides" color={SET.body} />
+      <FaceMat attach="material-2" color={SET.body} />
     </mesh>
   );
 }

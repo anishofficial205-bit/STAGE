@@ -68,7 +68,7 @@ export const projectionScreenObject: SetObjectType = {
     return (
       <>
         {b > 0 && <Cube at={[0, y0 + h / 2, -0.01]} size={[w + 2 * b, h + 2 * b, 0.04]} color="#202327" />}
-        <Cube at={[0, y0 + h / 2, 0.015]} size={[w, h, 0.01]} color="#f4f4f1" />
+        <Cube at={[0, y0 + h / 2, 0.015]} size={[w, h, 0.01]} color="#f4f4f1" faces={{ pz: 'screen' }} />
         {!hanging(p) &&
           [-1, 1].map((s) => (
             <group key={s}>

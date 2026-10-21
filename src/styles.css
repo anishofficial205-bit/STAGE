@@ -433,3 +433,30 @@ button, input, select { font: inherit; color: inherit; }
 .layer__chevron.is-open { transform: rotate(90deg); }
 .tool-row { display: flex; gap: 4px; margin-bottom: 10px; }
 .btn--tool { width: 34px; height: 30px; color: #4a5260; }
+
+/* Faces and materials */
+.faces { list-style: none; margin: 0 0 8px; padding: 0; }
+.face__row { width: 100%; display: flex; align-items: center; gap: 8px; border: 0; background: transparent; padding: 5px 4px; border-radius: 6px; cursor: pointer; text-align: left; }
+.face__row:hover { background: #f2f4f7; }
+.face.is-open .face__row { background: var(--accent-soft); }
+.face__name { flex: 1; }
+.face__size { color: var(--muted); font-size: 11px; }
+.face__editor { padding: 8px 4px 4px; }
+.swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.15); flex-shrink: 0; }
+.swatch--none { background: repeating-linear-gradient(45deg, #fff 0 3px, #e3e6ea 3px 6px); }
+.materials { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 10px; }
+.material { display: grid; justify-items: center; gap: 3px; border: 1px solid var(--border); background: var(--panel); border-radius: 6px; padding: 6px 2px; cursor: pointer; font-size: 10.5px; line-height: 1.15; }
+.material:hover { border-color: #c7d7f7; }
+.material.is-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.material__swatch { width: 26px; height: 26px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.15); }
+.material__swatch--wood-light, .material__swatch--wood-dark { background-image: repeating-linear-gradient(170deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 6px) !important; }
+.material__swatch--metal-brushed, .material__swatch--mirror { background-image: linear-gradient(135deg, rgba(255,255,255,0.7), transparent 50%, rgba(0,0,0,0.15)) !important; }
+.material__swatch--glass { opacity: 0.55; }
+.material__swatch--fabric { background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.12) 0 2px, transparent 2px 4px) !important; }
+.material__swatch--concrete { background-image: radial-gradient(rgba(0,0,0,0.2) 1px, transparent 1px) !important; background-size: 4px 4px !important; }
+.material__name { text-align: center; color: var(--text); }
+.colour-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.colour-row input[type='color'] { width: 40px; height: 30px; border: 1px solid var(--border); border-radius: 6px; padding: 2px; background: var(--panel); }
+.colour-hex { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.recent { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+.recent__chip { width: 20px; height: 20px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.15); cursor: pointer; padding: 0; }

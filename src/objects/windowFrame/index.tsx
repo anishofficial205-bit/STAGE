@@ -43,8 +43,8 @@ export const windowFrameObject: SetObjectType = {
     const [w, h] = [num(p, 'width'), num(p, 'height')];
     const { cols, rows } = grid(p);
     const bars = [];
-    for (let i = 0; i <= cols; i++) bars.push(<Cube key={`v${i}`} at={[-w / 2 + (w * i) / cols, h / 2, 0]} size={[MEMBER, h, DEPTH]} color={SET.edge} />);
-    for (let j = 0; j <= rows; j++) bars.push(<Cube key={`h${j}`} at={[0, (h * j) / rows, 0]} size={[w + MEMBER, MEMBER, DEPTH]} color={SET.edge} />);
+    for (let i = 0; i <= cols; i++) bars.push(<Cube key={`v${i}`} at={[-w / 2 + (w * i) / cols, h / 2, 0]} size={[MEMBER, h, DEPTH]} color={SET.edge} face="frame-front" />);
+    for (let j = 0; j <= rows; j++) bars.push(<Cube key={`h${j}`} at={[0, (h * j) / rows, 0]} size={[w + MEMBER, MEMBER, DEPTH]} color={SET.edge} face="frame-front" />);
     return (
       <>
         {bars}
