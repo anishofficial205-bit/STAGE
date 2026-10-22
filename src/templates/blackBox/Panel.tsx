@@ -55,7 +55,7 @@ export function BlackBoxPanel() {
   );
 }
 
-function SelectedBlock({ block, index, units }: { block: Block; index: number; units: 'm' | 'ft' }) {
+export function SelectedBlock({ block, index, units }: { block: Block; index: number; units: 'm' | 'ft' }) {
   const fields = block.kind === 'platform' ? PLATFORM_FIELDS : SEATING_FIELDS;
   const value = (key: string) => {
     const v = (block as unknown as Record<string, number>)[key];

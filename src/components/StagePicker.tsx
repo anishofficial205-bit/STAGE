@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getTemplate, templates } from '../templates/registry';
 import { useProjectStore } from '../store/useProjectStore';
 import type { StageTemplate } from '../types';
@@ -7,6 +7,58 @@ import { Modal } from './Modal';
 import { Collapsible } from './Collapsible';
 import { ObjectLibrary } from './objects/ObjectLibrary';
 import { GraphicsPanel } from './graphics/GraphicsPanel';
+import { deleteMyTemplate, refreshMyTemplates, useMyTemplates, applySavedTemplate, type SavedTemplate } from '../templates/custom/myTemplates';
+
+/** Custom stages saved from Build Your Own, usable in any project. */
+function MyTemplates() {
+  const list = useMyTemplates((s) => s.list);
+  const [confirm, setConfirm] = useState<SavedTemplate | null>(null);
+  useEffect(() => {
+    void refreshMyTemplates();
+  }, []);
+  return (
+    <Collapsible id="my-templates" title={`My templates${list.length ? ` (${list.length})` : ''}`}>
+      {list.length === 0 ? (
+        <p className="hint">Draw a stage in Build Your Own, then use “Save as my template” to keep it here for other projects.</p>
+      ) : (
+        <ul className="picker">
+          {list.map((t) => (
+            <li key={t.id} className="my-template">
+              <button className="card" onClick={() => setConfirm(t)} title={`Use “${t.name}” in this project`}>
+                <span className="card__thumb">{t.thumbnail ? <img src={t.thumbnail} alt="" /> : <span className="card__loading" />}</span>
+                <span className="card__name">{t.name}</span>
+                <span className="card__desc">Saved {new Date(t.savedAt).toLocaleDateString()}</span>
+              </button>
+              <button className="my-template__x" onClick={() => void deleteMyTemplate(t.id)} title="Delete this saved template" aria-label={`Delete ${t.name}`}>
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      {confirm && (
+        <Modal title={`Use “${confirm.name}”?`} onClose={() => setConfirm(null)}>
+          <p className="modal__text">This switches to Build Your Own and replaces its shapes and seating with the saved ones. You can undo it.</p>
+          <div className="modal__actions">
+            <button className="btn" onClick={() => setConfirm(null)}>
+              Cancel
+            </button>
+            <button
+              className="btn btn--primary"
+              autoFocus
+              onClick={() => {
+                applySavedTemplate(confirm);
+                setConfirm(null);
+              }}
+            >
+              Use it
+            </button>
+          </div>
+        </Modal>
+      )}
+    </Collapsible>
+  );
+}
 
 const DIM_NAMES = { width: 'width', depth: 'depth', height: 'height' } as const;
 
@@ -83,6 +135,7 @@ export function StagePicker() {
       </ul>
       </Collapsible>
       </div>
+      <MyTemplates />
       {pending && <SwitchDialog to={pending} onClose={() => setPending(null)} />}
     </aside>
   );

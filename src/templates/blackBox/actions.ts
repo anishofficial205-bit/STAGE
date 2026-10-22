@@ -26,7 +26,7 @@ export const gridSize = () => (useProjectStore.getState().units === 'ft' ? 2 * M
 function update(fn: (blocks: Block[], room: Room, grid: number) => Block[], key?: string) {
   const s = useProjectStore.getState();
   const room = roomOf(s.paramsByTemplate[s.templateId]);
-  s.setData((d) => ({ blocks: fn((d as BlackBoxData).blocks, room, gridSize()) }), key);
+  s.setData((d) => ({ ...(d as object), blocks: fn((d as BlackBoxData).blocks, room, gridSize()) }), key);
 }
 
 /** Apply a change to one block, then re-snap it against the others. */
@@ -72,7 +72,7 @@ export const blockActions = {
   resetLayout: () => {
     const s = useProjectStore.getState();
     const p = s.paramsByTemplate[s.templateId];
-    s.setData(() => ({ blocks: makeLayout(str(p, 'layout'), roomOf(p)) }));
+    s.setData((d) => ({ ...(d as object), blocks: makeLayout(str(p, 'layout'), roomOf(p)) }));
     select(null);
   },
 };

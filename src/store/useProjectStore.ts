@@ -110,6 +110,8 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   /** Remove from the library and from every face and surface that uses it. */
   removeGraphic: (id: string) => void;
   saveView: (view: PresetView) => void;
+  /** Switch to a template with the given params and data, e.g. a saved custom stage (undoable). */
+  loadTemplateState: (templateId: string, params: Params, data: unknown, label: string) => void;
   /** Replace this stage's set with a starter set (undoable). */
   loadStarterSet: (set: StarterSet) => void;
   deleteView: (id: string) => void;
@@ -487,6 +489,21 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         else delete current[surfaceId];
         return { surfaceStylesByTemplate: { ...s.surfaceStylesByTemplate, [s.templateId]: current }, dirty: true };
       });
+    },
+
+    loadTemplateState: (templateId, rawParams, rawData, label) => {
+      const t = getTemplate(templateId);
+      if (!t) return;
+      commit();
+      const params = applyConstraints(t, { ...defaultParams(t), ...rawParams });
+      set((s) => ({
+        templateId,
+        paramsByTemplate: { ...s.paramsByTemplate, [templateId]: params },
+        dataByTemplate: t.data ? { ...s.dataByTemplate, [templateId]: t.data.sanitize(rawData, params) } : s.dataByTemplate,
+        selectedIds: [],
+        ...announce(label),
+        dirty: true,
+      }));
     },
 
     loadStarterSet: (starter) => {

@@ -586,3 +586,12 @@ kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11
 .library__tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
 .btn--small { font-size: 12px; padding: 4px 8px; }
 .field__input { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font: inherit; }
+
+/* Build Your Own */
+.draw-label { display: inline-block; background: rgba(255,255,255,0.95); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; font-size: 11px; font-weight: 600; color: var(--text); white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+.draw-label.is-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+.shape-list { list-style: none; margin: 4px 0 10px; padding: 0; }
+.shape-list .btn { width: 100%; justify-content: flex-start; text-align: left; }
+.block-editor__corner { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 6px; }
+.my-template { position: relative; }
+.my-template__x { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.55); color: #fff; cursor: pointer; line-height: 1; }

@@ -6,6 +6,7 @@
 import * as THREE from 'three';
 import { create } from 'zustand';
 import JSZip from 'jszip';
+import { importMyTemplates, refreshMyTemplates, useMyTemplates } from '../templates/custom/myTemplates';
 import { useEffect } from 'react';
 import { MERGE_WITH_PREVIOUS, useProjectStore } from '../store/useProjectStore';
 import { newObjectId } from '../store/ids';
@@ -273,6 +274,10 @@ export async function exportZip(): Promise<Blob> {
   const s = useProjectStore.getState();
   const zip = new JSZip();
   zip.file('project.json', JSON.stringify(s.toFile(), null, 2));
+  // Saved custom stages ("My templates") travel with the project.
+  await refreshMyTemplates();
+  const mine = useMyTemplates.getState().list;
+  if (mine.length) zip.file('my-templates.json', JSON.stringify(mine));
   for (const g of Object.values(s.graphics)) {
     const blob = await getBlob(g.id);
     if (blob) zip.file(`images/${g.id}.${EXT[g.mime] ?? 'bin'}`, blob);
@@ -297,6 +302,8 @@ export async function importZip(file: Blob) {
     if (mime !== 'image/svg+xml') await storeDisplayCopy(m[1], await decode(blob), blob).catch(() => undefined);
     refresh(m[1]);
   }
+  const mine = zip.file('my-templates.json');
+  if (mine) await importMyTemplates(JSON.parse(await mine.async('string'))).catch(() => undefined);
   useProjectStore.getState().loadFile(project);
 }
 

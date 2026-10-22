@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
+import { SceneModeContext } from '../../components/StageScene';
 import * as THREE from 'three';
 import { Edges } from '@react-three/drei';
 import { useThree, type ThreeEvent } from '@react-three/fiber';
@@ -62,7 +63,7 @@ function Outline({ selected, overlap }: { selected: boolean; overlap: boolean })
   return <Edges color={overlap ? COLORS.overlay : SELECTED} lineWidth={selected ? 3 : 2} />;
 }
 
-function PlatformView({ block, selected, overlap }: { block: Extract<Block, { kind: 'platform' }>; selected: boolean; overlap: boolean }) {
+export function PlatformView({ block, selected, overlap }: { block: Extract<Block, { kind: 'platform' }>; selected: boolean; overlap: boolean }) {
   const handlers = useDrag(block);
   return (
     <group position={[block.x, 0, block.z]} rotation-y={(block.rotation * Math.PI) / 180}>
@@ -75,7 +76,7 @@ function PlatformView({ block, selected, overlap }: { block: Extract<Block, { ki
   );
 }
 
-function SeatingView({ block, selected, overlap }: { block: Extract<Block, { kind: 'seating' }>; selected: boolean; overlap: boolean }) {
+export function SeatingView({ block, selected, overlap }: { block: Extract<Block, { kind: 'seating' }>; selected: boolean; overlap: boolean }) {
   const handlers = useDrag(block);
   const { w, d } = footprint(block);
   const h = (block.rows - 1) * block.rake + 1;
@@ -109,15 +110,10 @@ function LightingGrid({ halfW, halfL, y, color }: { halfW: number; halfL: number
   );
 }
 
-export function BlackBoxScene({ p, data }: { p: Params; data: BlackBoxData }) {
-  const room = roomOf(p);
-  const { halfW, halfL, height } = room;
-  const colors = WALL_COLORS[str(p, 'wallColour')] ?? WALL_COLORS.black;
-  const selectedId = useBlackBoxUI((s) => s.selectedId);
-  const overlap = useMemo(() => overlappingIds(data.blocks), [data.blocks]);
-
-  // Keyboard: Delete removes, R rotates 15° (Shift+R: 90°), Cmd/Ctrl+D duplicates, Esc deselects.
+/** Keyboard for the selected block: Delete removes, R rotates 15° (Shift+R: 90°), Cmd/Ctrl+D duplicates, Esc deselects. */
+export function useBlockKeys(enabled = true) {
   useEffect(() => {
+    if (!enabled) return;
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) return;
@@ -133,7 +129,17 @@ export function BlackBoxScene({ p, data }: { p: Params; data: BlackBoxData }) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [enabled]);
+}
+
+export function BlackBoxScene({ p, data }: { p: Params; data: BlackBoxData }) {
+  const room = roomOf(p);
+  const { halfW, halfL, height } = room;
+  const colors = WALL_COLORS[str(p, 'wallColour')] ?? WALL_COLORS.black;
+  const selectedId = useBlackBoxUI((s) => s.selectedId);
+  const overlap = useMemo(() => overlappingIds(data.blocks), [data.blocks]);
+
+  useBlockKeys(!useContext(SceneModeContext).thumbnail);
 
   return (
     <group>
