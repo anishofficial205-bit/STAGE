@@ -4,35 +4,75 @@ import { useProjectStore } from '../../store/useProjectStore';
 import { formatLength } from '../../units';
 import type { ParamDef } from '../../types';
 import { wallLength } from '../../venue/geometry';
-import { WALL_MATERIALS } from '../../venue/types';
+import { DOOR_PRESETS, ENTRANCE_NAMES, FLOOR_MATERIALS, ROOM_TYPES, WALL_MATERIALS, type Door } from '../../venue/types';
 import { venueActions } from '../../venue/actions';
 import { useVenueUI, type VenueTool } from '../../venue/ui';
+import { polygonArea, roomAt, roomOutline } from '../../venue/rooms';
+import { FURNITURE, getFurniture } from '../../venue/furniture';
+import { formatArea } from './format';
 
 const TOOLS: { id: VenueTool; label: string; key: string; hint: string }[] = [
-  { id: 'select', label: 'Select', key: 'V', hint: 'Click a wall (here or in 3D) to select it. Drag it to move it, drag its round ends to reshape. Drag the background to pan, scroll to zoom.' },
-  { id: 'wall', label: 'Wall', key: 'W', hint: 'Click to start, click to add corners, double-click (or Enter) to finish; click the first corner to close a room. Snaps to the grid, 90°/45° angles, wall ends and the stage — hold Shift for any angle, ⌘/Ctrl to place freely.' },
+  { id: 'select', label: 'Select', key: 'V', hint: 'Click anything (here or in 3D) to select it. Drag walls, wall ends, doors and furniture to move them. Drag the background to pan, scroll to zoom.' },
+  { id: 'wall', label: 'Wall', key: 'W', hint: 'Click to start, click to add corners, double-click (or Enter) to finish; click the first corner to close. Snaps to the grid, 90°/45°, wall ends and the stage — Shift for any angle, ⌘/Ctrl to place freely.' },
+  { id: 'room', label: 'Room', key: 'M', hint: 'Drag out a rectangle to make a room with four walls — or click inside an area your walls already close in.' },
+  { id: 'door', label: 'Door', key: 'D', hint: 'Click on a wall to put a door there. It swings to the side you click on.' },
+  { id: 'furniture', label: 'Furniture', key: 'F', hint: 'Pick a piece, then click in the plan to place it. Near a wall it turns its back to the wall. R rotates the selected piece 90° (Shift: 15°).' },
 ];
 
-/** Left side in Venue mode: the drawing tools. */
+/** Left side in Venue mode: the drawing tools and their options. */
 export function VenueTools() {
   const tool = useVenueUI((s) => s.tool);
   const draft = useVenueUI((s) => s.draft.length);
-  const walls = useProjectStore((s) => s.venue.walls.length);
+  const roomType = useVenueUI((s) => s.roomType);
+  const doorPreset = useVenueUI((s) => s.doorPreset);
+  const furnitureType = useVenueUI((s) => s.furnitureType);
+  const counts = { walls: useProjectStore((s) => s.venue.walls.length), rooms: useProjectStore((s) => s.venue.rooms.length), doors: useProjectStore((s) => s.venue.doors.length) };
+  const ui = useVenueUI.getState();
   const hint = TOOLS.find((t) => t.id === tool)?.hint;
   return (
     <Collapsible id="venue-tools" title="Plan tools">
       <div className="tool-list" role="toolbar" aria-label="Plan tools">
         {TOOLS.map((t) => (
-          <button key={t.id} className={`tool-btn ${tool === t.id ? 'is-active' : ''}`} onClick={() => useVenueUI.getState().setTool(t.id)} aria-pressed={tool === t.id} title={`${t.label} (${t.key})`}>
+          <button key={t.id} className={`tool-btn ${tool === t.id ? 'is-active' : ''}`} onClick={() => ui.setTool(t.id)} aria-pressed={tool === t.id} title={`${t.label} (${t.key})`}>
             <span>{t.label}</span>
             <kbd>{t.key}</kbd>
           </button>
         ))}
       </div>
+      {tool === 'room' && (
+        <label className="field">
+          <span className="field__label">Room type</span>
+          <select className="field__select" value={roomType} onChange={(e) => ui.setChoice({ roomType: e.target.value })}>
+            {Object.entries(ROOM_TYPES).map(([id, t]) => (
+              <option key={id} value={id}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {tool === 'door' && (
+        <div className="chips">
+          {Object.entries(DOOR_PRESETS).map(([id, p]) => (
+            <button key={id} className={`chip ${doorPreset === id ? 'is-active' : ''}`} onClick={() => ui.setChoice({ doorPreset: id as keyof typeof DOOR_PRESETS })}>
+              {p.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {tool === 'furniture' && (
+        <div className="furniture-list">
+          {FURNITURE.map((f) => (
+            <button key={f.id} className={`tool-btn ${furnitureType === f.id ? 'is-active' : ''}`} onClick={() => ui.setChoice({ furnitureType: f.id })}>
+              <span>{f.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
       <p className="hint">{hint}</p>
       {tool === 'wall' && draft > 0 && <p className="panel-msg panel-msg--info">{draft} corner{draft === 1 ? '' : 's'} placed. Esc cancels, Backspace removes the last one.</p>}
       <p className="hint">
-        {walls} wall{walls === 1 ? '' : 's'}
+        {counts.walls} wall{counts.walls === 1 ? '' : 's'} · {counts.rooms} room{counts.rooms === 1 ? '' : 's'} · {counts.doors} door{counts.doors === 1 ? '' : 's'}
       </p>
     </Collapsible>
   );
@@ -44,46 +84,194 @@ const WALL_FIELDS: ParamDef[] = [
   { key: 'height', label: 'Height', group: '', type: 'number', default: 4, min: 0.5, max: 30, step: 0.1 },
   { key: 'material', label: 'Material', group: '', type: 'select', default: 'plaster', options: Object.entries(WALL_MATERIALS).map(([value, m]) => ({ value, label: m.label })) },
 ];
+const ROOM_FIELDS: ParamDef[] = [
+  { key: 'type', label: 'Type', group: '', type: 'select', default: 'custom', options: Object.entries(ROOM_TYPES).map(([value, t]) => ({ value, label: t.label })) },
+  { key: 'floor', label: 'Floor', group: '', type: 'select', default: 'vinyl', options: Object.entries(FLOOR_MATERIALS).map(([value, m]) => ({ value, label: m.label })) },
+  { key: 'wallHeight', label: 'Wall height', group: '', type: 'number', default: 4, min: 0.5, max: 30, step: 0.1 },
+];
+const DOOR_FIELDS: ParamDef[] = [
+  { key: 'kind', label: 'Type', group: '', type: 'select', default: 'single', options: [
+    { value: 'single', label: 'Single door' },
+    { value: 'double', label: 'Double door' },
+    { value: 'opening', label: 'Opening (no door)' },
+  ] },
+  { key: 'width', label: 'Width', group: '', type: 'number', default: 0.9, min: 0.4, max: 10, step: 0.05 },
+  { key: 'height', label: 'Height', group: '', type: 'number', default: 2.1, min: 1, max: 10, step: 0.05 },
+];
 
-/** Right side in Venue mode: the selected wall, or an overview. */
+function Head({ title }: { title: string }) {
+  return (
+    <div className="panel-head">
+      <h2 className="panel-title">{title}</h2>
+      <button className="btn btn--link" onClick={() => useVenueUI.getState().select(null)} title="Deselect (Esc)">
+        Done
+      </button>
+    </div>
+  );
+}
+
+function DoorProps({ door }: { door: Door }) {
+  const units = useProjectStore((s) => s.units);
+  return (
+    <div className="props">
+      <Head title={door.entrance ? `Door · ${door.entrance}` : 'Door'} />
+      {DOOR_FIELDS.map((def) => (
+        <Field key={def.key} def={def} value={(door as unknown as Record<string, number | string>)[def.key]} units={units} onChange={(v) => venueActions.patchDoor(door.id, { [def.key]: v })} />
+      ))}
+      <div className="btn-row">
+        <button className="btn btn--small" onClick={() => venueActions.patchDoor(door.id, { width: DOOR_PRESETS.loading.width, height: DOOR_PRESETS.loading.height, kind: 'double' })} title="3 m wide, 3.5 m high">
+          Loading door size
+        </button>
+        {door.kind !== 'opening' && (
+          <>
+            <button className="btn btn--small" onClick={() => venueActions.patchDoor(door.id, { side: door.side === 1 ? -1 : 1 })} title="Swing to the other side of the wall">
+              ⇅ Flip swing
+            </button>
+            {door.kind === 'single' && (
+              <button className="btn btn--small" onClick={() => venueActions.patchDoor(door.id, { hinge: door.hinge === 'a' ? 'b' : 'a' })} title="Hinge on the other side">
+                ⇆ Flip hinge
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      <section className="group">
+        <h3 className="group__title">Stage connection</h3>
+        <label className="field field--inline">
+          <span className="field__label">Leads onto the stage</span>
+          <button type="button" role="switch" aria-checked={!!door.entrance} className={`switch ${door.entrance ? 'is-on' : ''}`} onClick={() => venueActions.patchDoor(door.id, { entrance: door.entrance ? undefined : nextEntranceName() })}>
+            <span className="switch__knob" />
+          </button>
+        </label>
+        {door.entrance !== undefined && (
+          <label className="field">
+            <span className="field__label">Entrance name</span>
+            <input className="field__input" list="entrance-names" value={door.entrance} onChange={(e) => venueActions.patchDoor(door.id, { entrance: e.target.value }, `door-name:${door.id}`)} />
+            <datalist id="entrance-names">
+              {ENTRANCE_NAMES.map((n) => (
+                <option key={n} value={n} />
+              ))}
+            </datalist>
+          </label>
+        )}
+        <p className="hint">Named entrances are used in Blocking for performers’ entrances and exits.</p>
+      </section>
+      <div className="btn-row">
+        <button className="btn btn--danger" onClick={() => venueActions.removeDoor(door.id)}>
+          Delete door
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** The first suggested entrance name not used yet. */
+function nextEntranceName() {
+  const used = new Set(useProjectStore.getState().venue.doors.map((d) => d.entrance));
+  return ENTRANCE_NAMES.find((n) => !used.has(n)) ?? 'Stage entrance';
+}
+
+/** Right side in Venue mode: the selection's properties, or an overview. */
 export function VenueProperties() {
   const units = useProjectStore((s) => s.units);
-  const walls = useProjectStore((s) => s.venue.walls);
+  const venue = useProjectStore((s) => s.venue);
   const selected = useVenueUI((s) => s.selected);
   const cutaway = useVenueUI((s) => s.cutaway);
-  const wall = selected?.kind === 'wall' ? walls.find((w) => w.id === selected.id) : undefined;
-  if (wall)
-    return (
-      <div className="props">
-        <div className="panel-head">
-          <h2 className="panel-title">Wall</h2>
-          <button className="btn btn--link" onClick={() => useVenueUI.getState().select(null)} title="Deselect (Esc)">
-            Done
-          </button>
+  const { walls, rooms, doors, furniture } = venue;
+
+  if (selected?.kind === 'wall') {
+    const wall = walls.find((w) => w.id === selected.id);
+    if (wall)
+      return (
+        <div className="props">
+          <Head title="Wall" />
+          {WALL_FIELDS.map((def) => (
+            <Field
+              key={def.key}
+              def={def}
+              value={def.key === 'length' ? wallLength(wall) : (wall as unknown as Record<string, number | string>)[def.key]}
+              units={units}
+              onChange={(v) => (def.key === 'length' ? venueActions.setLength(wall.id, v as number) : venueActions.patchWall(wall.id, { [def.key]: v }))}
+            />
+          ))}
+          <p className="hint">
+            {doors.filter((d) => d.wallId === wall.id).length} door(s) in this wall
+          </p>
+          <div className="btn-row">
+            <button className="btn btn--danger" onClick={() => venueActions.removeWall(wall.id)} title="Delete (Delete key)">
+              Delete wall
+            </button>
+          </div>
         </div>
-        {WALL_FIELDS.map((def) => (
+      );
+  }
+  if (selected?.kind === 'room') {
+    const room = rooms.find((r) => r.id === selected.id);
+    if (room) {
+      const { polygon, closed } = roomOutline(walls, room);
+      return (
+        <div className="props">
+          <Head title="Room" />
+          <label className="field">
+            <span className="field__label">Name</span>
+            <input className="field__input" value={room.name} onChange={(e) => venueActions.patchRoom(room.id, { name: e.target.value }, `room-name:${room.id}`)} />
+          </label>
+          <p className="hint">Area {formatArea(polygonArea(polygon), units)}</p>
+          {!closed && <p className="panel-msg panel-msg--warning">The walls around this room no longer close it in; it shows its last outline.</p>}
+          {ROOM_FIELDS.map((def) => (
+            <Field
+              key={def.key}
+              def={def}
+              value={(room as unknown as Record<string, number | string>)[def.key]}
+              units={units}
+              onChange={(v) => (def.key === 'wallHeight' ? venueActions.setRoomWallHeight(room.id, v as number, polygon) : venueActions.patchRoom(room.id, { [def.key]: v }))}
+            />
+          ))}
+          <div className="btn-row">
+            <button className="btn btn--danger" onClick={() => venueActions.removeRoom(room.id)} title="Removes the room label and floor; its walls stay">
+              Delete room
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
+  if (selected?.kind === 'door') {
+    const door = doors.find((d) => d.id === selected.id);
+    if (door) return <DoorProps door={door} />;
+  }
+  if (selected?.kind === 'furniture') {
+    const item = furniture.find((f) => f.id === selected.id);
+    const f = item && getFurniture(item.type);
+    if (item && f) {
+      const inRoom = roomAt(walls, rooms, [item.x, item.z]);
+      return (
+        <div className="props">
+          <Head title={f.label} />
+          <p className="hint">{inRoom ? `In ${inRoom.name}` : 'Not inside a room'}</p>
           <Field
-            key={def.key}
-            def={def}
-            value={def.key === 'length' ? wallLength(wall) : (wall as unknown as Record<string, number | string>)[def.key]}
+            def={{ key: 'rotation', label: 'Rotation (°)', group: '', type: 'number', unit: 'none', default: 0, min: -180, max: 180, step: 15 }}
+            value={item.rotation}
             units={units}
-            onChange={(v) => (def.key === 'length' ? venueActions.setLength(wall.id, v as number) : venueActions.patchWall(wall.id, { [def.key]: v }))}
+            onChange={(v) => venueActions.patchFurniture(item.id, { rotation: v as number })}
           />
-        ))}
-        <div className="btn-row">
-          <button className="btn btn--danger" onClick={() => venueActions.removeWall(wall.id)} title="Delete (Delete key)">
-            Delete wall
-          </button>
+          <div className="btn-row">
+            <button className="btn btn--danger" onClick={() => venueActions.removeFurniture(item.id)}>
+              Delete
+            </button>
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
+  }
   const total = walls.reduce((t, w) => t + wallLength(w), 0);
+  const entrances = doors.filter((d) => d.entrance);
   return (
     <div className="props">
       <div className="panel-head">
         <h2 className="panel-title">Venue</h2>
       </div>
-      <p className="sidebar__empty">Draw the building around the stage on the plan: walls first, then rooms and doors. The stage and seating show in grey.</p>
+      <p className="sidebar__empty">Draw the building around the stage on the plan: walls, rooms, doors and furniture. The stage and seating show in grey.</p>
       <p className="hint">
         {walls.length} wall{walls.length === 1 ? '' : 's'}
         {walls.length ? ` · ${formatLength(total, units)} in total` : ''}
@@ -94,6 +282,38 @@ export function VenueProperties() {
           <span className="switch__knob" />
         </button>
       </label>
+      {rooms.length > 0 && (
+        <section className="group">
+          <h3 className="group__title">Rooms</h3>
+          <ul className="venue-list">
+            {rooms.map((r) => (
+              <li key={r.id}>
+                <button className="btn btn--ghost" onClick={() => useVenueUI.getState().select({ kind: 'room', id: r.id })}>
+                  <span className="venue-list__swatch" style={{ background: ROOM_TYPES[r.type]?.color }} />
+                  {r.name}
+                  <span className="hint">{formatArea(polygonArea(roomOutline(walls, r).polygon), units)}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <section className="group">
+        <h3 className="group__title">Stage entrances</h3>
+        {entrances.length ? (
+          <ul className="venue-list">
+            {entrances.map((d) => (
+              <li key={d.id}>
+                <button className="btn btn--ghost" onClick={() => useVenueUI.getState().select({ kind: 'door', id: d.id })}>
+                  ★ {d.entrance}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="hint">Select a door and turn on “Leads onto the stage” to name it (e.g. SL entrance).</p>
+        )}
+      </section>
     </div>
   );
 }

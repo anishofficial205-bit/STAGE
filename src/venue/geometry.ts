@@ -139,3 +139,48 @@ export function snapWallPoint(raw: Pt, prev: Pt | undefined, o: { walls: Wall[];
   }
   return { at: [Math.round(snap(raw[0]) * 1e6) / 1e6, Math.round(snap(raw[1]) * 1e6) / 1e6], kind: 'grid' };
 }
+
+/** Where a door's opening sits along its wall: [start, end] in metres from the wall's start (kept within the wall). */
+export function doorSpan(w: Wall, d: { s: number; width: number }): [number, number] {
+  const L = wallLength(w);
+  const half = Math.min(d.width, L) / 2;
+  const s = Math.max(half, Math.min(L - half, d.s));
+  return [s - half, s + half];
+}
+
+/**
+ * A wall cut around its door openings: the solid pieces (outlines to extrude
+ * full height) and each opening's outline (for lintels and the plan symbol).
+ */
+export function wallPieces(walls: Wall[], w: Wall, doors: { id: string; wallId: string; s: number; width: number }[]) {
+  const poly = wallPolygon(walls, w);
+  const L = wallLength(w);
+  const d = norm(sub(w.b, w.a));
+  const n = left(d);
+  const h = w.thickness / 2;
+  const at = (u: number, side: 1 | -1): Pt => add(add(w.a, mul(d, u)), mul(n, side * h));
+  const leftAt = (u: number): Pt => (u <= 1e-6 ? poly[0] : u >= L - 1e-6 ? poly[1] : at(u, 1));
+  const rightAt = (u: number): Pt => (u <= 1e-6 ? poly[3] : u >= L - 1e-6 ? poly[2] : at(u, -1));
+  const piece = (u0: number, u1: number): Pt[] => [leftAt(u0), leftAt(u1), rightAt(u1), rightAt(u0)];
+  const spans = doors
+    .filter((x) => x.wallId === w.id)
+    .map((x) => ({ id: x.id, span: doorSpan(w, x) }))
+    .sort((a, b) => a.span[0] - b.span[0]);
+  const solids: Pt[][] = [];
+  const openings: { id: string; poly: Pt[]; span: [number, number] }[] = [];
+  let u = 0;
+  for (const { id, span } of spans) {
+    const s0 = Math.max(u, span[0]);
+    if (s0 - u > 0.01) solids.push(piece(u, s0));
+    if (span[1] > s0) openings.push({ id, poly: [at(s0, 1), at(span[1], 1), at(span[1], -1), at(s0, -1)], span: [s0, span[1]] });
+    u = Math.max(u, span[1]);
+  }
+  if (L - u > 0.01) solids.push(piece(u, L));
+  return { solids, openings };
+}
+
+/** A point along a wall and the wall's direction and left normal there. */
+export function wallFrame(w: Wall, u: number) {
+  const d = norm(sub(w.b, w.a));
+  return { at: add(w.a, mul(d, u)), d, n: left(d) };
+}
