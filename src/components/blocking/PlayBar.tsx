@@ -14,7 +14,7 @@ export function PlayBar() {
   const ui = useBlockingUI.getState();
   useAutoCheck();
   return (
-    <div className="playbar" role="group" aria-label="Scene playback">
+    <div className="playbar" role="group" aria-label="Scene playback" data-tour="playbar">
       <button
         className="playbar__play"
         onClick={() => {

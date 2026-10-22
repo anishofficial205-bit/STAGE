@@ -15,7 +15,7 @@ export function LooksSection() {
   const [editing, setEditing] = useState<string | null>(null);
   const [presets, setPresets] = useState(false);
   return (
-    <Collapsible id="light-looks" title={`Looks${looks.length ? ` (${looks.length})` : ''}`}>
+    <Collapsible id="light-looks" title={`Looks${looks.length ? ` (${looks.length})` : ''}`} tour="light-looks">
       <div className="look-save">
         <input className="field__input" placeholder="Name, e.g. Sunset" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (lookActions.save(name), setName(''))} />
         <button className="btn btn--small" onClick={() => (lookActions.save(name), setName(''))} disabled={!fixtures} title="Store every light’s state and the haze">

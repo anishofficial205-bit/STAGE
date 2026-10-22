@@ -59,7 +59,7 @@ export interface ProjectFile {
 }
 
 /** The parts of the project that undo/redo restores. */
-type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics' | 'savedViewsByTemplate' | 'venue' | 'lightingByTemplate' | 'blockingByTemplate'>;
+type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics' | 'savedViewsByTemplate' | 'venue' | 'lightingByTemplate' | 'blockingByTemplate' | 'projectName'>;
 
 export interface ViewRequest {
   view: PresetView;
@@ -130,6 +130,8 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   saveView: (view: PresetView) => void;
   /** Switch to a template with the given params and data, e.g. a saved custom stage (undoable). */
   loadTemplateState: (templateId: string, params: Params, data: unknown, label: string) => void;
+  /** Run several edits as one undo step, then show `label` with an Undo button. */
+  batch: (label: string, fn: () => void) => void;
   /** Replace this stage's set with a starter set (undoable). */
   loadStarterSet: (set: StarterSet) => void;
   deleteView: (id: string) => void;
@@ -284,16 +286,18 @@ function nextName(base: string, objects: SetObject[]) {
 
 export const useProjectStore = create<ProjectState>((set, get) => {
   let lastCommit = { key: '', time: 0 };
+  /** While a batch runs, its edits don't add their own undo steps. */
+  let suspended = false;
 
   const doc = (): Doc => {
     const s = get();
-    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics, savedViewsByTemplate: s.savedViewsByTemplate, venue: s.venue, lightingByTemplate: s.lightingByTemplate, blockingByTemplate: s.blockingByTemplate };
+    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics, savedViewsByTemplate: s.savedViewsByTemplate, venue: s.venue, lightingByTemplate: s.lightingByTemplate, blockingByTemplate: s.blockingByTemplate, projectName: s.projectName };
   };
 
   /** Record the current state as an undo step before a change. */
   const commit = (key = '') => {
     // MERGE_WITH_PREVIOUS: a follow-up adjustment that belongs to the step just recorded.
-    if (key === MERGE_WITH_PREVIOUS) return;
+    if (key === MERGE_WITH_PREVIOUS || suspended) return;
     const now = Date.now();
     if (key && key === lastCommit.key && now - lastCommit.time < COALESCE_MS) {
       lastCommit.time = now;
@@ -528,6 +532,18 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         else delete current[surfaceId];
         return { surfaceStylesByTemplate: { ...s.surfaceStylesByTemplate, [s.templateId]: current }, dirty: true };
       });
+    },
+
+    batch: (label, fn) => {
+      commit();
+      suspended = true;
+      try {
+        fn();
+      } finally {
+        suspended = false;
+        lastCommit = { key: '', time: 0 };
+      }
+      set({ ...announce(label), dirty: true });
     },
 
     loadTemplateState: (templateId, rawParams, rawData, label) => {

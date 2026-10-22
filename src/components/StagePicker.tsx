@@ -8,6 +8,46 @@ import { Collapsible } from './Collapsible';
 import { ObjectLibrary } from './objects/ObjectLibrary';
 import { GraphicsPanel } from './graphics/GraphicsPanel';
 import { VenueLeft } from './venue/VenuePanels';
+import { EXAMPLES, loadExampleProject } from '../starters/projects';
+
+/** Complete example projects (one per stage type) that use every mode. */
+function ExampleProjects() {
+  const [confirm, setConfirm] = useState<string | null>(null);
+  return (
+    <Collapsible id="examples" title="Example projects" defaultOpen={false}>
+      <p className="hint">Complete projects with a venue, set, curtains, lights and blocking — a good way to see every mode.</p>
+      <ul className="venue-list">
+        {templates.map((t) => (
+          <li key={t.id}>
+            <button className="btn btn--ghost" onClick={() => setConfirm(t.id)}>
+              {EXAMPLES[t.id]?.title} <span className="hint">{t.name}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {confirm && (
+        <Modal title={`Open “${EXAMPLES[confirm]?.title}”?`} onClose={() => setConfirm(null)}>
+          <p className="modal__text">This replaces the current project with the example. You can undo it.</p>
+          <div className="modal__actions">
+            <button className="btn" onClick={() => setConfirm(null)}>
+              Cancel
+            </button>
+            <button
+              className="btn btn--primary"
+              autoFocus
+              onClick={() => {
+                loadExampleProject(confirm);
+                setConfirm(null);
+              }}
+            >
+              Open example
+            </button>
+          </div>
+        </Modal>
+      )}
+    </Collapsible>
+  );
+}
 import { LightsLeft } from './lights/LightsPanels';
 import { BlockingLeft } from './blocking/BlockingPanels';
 import { deleteMyTemplate, refreshMyTemplates, useMyTemplates, applySavedTemplate, type SavedTemplate } from '../templates/custom/myTemplates';
@@ -157,6 +197,7 @@ export function StagePicker() {
       </Collapsible>
       </div>
       <MyTemplates />
+      <ExampleProjects />
       {pending && <SwitchDialog to={pending} onClose={() => setPending(null)} />}
     </aside>
   );

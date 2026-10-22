@@ -148,7 +148,7 @@ export async function runChecks(scene3d: THREE.Scene, onProgress: (p: number) =>
       }
     close(seen);
     onProgress(time / duration);
-    if (i % 4 === 3) await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
   }
   close(new Set());
   return done.sort((x, y) => x.time - y.time);

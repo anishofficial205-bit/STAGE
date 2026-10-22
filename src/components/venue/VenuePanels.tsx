@@ -98,7 +98,7 @@ export function VenueTools() {
   const ui = useVenueUI.getState();
   const hint = TOOLS.find((t) => t.id === tool)?.hint;
   return (
-    <Collapsible id="venue-tools" title="Plan tools">
+    <Collapsible id="venue-tools" title="Plan tools" tour="venue-tools">
       <div className="tool-list" role="toolbar" aria-label="Plan tools">
         {TOOLS.map((t) => (
           <button key={t.id} className={`tool-btn ${tool === t.id ? 'is-active' : ''}`} onClick={() => ui.setTool(t.id)} aria-pressed={tool === t.id} title={`${t.label} (${t.key})`}>

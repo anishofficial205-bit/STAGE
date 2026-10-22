@@ -12,6 +12,7 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
       ['⇧⌘Z / Ctrl+Y', 'Redo'],
       ['⌘S / Ctrl+S', 'Save now (your work also saves automatically)'],
       ['1 – 5', 'Switch mode: Venue, Stage, Set, Lights, Blocking'],
+      ['⌘Z / ⇧⌘Z', 'Undo / redo works in every mode'],
       ['?', 'Show this sheet'],
       ['Esc', 'Deselect, or leave a seat'],
     ],
@@ -40,6 +41,24 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
       ['Shift / ⌘/Ctrl while drawing', 'Any angle / no snapping'],
       ['Enter, Backspace, Esc', 'Finish, remove the last corner, cancel'],
       ['Scroll, drag background', 'Zoom, pan the plan'],
+    ],
+  },
+  {
+    title: 'Lights',
+    rows: [
+      ['Click / Shift-click', 'Select a light / add to the selection'],
+      ['Drag a light', 'Move it along pipes, booms and truss (or the floor)'],
+      ['F', 'Click to focus the selected lights'],
+      ['⌘D, Delete', 'Duplicate, delete'],
+    ],
+  },
+  {
+    title: 'Blocking',
+    rows: [
+      ['Space', 'Play / pause the scene'],
+      ['Drag a performer', 'Set where they start the scene (⌘/Ctrl: off the grid)'],
+      ['Click, double-click / Enter', 'Add a path point, finish the path'],
+      ['Delete', 'Delete the selected performer, path or mark'],
     ],
   },
   {

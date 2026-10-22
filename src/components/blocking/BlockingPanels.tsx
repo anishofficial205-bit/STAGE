@@ -51,7 +51,7 @@ function Cast() {
   const b = useActiveBlocking();
   const selected = useBlockingUI((s) => (s.selected?.kind === 'performer' ? s.selected.ids : []));
   return (
-    <Collapsible id="bk-cast" title={`Cast (${b.performers.length})`}>
+    <Collapsible id="bk-cast" title={`Cast (${b.performers.length})`} tour="cast">
       <ul className="cast-list">
         {b.performers.map((p) => (
           <li key={p.id} className={selected.includes(p.id) ? 'is-selected' : ''}>

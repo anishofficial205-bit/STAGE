@@ -100,7 +100,7 @@ export function LightsLeft() {
   }, []);
   return (
     <>
-      <Collapsible id="light-library" title="Add lights">
+      <Collapsible id="light-library" title="Add lights" tour="light-library">
         <Library />
       </Collapsible>
       <Collapsible id="light-positions" title="Hanging positions">

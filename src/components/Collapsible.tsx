@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 
 /** A panel section with a clickable header; remembers whether it was open. */
-export function Collapsible({ id, title, children, defaultOpen = true, extra }: { id: string; title: string; children: ReactNode; defaultOpen?: boolean; extra?: ReactNode }) {
+export function Collapsible({ id, title, children, defaultOpen = true, extra, tour }: { id: string; title: string; children: ReactNode; defaultOpen?: boolean; extra?: ReactNode; tour?: string }) {
   const key = `stage-builder:open:${id}`;
   const [open, setOpen] = useState(() => {
     try {
@@ -20,7 +20,7 @@ export function Collapsible({ id, title, children, defaultOpen = true, extra }: 
     }
   };
   return (
-    <section className={`collapsible ${open ? 'is-open' : ''}`}>
+    <section className={`collapsible ${open ? 'is-open' : ''}`} data-tour={tour}>
       <div className="collapsible__head">
         <button className="collapsible__toggle" onClick={toggle} aria-expanded={open}>
           <span className="collapsible__chevron">▸</span>

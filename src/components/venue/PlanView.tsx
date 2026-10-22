@@ -530,6 +530,7 @@ export function PlanView() {
       <svg
         ref={svg}
         className="plan"
+        data-tour="plan"
         style={{ cursor }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
