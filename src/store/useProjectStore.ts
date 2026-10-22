@@ -11,6 +11,7 @@ import { MATERIALS, type FaceStyle } from '../objects/materials';
 import type { GraphicMeta } from '../graphics/types';
 import type { StarterSet } from '../starters';
 import { isMode, modeEnabled, type Mode, type OtherLayers } from '../modes';
+import { emptyVenue, sanitizeVenue, type Venue } from '../venue/types';
 import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
 
 const STORAGE_KEY = 'stage-builder:project';
@@ -41,6 +42,8 @@ export interface ProjectFile {
   graphics: Record<string, GraphicMeta>;
   /** Favourite seat views per template (shown beside the preset views). */
   savedViewsByTemplate: Record<string, PresetView[]>;
+  /** The building around the stage (Venue mode). */
+  venue: Venue;
   /** The mode the user was working in. */
   mode: Mode;
   /** How things from other modes look: shown normally, dimmed or hidden. */
@@ -48,7 +51,7 @@ export interface ProjectFile {
 }
 
 /** The parts of the project that undo/redo restores. */
-type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics' | 'savedViewsByTemplate'>;
+type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics' | 'savedViewsByTemplate' | 'venue'>;
 
 export interface ViewRequest {
   view: PresetView;
@@ -84,6 +87,8 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   /** Switch mode (Venue, Stage, Set, Lights, Blocking). Clears the selection when leaving Set. */
   setMode: (mode: Mode) => void;
   setOtherLayers: (v: OtherLayers) => void;
+  /** Change the venue. `key` merges rapid edits (drags) into one undo step. */
+  setVenue: (update: (venue: Venue) => Venue, key?: string) => void;
   /** Switch template, either from defaults or carrying the stage width/depth/height across. */
   switchTemplate: (id: string, mode: 'fresh' | 'similar') => void;
   resetToDefaults: () => void;
@@ -136,6 +141,7 @@ function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
     surfaceStylesByTemplate: {},
     graphics: {},
     savedViewsByTemplate: {},
+    venue: emptyVenue(),
     mode: 'stage',
     otherLayers: 'show',
   };
@@ -232,6 +238,7 @@ function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
         ),
       ]),
     ),
+    venue: sanitizeVenue(d.venue),
     mode: isMode(d.mode) && modeEnabled(d.mode) ? d.mode : base.mode,
     otherLayers: d.otherLayers === 'dim' || d.otherLayers === 'hide' ? d.otherLayers : 'show',
   };
@@ -261,7 +268,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   const doc = (): Doc => {
     const s = get();
-    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics, savedViewsByTemplate: s.savedViewsByTemplate };
+    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics, savedViewsByTemplate: s.savedViewsByTemplate, venue: s.venue };
   };
 
   /** Record the current state as an undo step before a change. */
@@ -339,6 +346,10 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       set({ mode, dirty: true, ...(mode === 'set' ? {} : { selectedIds: [] }) });
     },
     setOtherLayers: (otherLayers) => set({ otherLayers, dirty: true }),
+    setVenue: (update, key) => {
+      commit(key);
+      set((s) => ({ venue: update(s.venue), dirty: true }));
+    },
 
     switchTemplate: (id, mode) => {
       const s = get();
@@ -589,8 +600,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setViewportAspect: (viewportAspect) => set({ viewportAspect }),
 
     toFile: () => {
-      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, mode, otherLayers } = get();
-      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, mode, otherLayers };
+      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, mode, otherLayers } = get();
+      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, mode, otherLayers };
     },
 
     save: () => {

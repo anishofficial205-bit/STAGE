@@ -17,8 +17,8 @@ import { FaceContextMenu } from './graphics/FaceContextMenu';
 import { SeatLayer } from './sightlines/SeatLayer';
 import { Capturer } from './export/Capturer';
 import { EmptyHint } from './EmptyHint';
-import { ModeBar } from './ModeBar';
 import { OtherLayer } from './OtherLayer';
+import { VenueLayer } from './venue/VenueLayer';
 import { SeatPanel, ViewTools } from './sightlines/SeatPanel';
 import { goToSeat } from './sightlines/seatActions';
 import { useSightlines } from '../sightlines/store';
@@ -149,7 +149,6 @@ export function Viewport() {
       }}
     >
       <FaceContextMenu />
-      <ModeBar />
       <ViewTools />
       <EmptyHint />
       <SeatPanel />
@@ -164,6 +163,9 @@ export function Viewport() {
       gl={{ antialias: true }}
     >
       <StageScene template={template} params={params} data={data} />
+      <OtherLayer layer="venue">
+        <VenueLayer />
+      </OtherLayer>
       <OtherLayer layer="set">
         <SceneBoundary resetKey={objects}>
           <SetObjectsLayer />

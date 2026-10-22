@@ -274,6 +274,7 @@ function DrawTool({ shapes, size }: { shapes: DrawnShape[]; size: number }) {
           e.stopPropagation();
           const p = pointAt(e);
           if (!p) return;
+          if (e.nativeEvent.detail >= 2) return; // the second click of a double-click finishes (below)
           const ui = useCustomUI.getState();
           if (closesAt(p)) {
             customActions.finishDraft();

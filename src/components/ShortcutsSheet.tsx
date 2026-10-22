@@ -33,6 +33,16 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
     ],
   },
   {
+    title: 'Venue plan',
+    rows: [
+      ['W / V', 'Wall tool / select tool'],
+      ['Click, double-click', 'Add a corner, finish the wall (click the first corner to close a room)'],
+      ['Shift / ⌘/Ctrl while drawing', 'Any angle / no snapping'],
+      ['Enter, Backspace, Esc', 'Finish, remove the last corner, cancel'],
+      ['Scroll, drag background', 'Zoom, pan the plan'],
+    ],
+  },
+  {
     title: 'Seat view',
     rows: [
       ['Click a seat', 'Sit there'],

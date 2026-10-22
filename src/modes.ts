@@ -15,7 +15,7 @@ export interface ModeDef {
 }
 
 export const MODES: ModeDef[] = [
-  { id: 'venue', label: 'Venue', soon: true, description: 'Plan the rooms around the stage' },
+  { id: 'venue', label: 'Venue', description: 'Plan the building around the stage: walls, rooms and doors' },
   { id: 'stage', label: 'Stage', description: 'Pick a stage type and set its dimensions' },
   { id: 'set', label: 'Set', description: 'Build the set: objects, graphics and materials' },
   { id: 'lights', label: 'Lights', soon: true, description: 'Place, aim and colour stage lights' },

@@ -7,6 +7,7 @@ import { Modal } from './Modal';
 import { Collapsible } from './Collapsible';
 import { ObjectLibrary } from './objects/ObjectLibrary';
 import { GraphicsPanel } from './graphics/GraphicsPanel';
+import { VenueTools } from './venue/VenuePanels';
 import { deleteMyTemplate, refreshMyTemplates, useMyTemplates, applySavedTemplate, type SavedTemplate } from '../templates/custom/myTemplates';
 
 /** Custom stages saved from Build Your Own, usable in any project. */
@@ -111,6 +112,12 @@ export function StagePicker() {
         <Collapsible id="graphics" title="Graphics">
           <GraphicsPanel />
         </Collapsible>
+      </aside>
+    );
+  if (mode === 'venue')
+    return (
+      <aside className="sidebar sidebar--left">
+        <VenueTools />
       </aside>
     );
   if (mode !== 'stage') return <aside className="sidebar sidebar--left" />;

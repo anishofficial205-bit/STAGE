@@ -595,3 +595,34 @@ kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11
 .block-editor__corner { border-top: 1px dashed var(--border); margin-top: 6px; padding-top: 6px; }
 .my-template { position: relative; }
 .my-template__x { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.55); color: #fff; cursor: pointer; line-height: 1; }
+
+/* Venue mode: split plan + 3D */
+.viewport { display: flex; }
+.viewport__plan { flex: 0 0 55%; position: relative; border-right: 1px solid var(--border); background: #f3f4f6; min-width: 0; }
+.viewport__3d { flex: 1; position: relative; min-width: 0; }
+.viewport--plan .viewport__plan { flex: 1; border-right: 0; }
+.viewport--plan .viewport__3d { display: none; }
+.viewport--3d > .venue-bar { left: auto; right: 12px; }
+.venue-bar { position: absolute; top: 58px; left: 12px; z-index: 7; display: flex; gap: 6px; align-items: center; }
+.venue-bar .segmented, .venue-bar .btn { background: rgba(255,255,255,0.96); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.plan { display: block; width: 100%; height: 100%; user-select: none; touch-action: none; }
+.plan-grid { stroke: #dde0e5; vector-effect: non-scaling-stroke; stroke-width: 1; }
+.plan-grid.is-major { stroke: #c6cad1; }
+.plan-footprint polygon { fill: #d3d6db; stroke: #b4b9c0; vector-effect: non-scaling-stroke; stroke-width: 1; }
+.plan-seats { fill: #b9bec5; }
+.plan-wall { stroke: rgba(0,0,0,0.25); vector-effect: non-scaling-stroke; stroke-width: 1; }
+.plan-wall:hover { filter: brightness(1.35); }
+.plan-handle { fill: #fff; stroke: #2f6fde; cursor: grab; }
+.plan-draft { fill: none; stroke: #2f6fde; stroke-linejoin: round; }
+.plan-corner { fill: #fff; stroke: #2f6fde; }
+.plan-snap { fill: none; stroke: #2f6fde; }
+.plan-snap.is-end, .plan-snap.is-stage { stroke: #e8590c; }
+.plan-label { fill: #1d2228; paint-order: stroke; stroke: #fff; stroke-linejoin: round; font-weight: 600; pointer-events: none; }
+.plan-label.is-accent { fill: #2f6fde; }
+.plan-scale rect { fill: #1d2228; }
+.plan-scale text { font-size: 11px; fill: #1d2228; }
+.plan-fit { width: 32px; height: 32px; background: #fff; }
+.tool-list { display: grid; gap: 4px; margin-bottom: 8px; }
+.tool-btn { display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); background: #fff; border-radius: 7px; padding: 7px 10px; font: inherit; cursor: pointer; }
+.tool-btn.is-active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.tool-btn kbd { font-size: 11px; color: var(--muted); }
