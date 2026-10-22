@@ -35,6 +35,8 @@ export function applyConstraints(template: Schema, input: Params): Params {
       out[d.key] = isInteger(d) ? Math.round(v) : v;
     } else if (d.type === 'boolean') {
       out[d.key] = typeof raw === 'boolean' ? raw : d.default;
+    } else if (d.type === 'color') {
+      out[d.key] = typeof raw === 'string' && /^#[0-9a-f]{6}$/i.test(raw) ? raw.toLowerCase() : d.default;
     } else {
       out[d.key] = d.options.some((o) => o.value === raw) ? (raw as string) : d.default;
     }

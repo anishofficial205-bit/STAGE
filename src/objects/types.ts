@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import type { ParamDef, Params, Vec3 } from '../types';
+import type { ComponentType, ReactNode } from 'react';
+import type { ParamDef, Params, StageInfo, Vec3 } from '../types';
 import type { FaceStyle } from './materials';
 
 /**
@@ -64,6 +64,13 @@ export interface SetObjectType {
   platformTop?: (params: Params) => number;
   /** Steps/ramps: snap against a platform's edge and match its height via this param. */
   climbs?: { heightParam: string };
+  /**
+   * Where the piece goes when added with a click (not dropped at a point), e.g. a
+   * main curtain behind the proscenium arch. Position is relative to the stage centre.
+   */
+  autoPlace?: (info: StageInfo, params: Params) => { x: number; z: number; elevation?: number; rotation?: number; params?: Params } | null;
+  /** Extra controls in the properties panel, below the params (e.g. "Play open"). */
+  Panel?: ComponentType<{ o: SetObject }>;
 }
 
 /** A placed object, as saved in the project. Position is relative to the stage centre. */

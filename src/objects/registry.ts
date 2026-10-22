@@ -28,6 +28,8 @@ import { projectionScreenObject } from './projectionScreen';
 import { bannerObject } from './banner';
 import { hangingPanelObject } from './hangingPanel';
 import { fixtureObject } from './fixture';
+import { mainCurtainObject } from './curtains/mainCurtain';
+import { valanceObject } from './curtains/valance';
 import { propObjects } from './props';
 
 export const objectTypes: SetObjectType[] = [
@@ -54,6 +56,8 @@ export const objectTypes: SetObjectType[] = [
   projectionScreenObject,
   bannerObject,
   hangingPanelObject,
+  mainCurtainObject,
+  valanceObject,
   fixtureObject,
   ...propObjects,
 ];

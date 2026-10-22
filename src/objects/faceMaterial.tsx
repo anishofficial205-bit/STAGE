@@ -40,14 +40,16 @@ export interface FaceMatProps {
   emissiveMap?: THREE.Texture | null;
   map?: THREE.Texture | null;
   attach?: string;
+  /** How the face looks until the user styles it (e.g. curtains default to velour in their colour). */
+  defaultStyle?: FaceStyle;
 }
 
-export function FaceMat({ face, color, side, opacity = 1, roughness = 0.85, metalness = 0, emissive, emissiveIntensity, emissiveMap, map, attach }: FaceMatProps) {
+export function FaceMat({ face, color, side, opacity = 1, roughness = 0.85, metalness = 0, emissive, emissiveIntensity, emissiveMap, map, attach, defaultStyle }: FaceMatProps) {
   const ctx = useContext(ObjectFaces);
   useReflectionsReady((s) => s.ready); // re-render once reflections exist
   const id = face ?? ALL_FACES;
   const highlighted = useObjectUI((s) => !!ctx && ((s.hoverFace?.objectId === ctx.objectId && (s.hoverFace.face === id || s.hoverFace.face === ALL_FACES)) || (s.selectedFace?.objectId === ctx.objectId && s.selectedFace.face === id)));
-  const style = ctx ? ctx.styles[id] ?? ctx.styles[ALL_FACES] : undefined;
+  const style = (ctx ? ctx.styles[id] ?? ctx.styles[ALL_FACES] : undefined) ?? defaultStyle;
   const size = ctx?.sizes[id] ?? { w: 1, h: 1 };
   const props = style ? styleProps(style, color, size) : { color, roughness, metalness, map: map ?? null, transparent: opacity < 1, opacity, depthWrite: opacity >= 1 };
   const graphic = usePlacedGraphic(style?.graphic, size);

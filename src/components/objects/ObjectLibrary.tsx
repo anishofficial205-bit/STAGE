@@ -1,6 +1,10 @@
 import { objectCategories, objectTypes } from '../../objects/registry';
 import { addObjectAt } from '../../objects/actions';
 import { OBJECT_DRAG_TYPE } from '../../objects/ui';
+import { CurtainTools } from '../../objects/curtains/Tools';
+import { CURTAINS } from '../../objects/curtains/mainCurtain';
+
+const CATEGORY_TOOLS: Record<string, () => JSX.Element> = { [CURTAINS]: CurtainTools };
 
 /** Object tiles by category: drag one into the 3D view, or click to place it at stage centre. */
 export function ObjectLibrary() {
@@ -9,6 +13,7 @@ export function ObjectLibrary() {
       {objectCategories().map((cat) => (
         <div key={cat} className="library__group">
           <h3 className="group__title">{cat}</h3>
+          {CATEGORY_TOOLS[cat]?.()}
           <div className="library__grid">
             {objectTypes
               .filter((t) => t.category === cat)

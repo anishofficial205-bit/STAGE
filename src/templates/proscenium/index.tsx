@@ -261,7 +261,7 @@ export const prosceniumTemplate: StageTemplate = {
     const L = layout(p);
     const floors = [{ outline: rect(-L.houseW / 2, -L.stageD, L.houseW / 2, 0), height: L.h }];
     if (L.apron > 0.01) floors.push({ outline: bulgedRect(L.apronW, -0.01, L.apron, L.bulge), height: L.h });
-    return { centre: [0, -L.stageD / 2], floors };
+    return { centre: [0, -L.stageD / 2], floors, opening: { z: -PROS_WALL / 2 - 0.2, width: L.archW, height: L.archH, backZ: -L.stageD } };
   },
 
   seats: (p) => {

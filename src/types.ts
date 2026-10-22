@@ -45,7 +45,14 @@ export interface SelectParam extends ParamBase {
   options: { value: string; label: string }[];
 }
 
-export type ParamDef = NumberParam | BooleanParam | SelectParam;
+/** A colour (hex), with optional named swatches. */
+export interface ColorParam extends ParamBase {
+  type: 'color';
+  default: string;
+  presets?: { value: string; label: string }[];
+}
+
+export type ParamDef = NumberParam | BooleanParam | SelectParam | ColorParam;
 
 export type AudienceSide = 'front' | 'left' | 'right' | 'back' | 'custom';
 
@@ -122,6 +129,11 @@ export interface StageInfo {
   floors: { outline: Pt[]; height: number }[];
   /** Overhead bars and truss lines that hanging pieces can attach to. */
   rigging?: [Vec3, Vec3][];
+  /**
+   * A framed opening (proscenium arch): world z of the line just behind it where the
+   * main curtain hangs, the opening's width and height, and the depth of the stage behind it.
+   */
+  opening?: { z: number; width: number; height: number; backZ: number };
 }
 
 /** One audience seat in world space, for seat view and sightline checks. */

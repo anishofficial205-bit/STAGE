@@ -137,8 +137,20 @@ export function addObjectAt(typeId: string, world?: Pt) {
   const id = s.addObject(typeId, at);
   if (!id) return;
   const obj = objects().find((o) => o.id === id)!;
-  // Hanging pieces attach to rigging straight away when there is some nearby.
   const type = getObjectType(typeId)!;
+  // Clicked (not dropped): some pieces know their usual spot, e.g. a main curtain behind the arch.
+  const spot = !world && type.autoPlace?.(info, obj.params);
+  if (spot) {
+    s.updateObjects(
+      (list) =>
+        list.map((o) =>
+          o.id === id ? { ...o, x: spot.x, z: spot.z, elevation: spot.elevation ?? o.elevation, rotation: spot.rotation ?? o.rotation, params: spot.params ? applyConstraints(type, { ...o.params, ...spot.params }) : o.params } : o,
+        ),
+      MERGE_WITH_PREVIOUS,
+    );
+    return;
+  }
+  // Hanging pieces attach to rigging straight away when there is some nearby.
   if (placementOf(type, obj.params) !== 'floor') moveSelection(id, [info.centre[0] + obj.x, info.centre[1] + obj.z], { [id]: { x: obj.x, z: obj.z } }, { snap: true, key: MERGE_WITH_PREVIOUS });
   useObjectUI.getState().setGuides([]);
 }

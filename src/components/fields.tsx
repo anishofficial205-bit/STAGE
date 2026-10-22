@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { displayStep, formatNumber, fromDisplay, toDisplay, type Units } from '../units';
-import type { BooleanParam, NumberParam, ParamDef, SelectParam } from '../types';
+import type { BooleanParam, ColorParam, NumberParam, ParamDef, SelectParam } from '../types';
 
 /**
  * Form controls generated from a param definition. Used by the properties
@@ -27,6 +27,7 @@ export function Field(props: FieldProps<ParamDef, unknown>) {
   );
   if (def.type === 'number') return <NumberField {...(props as FieldProps<NumberParam, number>)} label={label} />;
   if (def.type === 'boolean') return <BooleanField {...(props as FieldProps<BooleanParam, boolean>)} label={label} />;
+  if (def.type === 'color') return <ColorField {...(props as FieldProps<ColorParam, string>)} label={label} />;
   return <SelectField {...(props as FieldProps<SelectParam, string>)} label={label} />;
 }
 
@@ -99,6 +100,29 @@ function BooleanField({ def, value, onChange, label }: FieldProps<BooleanParam, 
         <span className="switch__knob" />
       </button>
     </label>
+  );
+}
+
+function ColorField({ def, value, onChange, label }: FieldProps<ColorParam, string> & WithLabel) {
+  return (
+    <div className="field">
+      {label}
+      <div className="color-field">
+        {def.presets?.map((p) => (
+          <button
+            key={p.value}
+            type="button"
+            className={`swatch ${p.value === value ? 'is-active' : ''}`}
+            style={{ background: p.value }}
+            title={p.label}
+            aria-label={p.label}
+            aria-pressed={p.value === value}
+            onClick={() => onChange(p.value)}
+          />
+        ))}
+        <input type="color" className="color-field__picker" value={value} onChange={(e) => onChange(e.target.value)} aria-label={`${def.label} (custom)`} title="Custom colour" />
+      </div>
+    </div>
   );
 }
 

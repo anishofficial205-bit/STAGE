@@ -75,6 +75,7 @@ export function ObjectProperties() {
         </section>
       ))}
 
+      {type.Panel && <type.Panel o={o} />}
       <FacesSection o={o} />
       <ArrayTool />
 

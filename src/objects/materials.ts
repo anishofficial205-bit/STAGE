@@ -17,7 +17,8 @@ export type MaterialId =
   | 'concrete'
   | 'glass'
   | 'mirror'
-  | 'theatre-black';
+  | 'theatre-black'
+  | 'velour';
 
 /** How a face looks. `graphic` is added by the graphics feature. */
 export interface FaceStyle {
@@ -54,6 +55,7 @@ export const MATERIALS: MaterialDef[] = [
   { id: 'glass', name: 'Glass', color: '#d6e8f2', roughness: 0.05, metalness: 0, opacity: 0.3, pattern: null, reflective: true },
   { id: 'mirror', name: 'Mirror', color: '#f2f5f7', roughness: 0.03, metalness: 1, pattern: null, reflective: true },
   { id: 'theatre-black', name: 'Matte black (theatre black)', color: '#141517', roughness: 1, metalness: 0, pattern: null },
+  { id: 'velour', name: 'Velour', color: '#7e1622', roughness: 0.82, metalness: 0, pattern: 'fabric' },
 ];
 
 export const getMaterial = (id: MaterialId) => MATERIALS.find((m) => m.id === id) ?? MATERIALS[0];
