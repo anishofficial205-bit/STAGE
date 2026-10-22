@@ -11,6 +11,7 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
       ['⌘Z / Ctrl+Z', 'Undo'],
       ['⇧⌘Z / Ctrl+Y', 'Redo'],
       ['⌘S / Ctrl+S', 'Save now (your work also saves automatically)'],
+      ['1 – 5', 'Switch mode: Venue, Stage, Set, Lights, Blocking'],
       ['?', 'Show this sheet'],
       ['Esc', 'Deselect, or leave a seat'],
     ],

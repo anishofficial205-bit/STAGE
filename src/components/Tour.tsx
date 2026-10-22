@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { useProjectStore } from '../store/useProjectStore';
 
 /**
  * First-run tour: three tooltips pointing at the stage picker, the properties
@@ -8,6 +9,12 @@ export const TOUR_EVENT = 'stage-builder:tour';
 const DONE_KEY = 'stage-builder:tour-done';
 
 const STEPS = [
+  {
+    target: 'modes',
+    side: 'bottom',
+    title: 'Work in modes',
+    text: 'Stage sets the size and shape, Set builds the scenery. Press 1–5 to switch. Things from other modes stay in view but can’t be picked.',
+  },
   {
     target: 'picker',
     side: 'right',
@@ -50,7 +57,10 @@ export function Tour() {
   }, []);
 
   useEffect(() => {
-    const replay = () => setStep(0);
+    const replay = () => {
+      useProjectStore.getState().setMode('stage');
+      setStep(0);
+    };
     window.addEventListener(TOUR_EVENT, replay);
     return () => window.removeEventListener(TOUR_EVENT, replay);
   }, []);

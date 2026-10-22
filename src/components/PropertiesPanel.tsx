@@ -62,8 +62,6 @@ function TemplateProperties() {
         </p>
       ))}
       {Extra && <Extra />}
-      <StarterSets />
-      <SurfacesSection />
       {groups.map((g) => (
         <section key={g.name} className="group">
           <h3 className="group__title">{g.name}</h3>
@@ -76,17 +74,44 @@ function TemplateProperties() {
   );
 }
 
-/** Right-hand side: the layers list, then properties of the selection (or of the stage when nothing is selected). */
+/** Set mode with nothing selected: starter sets and the stage's own surfaces. */
+function SetProperties() {
+  return (
+    <>
+      <div className="panel-head">
+        <h2 className="panel-title">Set</h2>
+      </div>
+      <p className="sidebar__empty">Click a piece to edit it, or add pieces from the library on the left.</p>
+      <StarterSets />
+      <SurfacesSection />
+    </>
+  );
+}
+
+/**
+ * Right-hand side, by mode. Stage: the template's dimensions. Set: the layers list,
+ * then properties of the selection (or starter sets and stage surfaces when nothing is selected).
+ */
 export function PropertiesPanel() {
+  const mode = useProjectStore((s) => s.mode);
   const hasSelection = useProjectStore((s) => s.selectedIds.length > 0);
   const count = useActiveObjects().length;
+  if (mode === 'stage')
+    return (
+      <aside className="sidebar sidebar--right" data-tour="panel">
+        <div className="props">
+          <TemplateProperties />
+        </div>
+      </aside>
+    );
+  if (mode !== 'set') return <aside className="sidebar sidebar--right" data-tour="panel" />;
   return (
     <aside className="sidebar sidebar--right" data-tour="panel">
       <Collapsible id="layers" title={`Layers${count ? ` (${count})` : ''}`}>
         <LayersPanel />
       </Collapsible>
       <SightlineWarnings />
-      <div className="props">{hasSelection ? <ObjectProperties /> : <TemplateProperties />}</div>
+      <div className="props">{hasSelection ? <ObjectProperties /> : <SetProperties />}</div>
     </aside>
   );
 }

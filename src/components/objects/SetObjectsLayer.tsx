@@ -378,6 +378,8 @@ interface ObjectViewProps {
   rigging: [Vec3, Vec3][];
   locked: boolean;
   flagged: boolean;
+  /** False outside Set mode: the piece is shown but can't be picked. */
+  active: boolean;
 }
 
 /** Only re-render a piece when it (or how it's shown) changes — keeps big sets smooth while dragging one piece. */
@@ -390,12 +392,13 @@ const sameView = (a: ObjectViewProps, b: ObjectViewProps) =>
   a.offStage === b.offStage &&
   a.rigging === b.rigging &&
   a.locked === b.locked &&
-  a.flagged === b.flagged;
+  a.flagged === b.flagged &&
+  a.active === b.active;
 
 const ObjectView = memo(ObjectViewInner, sameView);
 const NO_RIGGING: [Vec3, Vec3][] = [];
 
-function ObjectViewInner({ p, selected, offStage, rigging, locked, flagged }: ObjectViewProps) {
+function ObjectViewInner({ p, selected, offStage, rigging, locked, flagged, active }: ObjectViewProps) {
   const exporting = useExportState((s) => s.exporting);
   const { obj, type, size } = p;
   const built = useMemo(() => type.build(obj.params), [type, obj.params]);
@@ -459,12 +462,12 @@ function ObjectViewInner({ p, selected, offStage, rigging, locked, flagged }: Ob
     e.stopPropagation();
     useProjectStore.getState().select([obj.id]);
   };
-  const interactive = locked ? {} : { ...drag, onDoubleClick, onPointerOver: () => (document.body.style.cursor = 'move'), onPointerOut: () => (document.body.style.cursor = '') };
+  const interactive = locked || !active ? {} : { ...drag, onDoubleClick, onPointerOver: () => (document.body.style.cursor = 'move'), onPointerOut: () => (document.body.style.cursor = '') };
   return (
     <>
       <group position={[p.wx, p.baseY, p.wz]} rotation-y={toRad(obj.rotation)} userData={{ objectId: obj.id }} {...interactive}>
         <ObjectFaces.Provider value={faceCtx}>{built}</ObjectFaces.Provider>
-        {!exporting && (selected || offStage || flagged) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={flagged ? BLOCK : selected ? (offStage ? WARN : SELECT) : WARN} />}
+        {!exporting && active && (selected || offStage || flagged) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={flagged ? BLOCK : selected ? (offStage ? WARN : SELECT) : WARN} />}
       </group>
       {placementOf(type, obj.params) === 'hanging' && <Cables p={p} lines={rigging} />}
     </>
@@ -496,6 +499,8 @@ export function SetObjectsLayer() {
   const tall = useTallWarnings();
   const flagged = useMemo(() => new Set([...(blockingIds ?? []), ...tall.map((w) => w.objectId)]), [blockingIds, tall]);
   const exporting = useExportState((s) => s.exporting);
+  const active = useProjectStore((s) => s.mode === 'set');
+  const editing = active && !exporting;
   const multi = selectedIds.length > 1 ? placed.filter((p) => selectedIds.includes(p.obj.id) && !hidden.has(p.obj.id)) : [];
   // Everything a piece can hang from: the stage's own rigging plus placed truss.
   const rigging = useMemo(() => [...(info.rigging ?? []), ...placed.filter((p) => !inherited(p.obj, objects, 'hidden')).flatMap(worldHangLines)], [info, placed, objects]);
@@ -505,11 +510,11 @@ export function SetObjectsLayer() {
       {placed
         .filter((p) => !hidden.has(p.obj.id))
         .map((p) => (
-          <ObjectView key={p.obj.id} p={p} rigging={placementOf(p.type, p.obj.params) === 'hanging' ? rigging : NO_RIGGING} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} flagged={flagged.has(p.obj.id)} />
+          <ObjectView key={p.obj.id} p={p} rigging={placementOf(p.type, p.obj.params) === 'hanging' ? rigging : NO_RIGGING} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} flagged={flagged.has(p.obj.id)} active={active} />
         ))}
-      {!exporting && single && !locked.has(single.obj.id) && !hidden.has(single.obj.id) && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
-      {!exporting && multi.length > 1 && !multi.some((p) => locked.has(p.obj.id)) && <SelectionHandles members={multi} key={multi.map((p) => p.obj.id).join()} />}
-      {!exporting && guides.map(([a, b], i) => (
+      {editing && single && !locked.has(single.obj.id) && !hidden.has(single.obj.id) && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
+      {editing && multi.length > 1 && !multi.some((p) => locked.has(p.obj.id)) && <SelectionHandles members={multi} key={multi.map((p) => p.obj.id).join()} />}
+      {editing && guides.map(([a, b], i) => (
         <Line key={i} points={[a, b]} color={GUIDE} lineWidth={1.2} depthTest={false} renderOrder={997} />
       ))}
     </group>

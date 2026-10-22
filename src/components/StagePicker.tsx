@@ -49,6 +49,19 @@ export function StagePicker() {
   const templateId = useProjectStore((s) => s.templateId);
   const images = useThumbnails((s) => s.images);
   const [pending, setPending] = useState<StageTemplate | null>(null);
+  const mode = useProjectStore((s) => s.mode);
+  if (mode === 'set')
+    return (
+      <aside className="sidebar sidebar--left">
+        <Collapsible id="library" title="Add objects">
+          <ObjectLibrary />
+        </Collapsible>
+        <Collapsible id="graphics" title="Graphics">
+          <GraphicsPanel />
+        </Collapsible>
+      </aside>
+    );
+  if (mode !== 'stage') return <aside className="sidebar sidebar--left" />;
   return (
     <aside className="sidebar sidebar--left">
       <div data-tour="picker">
@@ -70,12 +83,6 @@ export function StagePicker() {
       </ul>
       </Collapsible>
       </div>
-      <Collapsible id="library" title="Add objects">
-        <ObjectLibrary />
-      </Collapsible>
-      <Collapsible id="graphics" title="Graphics">
-        <GraphicsPanel />
-      </Collapsible>
       {pending && <SwitchDialog to={pending} onClose={() => setPending(null)} />}
     </aside>
   );

@@ -27,6 +27,9 @@ function useDrag(block: Block) {
   const controls = useThree((s) => s.controls) as OrbitControlsImpl | null;
   const drag = useRef<{ dx: number; dz: number } | null>(null);
   const hit = new THREE.Vector3();
+  // Seating blocks belong to the Stage mode; elsewhere they're shown but can't be picked.
+  const active = useProjectStore((s) => s.mode === 'stage');
+  if (!active) return {};
 
   return {
     onPointerDown: (e: ThreeEvent<PointerEvent>) => {

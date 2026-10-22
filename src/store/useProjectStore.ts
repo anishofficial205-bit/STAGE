@@ -10,6 +10,7 @@ import { GROUP_TYPE } from '../objects/types';
 import { MATERIALS, type FaceStyle } from '../objects/materials';
 import type { GraphicMeta } from '../graphics/types';
 import type { StarterSet } from '../starters';
+import { isMode, modeEnabled, type Mode, type OtherLayers } from '../modes';
 import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
 
 const STORAGE_KEY = 'stage-builder:project';
@@ -40,6 +41,10 @@ export interface ProjectFile {
   graphics: Record<string, GraphicMeta>;
   /** Favourite seat views per template (shown beside the preset views). */
   savedViewsByTemplate: Record<string, PresetView[]>;
+  /** The mode the user was working in. */
+  mode: Mode;
+  /** How things from other modes look: shown normally, dimmed or hidden. */
+  otherLayers: OtherLayers;
 }
 
 /** The parts of the project that undo/redo restores. */
@@ -76,6 +81,9 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   setProjectName: (name: string) => void;
   setUnits: (units: Units) => void;
   toggleLabels: () => void;
+  /** Switch mode (Venue, Stage, Set, Lights, Blocking). Clears the selection when leaving Set. */
+  setMode: (mode: Mode) => void;
+  setOtherLayers: (v: OtherLayers) => void;
   /** Switch template, either from defaults or carrying the stage width/depth/height across. */
   switchTemplate: (id: string, mode: 'fresh' | 'similar') => void;
   resetToDefaults: () => void;
@@ -126,6 +134,8 @@ function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
     surfaceStylesByTemplate: {},
     graphics: {},
     savedViewsByTemplate: {},
+    mode: 'stage',
+    otherLayers: 'show',
   };
 }
 
@@ -220,6 +230,8 @@ function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
         ),
       ]),
     ),
+    mode: isMode(d.mode) && modeEnabled(d.mode) ? d.mode : base.mode,
+    otherLayers: d.otherLayers === 'dim' || d.otherLayers === 'hide' ? d.otherLayers : 'show',
   };
 }
 
@@ -303,6 +315,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     dismissLastAction: () => set({ lastAction: null }),
 
     select: (ids, additive = false) => {
+      // Set pieces can only be picked in Set mode.
+      if (ids.length && get().mode !== 'set') return;
       const existing = new Set(activeObjects().map((o) => o.id));
       const current = get().selectedIds;
       let next = ids;
@@ -318,6 +332,11 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setProjectName: (projectName) => set({ projectName, dirty: true }),
     setUnits: (units) => set({ units, dirty: true }),
     toggleLabels: () => set((s) => ({ showLabels: !s.showLabels, dirty: true })),
+    setMode: (mode) => {
+      if (!modeEnabled(mode) || mode === get().mode) return;
+      set({ mode, dirty: true, ...(mode === 'set' ? {} : { selectedIds: [] }) });
+    },
+    setOtherLayers: (otherLayers) => set({ otherLayers, dirty: true }),
 
     switchTemplate: (id, mode) => {
       const s = get();
@@ -553,8 +572,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setViewportAspect: (viewportAspect) => set({ viewportAspect }),
 
     toFile: () => {
-      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate } = get();
-      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate };
+      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, mode, otherLayers } = get();
+      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, mode, otherLayers };
     },
 
     save: () => {

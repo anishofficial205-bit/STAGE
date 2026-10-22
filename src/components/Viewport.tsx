@@ -17,6 +17,8 @@ import { FaceContextMenu } from './graphics/FaceContextMenu';
 import { SeatLayer } from './sightlines/SeatLayer';
 import { Capturer } from './export/Capturer';
 import { EmptyHint } from './EmptyHint';
+import { ModeBar } from './ModeBar';
+import { OtherLayer } from './OtherLayer';
 import { SeatPanel, ViewTools } from './sightlines/SeatPanel';
 import { goToSeat } from './sightlines/seatActions';
 import { useSightlines } from '../sightlines/store';
@@ -88,6 +90,7 @@ export function Viewport() {
   // Dropping a tile from the object library places that object where it lands on the floor;
   // dropping an image file or a library graphic onto a face puts it on that face.
   const onDrop = (e: React.DragEvent) => {
+    if (useProjectStore.getState().mode !== 'set') return;
     const graphicId = e.dataTransfer.getData(GRAPHIC_DRAG_TYPE);
     const files = [...e.dataTransfer.files];
     if (graphicId || files.length) {
@@ -138,6 +141,7 @@ export function Viewport() {
         }
         const start = rightDown.current;
         rightDown.current = null;
+        if (useProjectStore.getState().mode !== 'set') return;
         if (e.button !== 2 || !start || Math.hypot(e.clientX - start[0], e.clientY - start[1]) > 4) return;
         const target = pickFace(e.clientX, e.clientY);
         const rect = e.currentTarget.getBoundingClientRect();
@@ -145,6 +149,7 @@ export function Viewport() {
       }}
     >
       <FaceContextMenu />
+      <ModeBar />
       <ViewTools />
       <EmptyHint />
       <SeatPanel />
@@ -159,9 +164,11 @@ export function Viewport() {
       gl={{ antialias: true }}
     >
       <StageScene template={template} params={params} data={data} />
-      <SceneBoundary resetKey={objects}>
-        <SetObjectsLayer />
-      </SceneBoundary>
+      <OtherLayer layer="set">
+        <SceneBoundary resetKey={objects}>
+          <SetObjectsLayer />
+        </SceneBoundary>
+      </OtherLayer>
       <StageSurfacesLayer />
       <SeatLayer />
       <Capturer />
