@@ -9,6 +9,7 @@ import { Shortcuts } from './components/Shortcuts';
 import { PdfPagePicker } from './components/graphics/PdfPagePicker';
 import { ShortcutsSheet } from './components/ShortcutsSheet';
 import { ModeBar } from './components/ModeBar';
+import { LightPlot } from './components/lights/LightPlot';
 import { PlanView } from './components/venue/PlanView';
 import { VenueViewBar } from './components/venue/VenuePanels';
 import { useProjectStore } from './store/useProjectStore';
@@ -40,6 +41,7 @@ export default function App() {
       <Shortcuts />
       <PdfPagePicker />
       <ShortcutsSheet />
+      <LightPlot />
       <Tour />
       <ThumbnailRenderer />
     </div>

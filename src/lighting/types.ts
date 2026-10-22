@@ -102,11 +102,13 @@ export interface Lighting {
   haze: Haze;
   /** Uploaded gobo images (stored in IndexedDB as gobo-<id>). */
   gobos: { id: string; name: string }[];
+  /** Title block of the light plot. */
+  plot: { venue: string; designer: string };
   /** False until default positions have been made for this stage. */
   ready: boolean;
 }
 
-export const emptyLighting = (): Lighting => ({ fixtures: [], positions: [], looks: [], groups: [], haze: { on: false, density: 40 }, gobos: [], ready: false });
+export const emptyLighting = (): Lighting => ({ fixtures: [], positions: [], looks: [], groups: [], haze: { on: false, density: 40 }, gobos: [], plot: { venue: '', designer: '' }, ready: false });
 
 let counter = 0;
 export const lightId = (p: string) => `${p}${Date.now().toString(36)}${(counter++).toString(36)}`;
@@ -181,5 +183,6 @@ export function sanitizeLighting(raw: unknown): Lighting {
     .filter((g) => g && typeof g.name === 'string' && Array.isArray(g.ids))
     .map((g) => ({ id: typeof g.id === 'string' ? g.id : lightId('g'), name: g.name, ids: g.ids.filter((id) => ids.has(id)) }));
   const gobos = (Array.isArray(r.gobos) ? r.gobos : []).filter((g) => g && typeof g.id === 'string').map((g) => ({ id: g.id, name: typeof g.name === 'string' ? g.name : 'Gobo' }));
-  return { fixtures, positions, looks, groups, haze: haze(r.haze), gobos, ready: !!r.ready };
+  const plot = r.plot && typeof r.plot === 'object' ? r.plot : { venue: '', designer: '' };
+  return { fixtures, positions, looks, groups, haze: haze(r.haze), gobos, plot: { venue: typeof plot.venue === 'string' ? plot.venue : '', designer: typeof plot.designer === 'string' ? plot.designer : '' }, ready: !!r.ready };
 }
