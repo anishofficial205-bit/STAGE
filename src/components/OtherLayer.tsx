@@ -61,7 +61,7 @@ export function OtherLayer({ layer, children }: { layer: Mode; children: ReactNo
     if (look === 'dim' && ref.current) eachMaterial(ref.current, dim);
   });
   useEffect(() => {
-    if (look !== 'dim' && ref.current) eachMaterial(ref.current, undim);
+    if (ref.current) eachMaterial(ref.current, look === 'dim' ? dim : undim);
   }, [look]);
 
   return (
