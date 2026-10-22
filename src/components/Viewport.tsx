@@ -19,6 +19,12 @@ import { Capturer } from './export/Capturer';
 import { EmptyHint } from './EmptyHint';
 import { OtherLayer } from './OtherLayer';
 import { VenueLayer } from './venue/VenueLayer';
+import { LightsLayer } from './lights/LightsLayer';
+import { useLightsUI } from '../lighting/ui';
+import { LIGHT_DRAG_TYPE } from './lights/LightsPanels';
+import { FIXTURES, emptyLighting, type FixtureType } from '../lighting/types';
+import { hangLines, snapToRig } from '../lighting/hang';
+import { lightActions } from '../lighting/actions';
 import { SeatPanel, ViewTools } from './sightlines/SeatPanel';
 import { goToSeat } from './sightlines/seatActions';
 import { useSightlines } from '../sightlines/store';
@@ -50,7 +56,7 @@ function ViewportSync() {
   // Dev-only hooks for automated checks (camera + store); stripped from production builds.
   const three = useThree();
   viewportBridge.three = three;
-  if (import.meta.env.DEV) Object.assign(window, { __three: three, __store: useProjectStore, __objectUI: useObjectUI });
+  if (import.meta.env.DEV) Object.assign(window, { __three: three, __store: useProjectStore, __objectUI: useObjectUI, __lightsUI: useLightsUI });
   useEffect(() => {
     if (width <= 0 || height <= 0) return;
     setAspect(width / height);
@@ -90,6 +96,19 @@ export function Viewport() {
   // Dropping a tile from the object library places that object where it lands on the floor;
   // dropping an image file or a library graphic onto a face puts it on that face.
   const onDrop = (e: React.DragEvent) => {
+    const lightType = e.dataTransfer.getData(LIGHT_DRAG_TYPE);
+    if (lightType && useProjectStore.getState().mode === 'lights' && viewportBridge.three) {
+      e.preventDefault();
+      const three = viewportBridge.three;
+      const rect = three.gl.domElement.getBoundingClientRect();
+      const rc = new THREE.Raycaster();
+      rc.setFromCamera(new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1), three.camera);
+      const s = useProjectStore.getState();
+      const spec = FIXTURES[lightType as FixtureType];
+      const at = spec && snapToRig(rc.ray, hangLines(s.lightingByTemplate[s.templateId] ?? emptyLighting()), spec.mount === 'floor');
+      if (spec) lightActions.addFixture(lightType as FixtureType, at ?? undefined);
+      return;
+    }
     if (useProjectStore.getState().mode !== 'set') return;
     const graphicId = e.dataTransfer.getData(GRAPHIC_DRAG_TYPE);
     const files = [...e.dataTransfer.files];
@@ -119,7 +138,7 @@ export function Viewport() {
       className="viewport__drop"
       onDragOver={(e) => {
         const t = e.dataTransfer.types;
-        if (t.includes(OBJECT_DRAG_TYPE) || t.includes(GRAPHIC_DRAG_TYPE) || t.includes('Files')) {
+        if (t.includes(OBJECT_DRAG_TYPE) || t.includes(GRAPHIC_DRAG_TYPE) || t.includes(LIGHT_DRAG_TYPE) || t.includes('Files')) {
           e.preventDefault();
           e.dataTransfer.dropEffect = 'copy';
         }
@@ -154,7 +173,10 @@ export function Viewport() {
       <SeatPanel />
     <Canvas
       events={(store) => ({ ...defaultEvents(store), filter: (hits) => handlesFirst(hits) })}
-      onPointerMissed={() => useProjectStore.getState().select([])}
+      onPointerMissed={() => {
+        useProjectStore.getState().select([]);
+        if (!useLightsUI.getState().focusMode) useLightsUI.getState().select(null);
+      }}
       shadows
       dpr={[1, 2]}
       // While orbiting, resolution may drop to half to stay smooth; it recovers when you stop.
@@ -165,6 +187,9 @@ export function Viewport() {
       <StageScene template={template} params={params} data={data} />
       <OtherLayer layer="venue">
         <VenueLayer />
+      </OtherLayer>
+      <OtherLayer layer="lights">
+        <LightsLayer />
       </OtherLayer>
       <OtherLayer layer="set">
         <SceneBoundary resetKey={objects}>

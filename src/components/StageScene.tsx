@@ -1,10 +1,12 @@
-import { Component, createContext, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { Component, createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Sky, Stars } from '@react-three/drei';
 import { FloorGrid } from '../helpers/FloorGrid';
 import { DEFAULT_ENVIRONMENT } from '../helpers/environment';
 import type { Bounds, Environment, Params, StageTemplate } from '../types';
 import { useExportState } from '../export/state';
+import { useProjectStore } from '../store/useProjectStore';
+import { useLightsUI } from '../lighting/ui';
 
 /** Lets shared helpers know they're drawing a picker thumbnail (e.g. to hide labels). */
 export const SceneModeContext = createContext({ thumbnail: false });
@@ -69,9 +71,32 @@ export const sceneEnvironment = (template: StageTemplate, params: Params): Envir
 });
 
 /** Sky, lights, ground and the template's stage: everything except the camera. */
+/** The theatre with its working lights out: only the stage lights (and a little spill) light the scene. */
+const darkEnvironment = (env: Environment): Environment => ({
+  ...env,
+  sky: undefined,
+  stars: false,
+  background: '#0a0b0e',
+  fog: '#0a0b0e',
+  ground: '#1b1c20',
+  grid: { cell: '#25272c', section: '#2e3036' },
+  hemisphere: { ...env.hemisphere, intensity: env.hemisphere.intensity * 0.06 },
+  ambient: env.ambient * 0.12,
+  sun: { ...env.sun, intensity: env.sun.intensity * 0.03 },
+});
+
+/** In Lights mode, with the work light off, the scene shows only the stage lighting. */
+export function useStageDark() {
+  const { thumbnail } = useContext(SceneModeContext);
+  const lights = useProjectStore((s) => s.mode === 'lights');
+  const work = useLightsUI((s) => s.workLight);
+  return !thumbnail && lights && !work;
+}
+
 export function StageScene({ template, params, data }: { template: StageTemplate; params: Params; data: unknown }) {
   const bounds = useMemo(() => template.bounds(params, data), [template, params, data]);
-  const env = useMemo(() => sceneEnvironment(template, params), [template, params]);
+  const dark = useStageDark();
+  const env = useMemo(() => (dark ? darkEnvironment : (e: Environment) => e)(sceneEnvironment(template, params)), [template, params, dark]);
   // A fresh object whenever the scene inputs change, so a failed scene gets another try.
   const sceneKey = useMemo(() => ({}), [template, params, data]); // eslint-disable-line react-hooks/exhaustive-deps
   return (

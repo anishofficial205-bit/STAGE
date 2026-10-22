@@ -12,6 +12,7 @@ import type { GraphicMeta } from '../graphics/types';
 import type { StarterSet } from '../starters';
 import { isMode, modeEnabled, type Mode, type OtherLayers } from '../modes';
 import { emptyVenue, sanitizeVenue, type Venue } from '../venue/types';
+import { emptyLighting, sanitizeLighting, type Lighting } from '../lighting/types';
 import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
 
 const STORAGE_KEY = 'stage-builder:project';
@@ -44,6 +45,10 @@ export interface ProjectFile {
   savedViewsByTemplate: Record<string, PresetView[]>;
   /** The building around the stage (Venue mode). */
   venue: Venue;
+  /** Lights, hanging positions, looks and groups for each stage type. */
+  lightingByTemplate: Record<string, Lighting>;
+  /** Draft (fast, no shadows) or Presentation (shadows; used for exports). */
+  lightQuality: 'draft' | 'presentation';
   /** The mode the user was working in. */
   mode: Mode;
   /** How things from other modes look: shown normally, dimmed or hidden. */
@@ -51,7 +56,7 @@ export interface ProjectFile {
 }
 
 /** The parts of the project that undo/redo restores. */
-type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics' | 'savedViewsByTemplate' | 'venue'>;
+type Doc = Pick<ProjectFile, 'templateId' | 'paramsByTemplate' | 'dataByTemplate' | 'objectsByTemplate' | 'surfaceStylesByTemplate' | 'graphics' | 'savedViewsByTemplate' | 'venue' | 'lightingByTemplate'>;
 
 export interface ViewRequest {
   view: PresetView;
@@ -89,6 +94,9 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   setOtherLayers: (v: OtherLayers) => void;
   /** Change the venue. `key` merges rapid edits (drags) into one undo step. */
   setVenue: (update: (venue: Venue) => Venue, key?: string) => void;
+  /** Change the active stage's lighting. `key` merges rapid edits into one undo step; `history: false` skips undo (live fades). */
+  setLighting: (update: (lighting: Lighting) => Lighting, key?: string, history?: boolean) => void;
+  setLightQuality: (q: 'draft' | 'presentation') => void;
   /** Switch template, either from defaults or carrying the stage width/depth/height across. */
   switchTemplate: (id: string, mode: 'fresh' | 'similar') => void;
   resetToDefaults: () => void;
@@ -142,6 +150,8 @@ function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
     graphics: {},
     savedViewsByTemplate: {},
     venue: emptyVenue(),
+    lightingByTemplate: {},
+    lightQuality: 'draft',
     mode: 'stage',
     otherLayers: 'show',
   };
@@ -239,6 +249,8 @@ function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
       ]),
     ),
     venue: sanitizeVenue(d.venue),
+    lightingByTemplate: Object.fromEntries(Object.entries(d.lightingByTemplate && typeof d.lightingByTemplate === 'object' ? d.lightingByTemplate : {}).filter(([id]) => getTemplate(id)).map(([id, l]) => [id, sanitizeLighting(l)])),
+    lightQuality: d.lightQuality === 'presentation' ? 'presentation' : 'draft',
     mode: isMode(d.mode) && modeEnabled(d.mode) ? d.mode : base.mode,
     otherLayers: d.otherLayers === 'dim' || d.otherLayers === 'hide' ? d.otherLayers : 'show',
   };
@@ -268,7 +280,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   const doc = (): Doc => {
     const s = get();
-    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics, savedViewsByTemplate: s.savedViewsByTemplate, venue: s.venue };
+    return { templateId: s.templateId, paramsByTemplate: s.paramsByTemplate, dataByTemplate: s.dataByTemplate, objectsByTemplate: s.objectsByTemplate, surfaceStylesByTemplate: s.surfaceStylesByTemplate, graphics: s.graphics, savedViewsByTemplate: s.savedViewsByTemplate, venue: s.venue, lightingByTemplate: s.lightingByTemplate };
   };
 
   /** Record the current state as an undo step before a change. */
@@ -350,6 +362,11 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       commit(key);
       set((s) => ({ venue: update(s.venue), dirty: true }));
     },
+    setLighting: (update, key, history = true) => {
+      if (history) commit(key);
+      set((s) => ({ lightingByTemplate: { ...s.lightingByTemplate, [s.templateId]: update(s.lightingByTemplate[s.templateId] ?? emptyLighting()) }, dirty: true }));
+    },
+    setLightQuality: (lightQuality) => set({ lightQuality, dirty: true }),
 
     switchTemplate: (id, mode) => {
       const s = get();
@@ -600,8 +617,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setViewportAspect: (viewportAspect) => set({ viewportAspect }),
 
     toFile: () => {
-      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, mode, otherLayers } = get();
-      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, mode, otherLayers };
+      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, lightingByTemplate, lightQuality, mode, otherLayers } = get();
+      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, lightingByTemplate, lightQuality, mode, otherLayers };
     },
 
     save: () => {
@@ -625,3 +642,7 @@ export const useActiveData = () => useProjectStore((s) => s.dataByTemplate[s.tem
 const NO_OBJECTS: SetObject[] = [];
 /** Objects placed on the active template. */
 export const useActiveObjects = () => useProjectStore((s) => s.objectsByTemplate[s.templateId] ?? NO_OBJECTS);
+
+const NO_LIGHTING = emptyLighting();
+/** Lighting of the active stage. */
+export const useActiveLighting = () => useProjectStore((s) => s.lightingByTemplate[s.templateId] ?? NO_LIGHTING);

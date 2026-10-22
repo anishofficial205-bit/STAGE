@@ -662,3 +662,17 @@ kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11
 .route-stats dd { margin: 0; font-weight: 600; text-align: right; }
 .route-row { display: flex; align-items: center; gap: 2px; }
 .route-row__eye { border: 0; background: none; cursor: pointer; width: 24px; font-size: 13px; color: var(--muted); }
+
+/* Lights mode */
+.tile__icon--light { font-size: 18px; line-height: 24px; }
+.channel-tag { display: inline-block; min-width: 18px; padding: 0 4px; border-radius: 9px; background: rgba(20,22,26,0.82); color: #fff; font-size: 10px; font-weight: 700; text-align: center; border: 1px solid rgba(255,255,255,0.35); }
+.channel-tag.is-selected { background: #2f6fde; }
+.channel-tag.is-off { opacity: 0.55; }
+.light-hex { grid-template-columns: 36px 1fr; margin-top: 8px; }
+.gobos { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.gobo { aspect-ratio: 1; border: 1px solid var(--border); border-radius: 7px; background: #111; padding: 2px; cursor: pointer; display: grid; place-items: center; overflow: hidden; }
+.gobo img { width: 100%; height: 100%; border-radius: 50%; }
+.gobo.is-active { outline: 2px solid var(--accent); outline-offset: 1px; }
+.gobo__none { color: #ddd; font-size: 10px; text-align: center; }
+.segmented--wide2 { display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 6px; }
+.btn.is-active { background: var(--accent-soft); color: var(--accent); }

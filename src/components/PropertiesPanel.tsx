@@ -7,6 +7,7 @@ import { SurfacesSection } from './objects/FacesSection';
 import { SightlineWarnings } from './sightlines/SightlineWarnings';
 import { StarterSets } from './StarterSets';
 import { VenueProperties } from './venue/VenuePanels';
+import { LightsProperties } from './lights/LightsPanels';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
 
@@ -109,6 +110,12 @@ export function PropertiesPanel() {
     return (
       <aside className="sidebar sidebar--right" data-tour="panel">
         <VenueProperties />
+      </aside>
+    );
+  if (mode === 'lights')
+    return (
+      <aside className="sidebar sidebar--right" data-tour="panel">
+        <LightsProperties />
       </aside>
     );
   if (mode !== 'set') return <aside className="sidebar sidebar--right" data-tour="panel" />;

@@ -2,7 +2,9 @@
  * The rest of the theatre drapes: legs and borders (masking), the traveler,
  * the cyc cloth, the scrim and the stage skirt.
  */
-import { useMemo } from 'react';
+import { useContext, useMemo } from 'react';
+import { ObjectFaces } from '../faceMaterial';
+import { useScrimTransparency } from '../../lighting/scrim';
 import type { Params, StageInfo } from '../../types';
 import { bool, num, str } from '../../helpers/params';
 import { stageSnapLines } from '../../helpers/stageInfo';
@@ -199,6 +201,14 @@ export const cycClothObject: SetObjectType = {
   },
 };
 
+/** A scrim's look: from the lighting (front vs. behind) when it follows it, else the manual setting. */
+function Scrim({ p }: { p: Params }) {
+  const ctx = useContext(ObjectFaces);
+  const auto = useScrimTransparency(ctx?.objectId, bool(p, 'auto'));
+  const t = auto ?? num(p, 'transparency');
+  return <Smooth p={p} opacity={Math.max(0.04, 1 - t / 100)} />;
+}
+
 export const scrimObject: SetObjectType = {
   id: 'scrim',
   name: 'Scrim',
@@ -217,12 +227,13 @@ export const scrimObject: SetObjectType = {
       { value: '#8d939b', label: 'Grey' },
       { value: '#141416', label: 'Black (sharkstooth)' },
     ] },
-    { key: 'transparency', label: 'Transparency (%)', group: 'Fabric', type: 'number', unit: 'none', default: 40, min: 0, max: 100, step: 1, help: 'A scrim looks solid when lit from the front and see-through when the scene behind it is brighter. Set how see-through it looks.' },
+    { key: 'auto', label: 'Follow the lighting', group: 'Fabric', type: 'boolean', default: true, help: 'Solid when lit from the front, see-through when the scene behind is brighter — worked out from the lights. Off: set it by hand.' },
+    { key: 'transparency', label: 'Transparency (%)', group: 'Fabric', type: 'number', unit: 'none', default: 40, min: 0, max: 100, step: 1, help: 'How see-through it looks (used when it isn’t following the lighting, or when no lights are on).' },
   ],
   constraints: (p) => p,
   size: (p) => ({ width: num(p, 'width'), depth: 0.05, height: num(p, 'height') }),
   resize: { width: 'width' },
-  build: (p) => <Smooth p={p} opacity={Math.max(0.04, 1 - num(p, 'transparency') / 100)} />,
+  build: (p) => <Scrim p={p} />,
   faces: frontBack,
   autoPlace: (info) => {
     const a = playingArea(info);
