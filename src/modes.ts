@@ -19,7 +19,7 @@ export const MODES: ModeDef[] = [
   { id: 'stage', label: 'Stage', description: 'Pick a stage type and set its dimensions' },
   { id: 'set', label: 'Set', description: 'Build the set: objects, graphics and materials' },
   { id: 'lights', label: 'Lights', description: 'Place, aim and colour stage lights' },
-  { id: 'blocking', label: 'Blocking', soon: true, description: 'Plan where performers stand and move' },
+  { id: 'blocking', label: 'Blocking', description: 'Plan where performers stand, enter and move' },
 ];
 
 export const isMode = (v: unknown): v is Mode => MODES.some((m) => m.id === v);

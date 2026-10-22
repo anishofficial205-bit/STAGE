@@ -254,6 +254,14 @@ export const inTheRoundTemplate: StageTemplate = {
     ];
   },
 
+  entrances: (p) => {
+    const L = layout(p);
+    return L.aisleAngles.map((a, i) => {
+      const d = L.reach(a, L.gap * 0.5 + 0.3);
+      return { key: `aisle-${i}`, name: L.vomRows ? `Vom ${i + 1}` : `Aisle ${i + 1}`, x: d * Math.sin(a), z: d * Math.cos(a), facing: ((a * 180) / Math.PI + 180) % 360 };
+    });
+  },
+
   stage: (p) => {
     const L = layout(p);
     const outline = L.polygon ?? regularPolygon(64, L.radius, 0);

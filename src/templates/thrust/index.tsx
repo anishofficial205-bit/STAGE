@@ -314,6 +314,13 @@ export const thrustTemplate: StageTemplate = {
     ];
   },
 
+  // Vomitories at the downstage corners of the thrust, between the front and side seating.
+  entrances: (p) => {
+    const L = layout(p);
+    const off = L.gap * 0.5 + 0.4;
+    return [1, -1].map((s) => ({ key: `vom-${s > 0 ? 'sl' : 'sr'}`, name: s > 0 ? 'DSL vom' : 'DSR vom', x: s * (L.tw / 2 + off), z: L.sideEnd + off, facing: s > 0 ? 225 : 135 }));
+  },
+
   stage: (p) => {
     const L = layout(p);
     return { centre: [0, (L.tl - L.ud) / 2], floors: [{ outline: L.floor, height: L.h }] };

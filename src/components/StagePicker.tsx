@@ -9,6 +9,7 @@ import { ObjectLibrary } from './objects/ObjectLibrary';
 import { GraphicsPanel } from './graphics/GraphicsPanel';
 import { VenueLeft } from './venue/VenuePanels';
 import { LightsLeft } from './lights/LightsPanels';
+import { BlockingLeft } from './blocking/BlockingPanels';
 import { deleteMyTemplate, refreshMyTemplates, useMyTemplates, applySavedTemplate, type SavedTemplate } from '../templates/custom/myTemplates';
 
 /** Custom stages saved from Build Your Own, usable in any project. */
@@ -125,6 +126,12 @@ export function StagePicker() {
     return (
       <aside className="sidebar sidebar--left">
         <LightsLeft />
+      </aside>
+    );
+  if (mode === 'blocking')
+    return (
+      <aside className="sidebar sidebar--left">
+        <BlockingLeft />
       </aside>
     );
   if (mode !== 'stage') return <aside className="sidebar sidebar--left" />;

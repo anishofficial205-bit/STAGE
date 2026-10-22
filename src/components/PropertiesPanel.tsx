@@ -8,6 +8,7 @@ import { SightlineWarnings } from './sightlines/SightlineWarnings';
 import { StarterSets } from './StarterSets';
 import { VenueProperties } from './venue/VenuePanels';
 import { LightsProperties } from './lights/LightsPanels';
+import { BlockingProperties } from './blocking/BlockingPanels';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
 
@@ -116,6 +117,12 @@ export function PropertiesPanel() {
     return (
       <aside className="sidebar sidebar--right" data-tour="panel">
         <LightsProperties />
+      </aside>
+    );
+  if (mode === 'blocking')
+    return (
+      <aside className="sidebar sidebar--right" data-tour="panel">
+        <BlockingProperties />
       </aside>
     );
   if (mode !== 'set') return <aside className="sidebar sidebar--right" data-tour="panel" />;

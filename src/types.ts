@@ -204,6 +204,8 @@ export interface StageTemplate {
   dimensions?: SharedDimensions;
   /** Stage floor areas and rigging, for placing set objects. */
   stage?: (params: Params, data?: unknown) => StageInfo;
+  /** Ways onto the stage the template itself has (vomitories, aisles), for Blocking. Facing is the way onto the stage, in degrees (0 = towards +z). */
+  entrances?: (params: Params, data?: unknown) => { key: string; name: string; x: number; z: number; facing: number }[];
   /** Every audience seat (for seat view and sightlines). */
   seats?: (params: Params, data?: unknown) => SeatInfo[];
 }

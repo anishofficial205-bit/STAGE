@@ -20,6 +20,12 @@ import { EmptyHint } from './EmptyHint';
 import { OtherLayer } from './OtherLayer';
 import { VenueLayer } from './venue/VenueLayer';
 import { LightsLayer } from './lights/LightsLayer';
+import { BlockingLayer } from './blocking/BlockingLayer';
+import { PlayBar } from './blocking/PlayBar';
+import { useBlockingUI } from '../blocking/ui';
+import { posesAt } from '../blocking/actions';
+import { computeEntrances } from '../blocking/entrances';
+import { emptyBlocking } from '../blocking/types';
 import { useLightsUI } from '../lighting/ui';
 import { LIGHT_DRAG_TYPE } from './lights/LightsPanels';
 import { FIXTURES, emptyLighting, type FixtureType } from '../lighting/types';
@@ -56,7 +62,7 @@ function ViewportSync() {
   // Dev-only hooks for automated checks (camera + store); stripped from production builds.
   const three = useThree();
   viewportBridge.three = three;
-  if (import.meta.env.DEV) Object.assign(window, { __three: three, __store: useProjectStore, __objectUI: useObjectUI, __lightsUI: useLightsUI });
+  if (import.meta.env.DEV) Object.assign(window, { __three: three, __store: useProjectStore, __objectUI: useObjectUI, __lightsUI: useLightsUI, __blockingUI: useBlockingUI, __blockingSelect: (ids: string[]) => useBlockingUI.getState().select({ kind: 'performer', ids }), __posesAt: posesAt, __entrances: () => computeEntrances(useProjectStore.getState(), useProjectStore.getState().blockingByTemplate[useProjectStore.getState().templateId] ?? emptyBlocking()) });
   useEffect(() => {
     if (width <= 0 || height <= 0) return;
     setAspect(width / height);
@@ -72,6 +78,7 @@ function ViewportSync() {
 
 export function Viewport() {
   const templateId = useProjectStore((s) => s.templateId);
+  const mode = useProjectStore((s) => s.mode);
   const units = useProjectStore((s) => s.units);
   const requestView = useProjectStore((s) => s.requestView);
   const params = useActiveParams();
@@ -169,6 +176,7 @@ export function Viewport() {
     >
       <FaceContextMenu />
       <ViewTools />
+      {mode === 'blocking' && <PlayBar />}
       <EmptyHint />
       <SeatPanel />
     <Canvas
@@ -176,6 +184,7 @@ export function Viewport() {
       onPointerMissed={() => {
         useProjectStore.getState().select([]);
         if (!useLightsUI.getState().focusMode) useLightsUI.getState().select(null);
+        if (!useBlockingUI.getState().tool) useBlockingUI.getState().select(null);
       }}
       shadows
       dpr={[1, 2]}
@@ -187,6 +196,9 @@ export function Viewport() {
       <StageScene template={template} params={params} data={data} />
       <OtherLayer layer="venue">
         <VenueLayer />
+      </OtherLayer>
+      <OtherLayer layer="blocking">
+        <BlockingLayer />
       </OtherLayer>
       <OtherLayer layer="lights">
         <LightsLayer />
