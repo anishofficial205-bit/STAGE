@@ -3,9 +3,9 @@
  * handles (move / height / rotate / edge-resize), smart guides and the cables
  * of hanging pieces.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
-import { Line } from '@react-three/drei';
+import { Html, Line } from '@react-three/drei';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } from '../../store/useProjectStore';
@@ -118,19 +118,66 @@ function Cables({ p, lines }: { p: Placed; lines: [Vec3, Vec3][] }) {
   );
 }
 
-/** Keeps a handle the same size on screen regardless of zoom. */
-function ScreenSized({ position, children }: { position: Vec3; children: ReactNode }) {
+// --- First-use tips on handles --------------------------------------------------------
+
+const HINTS_KEY = 'stage-builder:handle-hints-seen';
+const seenHints = new Set<string>((() => {
+  try {
+    return JSON.parse(localStorage.getItem(HINTS_KEY) ?? '[]') as string[];
+  } catch {
+    return [];
+  }
+})());
+function markHintSeen(kind: string) {
+  if (seenHints.has(kind)) return;
+  seenHints.add(kind);
+  try {
+    localStorage.setItem(HINTS_KEY, JSON.stringify([...seenHints]));
+  } catch {
+    // ignore
+  }
+}
+
+export const HANDLE_HINTS: Record<string, string> = {
+  resize: 'Drag to resize — the opposite edge stays put. Hold Shift for free sizing.',
+  height: 'Drag up or down to raise or lower the piece. Hold Shift for free movement.',
+  rotate: 'Drag around to rotate in 15° steps. Hold Shift to rotate freely.',
+  'rotate-group': 'Drag around to rotate everything selected together.',
+};
+
+/** Keeps a handle the same size on screen regardless of zoom; shows its tip the first time it's hovered. */
+function ScreenSized({ position, children, hint }: { position: Vec3; children: ReactNode; hint?: string }) {
   const ref = useRef<THREE.Group>(null);
   const camera = useThree((s) => s.camera);
+  const [hover, setHover] = useState(false);
+  const [, rerender] = useState(0);
   useFrame(() => {
     const g = ref.current;
     if (!g) return;
     g.getWorldPosition(tmp);
     g.scale.setScalar(Math.max(0.03, camera.position.distanceTo(tmp) * 0.013));
   });
+  const showTip = !!hint && hover && !seenHints.has(hint);
   return (
-    <group ref={ref} position={position} userData={{ handle: true }}>
+    <group
+      ref={ref}
+      position={position}
+      userData={{ handle: true }}
+      onPointerOver={() => hint && setHover(true)}
+      onPointerOut={() => setHover(false)}
+      onPointerDown={() => {
+        if (hint) {
+          markHintSeen(hint);
+          rerender((n) => n + 1);
+        }
+      }}
+    >
       {children}
+      {showTip && (
+        <Html position={[0, 1.6, 0]} center zIndexRange={[40, 0]} style={{ pointerEvents: 'none' }}>
+          <div className="handle-tip">{HANDLE_HINTS[hint!]}</div>
+        </Html>
+      )}
     </group>
   );
 }
@@ -159,7 +206,7 @@ function EdgeHandle({ p, axis, sign, y }: { p: Placed; axis: 'x' | 'z'; sign: 1 
   });
   const offset = (axis === 'x' ? size.width : size.depth) / 2 + 0.02;
   return (
-    <ScreenSized position={axis === 'x' ? [sign * offset, y, 0] : [0, y, sign * offset]}>
+    <ScreenSized position={axis === 'x' ? [sign * offset, y, 0] : [0, y, sign * offset]} hint="resize">
       <mesh renderOrder={1000} {...drag} onPointerOver={() => (document.body.style.cursor = axis === 'x' ? 'ew-resize' : 'ns-resize')} onPointerOut={() => (document.body.style.cursor = '')}>
         <boxGeometry args={[0.5, 0.5, 0.5]} />
         {handleMat('#ffffff')}
@@ -204,7 +251,7 @@ function SelectionHandles({ members }: { members: Placed[] }) {
       <group position={[cx, box.y0, cz]}>
         <BoxOutline w={box.maxX - box.minX + 0.1} d={box.maxZ - box.minZ + 0.1} h={box.y1 - box.y0 + 0.05} color={SELECT} />
       </group>
-      <ScreenSized position={[cx, box.y0 + 0.03, box.maxZ + 0.5]}>
+      <ScreenSized position={[cx, box.y0 + 0.03, box.maxZ + 0.5]} hint="rotate-group">
         <group {...rotate} onPointerOver={() => (document.body.style.cursor = 'grab')} onPointerOut={() => (document.body.style.cursor = '')}>
           <mesh rotation-x={-Math.PI / 2} renderOrder={1000}>
             <torusGeometry args={[0.7, 0.18, 8, 32]} />
@@ -284,7 +331,7 @@ function Handles({ p }: { p: Placed }) {
       ))}
       {/* Height: a double arrow above the object */}
       {!topDown && (
-      <ScreenSized position={[0, size.height + 0.25, 0]}>
+      <ScreenSized position={[0, size.height + 0.25, 0]} hint="height">
         <group {...height} {...hover('ns-resize')}>
           <mesh position-y={1.6} renderOrder={1000}>
             <coneGeometry args={[0.55, 1, 16]} />
@@ -302,7 +349,7 @@ function Handles({ p }: { p: Placed }) {
       </ScreenSized>
       )}
       {/* Rotate: a ring knob in front of the object */}
-      <ScreenSized position={[0, 0.03, size.depth / 2 + 0.45]}>
+      <ScreenSized position={[0, 0.03, size.depth / 2 + 0.45]} hint="rotate">
         <group {...rotate} {...hover('grab')}>
           <mesh rotation-x={-Math.PI / 2} renderOrder={1000}>
             <torusGeometry args={[0.7, 0.18, 8, 32]} />
@@ -324,7 +371,31 @@ interface DragState {
   pan?: { face: string; uv0: THREE.Vector2; g: GraphicPlacement; aspect: number; size: { w: number; h: number } };
 }
 
-function ObjectView({ p, selected, offStage, rigging, locked, flagged }: { p: Placed; selected: boolean; offStage: boolean; rigging: [Vec3, Vec3][]; locked: boolean; flagged: boolean }) {
+interface ObjectViewProps {
+  p: Placed;
+  selected: boolean;
+  offStage: boolean;
+  rigging: [Vec3, Vec3][];
+  locked: boolean;
+  flagged: boolean;
+}
+
+/** Only re-render a piece when it (or how it's shown) changes — keeps big sets smooth while dragging one piece. */
+const sameView = (a: ObjectViewProps, b: ObjectViewProps) =>
+  a.p.obj === b.p.obj &&
+  a.p.wx === b.p.wx &&
+  a.p.wz === b.p.wz &&
+  a.p.baseY === b.p.baseY &&
+  a.selected === b.selected &&
+  a.offStage === b.offStage &&
+  a.rigging === b.rigging &&
+  a.locked === b.locked &&
+  a.flagged === b.flagged;
+
+const ObjectView = memo(ObjectViewInner, sameView);
+const NO_RIGGING: [Vec3, Vec3][] = [];
+
+function ObjectViewInner({ p, selected, offStage, rigging, locked, flagged }: ObjectViewProps) {
   const exporting = useExportState((s) => s.exporting);
   const { obj, type, size } = p;
   const built = useMemo(() => type.build(obj.params), [type, obj.params]);
@@ -434,7 +505,7 @@ export function SetObjectsLayer() {
       {placed
         .filter((p) => !hidden.has(p.obj.id))
         .map((p) => (
-          <ObjectView key={p.obj.id} p={p} rigging={rigging} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} flagged={flagged.has(p.obj.id)} />
+          <ObjectView key={p.obj.id} p={p} rigging={placementOf(p.type, p.obj.params) === 'hanging' ? rigging : NO_RIGGING} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} flagged={flagged.has(p.obj.id)} />
         ))}
       {!exporting && single && !locked.has(single.obj.id) && !hidden.has(single.obj.id) && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
       {!exporting && multi.length > 1 && !multi.some((p) => locked.has(p.obj.id)) && <SelectionHandles members={multi} key={multi.map((p) => p.obj.id).join()} />}

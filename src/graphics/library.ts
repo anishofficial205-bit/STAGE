@@ -11,7 +11,7 @@ import { MERGE_WITH_PREVIOUS, useProjectStore } from '../store/useProjectStore';
 import { newObjectId } from '../store/ids';
 import { defaultStyle, type FaceStyle } from '../objects/materials';
 import { FLOOR_DECAL, SURFACE, type FaceRef } from '../objects/ui';
-import { getBlob, putBlob } from './db';
+import { deleteBlob, getBlob, putBlob } from './db';
 import { defaultPlacement, type GraphicMeta, type GraphicPlacement } from './types';
 
 /** Biggest texture side we upload (most laptop GPUs handle 4096 comfortably). */
@@ -51,7 +51,7 @@ function toCanvas(img: HTMLImageElement, max: number, scaleUp: boolean) {
 async function loadTexture(id: string) {
   setEntry(id, 'loading');
   try {
-    const blob = await getBlob(id);
+    const blob = (await getBlob(displayKey(id))) ?? (await getBlob(id));
     if (!blob) return setEntry(id, 'missing');
     const img = await decode(blob);
     const svg = blob.type === 'image/svg+xml';
@@ -81,7 +81,9 @@ export function useGraphicUrl(id: string): string | null {
   const url = useGraphicsRuntime((s) => s.urls[id]);
   useEffect(() => {
     if (url) return;
-    void getBlob(id).then((b) => b && useGraphicsRuntime.setState((s) => ({ urls: { ...s.urls, [id]: URL.createObjectURL(b) } })));
+    void getBlob(displayKey(id))
+      .then((d) => d ?? getBlob(id))
+      .then((b) => b && useGraphicsRuntime.setState((s) => ({ urls: { ...s.urls, [id]: URL.createObjectURL(b) } })));
   }, [id, url]);
   return url ?? null;
 }
@@ -133,6 +135,24 @@ const isSvg = (f: File) => f.type === 'image/svg+xml' || /\.svg$/i.test(f.name);
 const isRaster = (f: File) => /^image\/(jpeg|png|webp)$/.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name);
 export const isSupported = (f: File) => isPdf(f) || isSvg(f) || isRaster(f);
 
+/** Display copies are kept beside the original under this key. */
+export const displayKey = (id: string) => `${id}@display`;
+const DISPLAY_MAX = 2048;
+
+/**
+ * Large rasters (over 2048 px or 4 MB) also get a lighter WebP display copy for
+ * the 3D view, so big projects stay fast. The original is kept for print
+ * checks and exports.
+ */
+async function storeDisplayCopy(id: string, img: HTMLImageElement, original: Blob) {
+  await deleteBlob(displayKey(id)).catch(() => undefined);
+  if (original.type === 'image/svg+xml') return;
+  if (Math.max(img.naturalWidth, img.naturalHeight) <= DISPLAY_MAX && original.size <= 4 * 1024 * 1024) return;
+  const c = toCanvas(img, DISPLAY_MAX, false);
+  const copy = await new Promise<Blob | null>((r) => c.toBlob(r, 'image/webp', 0.88));
+  if (copy) await putBlob(displayKey(id), copy);
+}
+
 /** Read a file into stored image + metadata (keeping `id` when replacing). */
 async function store(file: File, id: string): Promise<GraphicMeta | null> {
   const name = file.name.replace(/\.[^.]+$/, '');
@@ -140,11 +160,14 @@ async function store(file: File, id: string): Promise<GraphicMeta | null> {
     const r = await pdfToPng(file);
     if (!r) return null;
     await putBlob(id, r.blob);
+    const img = await decode(r.blob);
+    await storeDisplayCopy(id, img, r.blob);
     return { id, name, width: r.width, height: r.height, mime: 'image/png', bytes: r.blob.size, vector: true, page: r.page };
   }
   const blob = isSvg(file) && !file.type ? new Blob([file], { type: 'image/svg+xml' }) : file;
   const img = await decode(blob);
   await putBlob(id, blob);
+  await storeDisplayCopy(id, img, blob);
   return { id, name, width: img.naturalWidth || 1024, height: img.naturalHeight || 1024, mime: blob.type || 'image/png', bytes: blob.size, vector: isSvg(file) };
 }
 
@@ -269,7 +292,9 @@ export async function importZip(file: Blob) {
     if (!m) continue;
     const mime = metas[m[1]]?.mime ?? 'image/png';
     const data = await zip.file(path)!.async('arraybuffer');
-    await putBlob(m[1], new Blob([data], { type: mime }));
+    const blob = new Blob([data], { type: mime });
+    await putBlob(m[1], blob);
+    if (mime !== 'image/svg+xml') await storeDisplayCopy(m[1], await decode(blob), blob).catch(() => undefined);
     refresh(m[1]);
   }
   useProjectStore.getState().loadFile(project);

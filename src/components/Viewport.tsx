@@ -16,6 +16,7 @@ import { assignGraphic, importFiles, importOnto } from '../graphics/library';
 import { FaceContextMenu } from './graphics/FaceContextMenu';
 import { SeatLayer } from './sightlines/SeatLayer';
 import { Capturer } from './export/Capturer';
+import { EmptyHint } from './EmptyHint';
 import { SeatPanel, ViewTools } from './sightlines/SeatPanel';
 import { goToSeat } from './sightlines/seatActions';
 import { useSightlines } from '../sightlines/store';
@@ -145,6 +146,7 @@ export function Viewport() {
     >
       <FaceContextMenu />
       <ViewTools />
+      <EmptyHint />
       <SeatPanel />
     <Canvas
       events={(store) => ({ ...defaultEvents(store), filter: (hits) => handlesFirst(hits) })}

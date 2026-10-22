@@ -9,6 +9,7 @@ import { newObjectId } from './ids';
 import { GROUP_TYPE } from '../objects/types';
 import { MATERIALS, type FaceStyle } from '../objects/materials';
 import type { GraphicMeta } from '../graphics/types';
+import type { StarterSet } from '../starters';
 import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
 
 const STORAGE_KEY = 'stage-builder:project';
@@ -101,6 +102,8 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   /** Remove from the library and from every face and surface that uses it. */
   removeGraphic: (id: string) => void;
   saveView: (view: PresetView) => void;
+  /** Replace this stage's set with a starter set (undoable). */
+  loadStarterSet: (set: StarterSet) => void;
   deleteView: (id: string) => void;
 
   requestView: (view: PresetView, instant?: boolean) => void;
@@ -465,6 +468,27 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         else delete current[surfaceId];
         return { surfaceStylesByTemplate: { ...s.surfaceStylesByTemplate, [s.templateId]: current }, dirty: true };
       });
+    },
+
+    loadStarterSet: (starter) => {
+      commit();
+      const objects: SetObject[] = [];
+      for (const piece of starter.pieces) {
+        const type = getObjectType(piece.type);
+        if (!type) continue;
+        objects.push({
+          id: newObjectId(),
+          type: type.id,
+          name: piece.name ?? nextName(type.name, objects),
+          params: applyConstraints(type, { ...defaultParams(type), ...(piece.params ?? {}) }),
+          x: piece.x,
+          z: piece.z,
+          elevation: piece.elevation ?? type.defaultElevation ?? 0,
+          rotation: piece.rotation ?? 0,
+        });
+      }
+      setActiveObjects(objects);
+      set({ selectedIds: [], ...announce(`Loaded the “${starter.name}” starter set`) });
     },
 
     saveView: (view) => {

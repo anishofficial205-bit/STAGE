@@ -5,6 +5,7 @@ import { LayersPanel } from './objects/LayersPanel';
 import { ObjectProperties } from './objects/ObjectProperties';
 import { SurfacesSection } from './objects/FacesSection';
 import { SightlineWarnings } from './sightlines/SightlineWarnings';
+import { StarterSets } from './StarterSets';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
 
@@ -61,6 +62,7 @@ function TemplateProperties() {
         </p>
       ))}
       {Extra && <Extra />}
+      <StarterSets />
       <SurfacesSection />
       {groups.map((g) => (
         <section key={g.name} className="group">

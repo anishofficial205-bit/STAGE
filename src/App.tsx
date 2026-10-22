@@ -7,6 +7,7 @@ import { UndoToast } from './components/UndoToast';
 import { Tour } from './components/Tour';
 import { Shortcuts } from './components/Shortcuts';
 import { PdfPagePicker } from './components/graphics/PdfPagePicker';
+import { ShortcutsSheet } from './components/ShortcutsSheet';
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
       <UndoToast />
       <Shortcuts />
       <PdfPagePicker />
+      <ShortcutsSheet />
       <Tour />
       <ThumbnailRenderer />
     </div>

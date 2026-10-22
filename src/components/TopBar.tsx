@@ -6,6 +6,7 @@ import { exportZip, importZip } from '../graphics/library';
 import { PrintCheckDialog } from './graphics/PrintCheck';
 import { ExportDialog } from './export/ExportDialog';
 import { SaveStatus } from './Autosave';
+import { SHORTCUTS_EVENT } from './ShortcutsSheet';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -14,6 +15,7 @@ export function TopBar() {
   const [toast, setToast] = useState<string | null>(null);
   const [printCheck, setPrintCheck] = useState(false);
   const [render, setRender] = useState(false);
+  const [help, setHelp] = useState(false);
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -111,9 +113,21 @@ export function TopBar() {
         <button className={`btn ${s.snapping ? 'is-active' : ''}`} onClick={s.toggleSnapping} title="Snap objects to the grid, stage edges and each other (hold ⌘/Ctrl while dragging to place freely)">
           Snap
         </button>
-        <button className="btn btn--icon" onClick={() => window.dispatchEvent(new Event(TOUR_EVENT))} title="Show the quick tour" aria-label="Help">
-          ?
-        </button>
+        <span className="help-menu">
+          <button className="btn btn--icon" onClick={() => setHelp(!help)} title="Help" aria-label="Help" aria-expanded={help}>
+            ?
+          </button>
+          {help && (
+            <span className="help-menu__list" role="menu" onMouseLeave={() => setHelp(false)}>
+              <button role="menuitem" onClick={() => { setHelp(false); window.dispatchEvent(new Event(SHORTCUTS_EVENT)); }}>
+                Keyboard shortcuts <kbd>?</kbd>
+              </button>
+              <button role="menuitem" onClick={() => { setHelp(false); window.dispatchEvent(new Event(TOUR_EVENT)); }}>
+                Quick tour
+              </button>
+            </span>
+          )}
+        </span>
         <span className="divider" />
         <SaveStatus />
         <button className="btn" onClick={() => setRender(true)} title="Export images, all views, a presentation sheet or a turntable video">
