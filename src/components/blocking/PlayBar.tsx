@@ -1,5 +1,6 @@
 import { useBlockingUI } from '../../blocking/ui';
 import { useSceneDuration } from './useSceneDuration';
+import { useAutoCheck } from './ChecksPanel';
 
 const fmt = (t: number) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
 
@@ -11,6 +12,7 @@ export function PlayBar() {
   const rate = useBlockingUI((s) => s.rate);
   const follow = useBlockingUI((s) => s.follow);
   const ui = useBlockingUI.getState();
+  useAutoCheck();
   return (
     <div className="playbar" role="group" aria-label="Scene playback">
       <button

@@ -475,6 +475,9 @@ export function BlockingLayer() {
   const selected = useBlockingUI((s) => (active ? s.selected : null));
   const tool = useBlockingUI((s) => s.tool);
   const highlight = useBlockingUI((s) => s.highlight);
+  const warnings = useBlockingUI((s) => s.warnings);
+  // Performers with a problem right now (during playback), or the one picked from the list.
+  const flaggedNow = useMemo(() => new Set(highlight ? highlight.performerIds : (warnings ?? []).filter((w) => time >= w.time - 0.01 && time <= w.until + 0.5).flatMap((w) => w.performerIds)), [highlight, warnings, time]);
   const floorAt = useFloorAt();
   const poses = useMemo(() => new Map([...tracks.entries()].map(([id, { start, tracks: ts }]) => [id, poseAt(start, ts, map, time)])), [tracks, map, time]);
   const selPerf = selected?.kind === 'performer' ? selected.ids : [];
@@ -512,7 +515,7 @@ export function BlockingLayer() {
         .filter((p) => !p.hidden)
         .map((p) => {
           const pose = poses.get(p.id)!;
-          return <PerformerView key={p.id} p={p} pose={pose} y={floorAt(pose.x, pose.z)} selected={selPerf.includes(p.id)} active={active} flagged={!!highlight?.performerIds.includes(p.id)} />;
+          return <PerformerView key={p.id} p={p} pose={pose} y={floorAt(pose.x, pose.z)} selected={selPerf.includes(p.id)} active={active} flagged={flaggedNow.has(p.id)} />;
         })}
       {highlight?.seats?.map((s, i) => (
         <mesh key={i} position={[s.x, s.y + 1.2, s.z]} userData={{ blockingHelper: true }}>
