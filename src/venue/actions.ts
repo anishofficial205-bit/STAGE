@@ -5,7 +5,8 @@ import { useProjectStore } from '../store/useProjectStore';
 import { M_PER_FT } from '../units';
 import { dist, projectOnWall, samePt } from './geometry';
 import { enclosedArea } from './rooms';
-import { DOOR_PRESETS, ROOM_TYPES, WALL_DEFAULTS, venueId, type Door, type Furniture, type Pt, type Room, type Venue, type Wall } from './types';
+import { DOOR_PRESETS, ROOM_TYPES, WALL_DEFAULTS, venueId, type Door, type Furniture, type Pt, type Room, type Route, type RouteEnd, type Venue, type Wall } from './types';
+import { endName } from './routes';
 import { useVenueUI } from './ui';
 
 /** Plan grid: 0.1 m, or 3 in when working in feet. */
@@ -61,7 +62,10 @@ export const venueActions = {
       return { ...v, walls };
     }, key),
   removeWall: (id: string) => {
-    update((v) => ({ ...v, walls: v.walls.filter((w) => w.id !== id), doors: v.doors.filter((d) => d.wallId !== id) }));
+    update((v) => {
+      const gone = new Set(v.doors.filter((d) => d.wallId === id).map((d) => d.id));
+      return { ...v, walls: v.walls.filter((w) => w.id !== id), doors: v.doors.filter((d) => !gone.has(d.id)), routes: v.routes.filter((r) => !uses(r, 'door', gone)) };
+    });
     useVenueUI.getState().select(null);
   },
 
@@ -104,7 +108,7 @@ export const venueActions = {
       return { ...v, rooms: v.rooms.map((r) => (r.id === id ? { ...r, wallHeight: height } : r)), walls: v.walls.map((w) => (onEdge(w) ? { ...w, height } : w)) };
     }, `room-height:${id}`),
   removeRoom: (id: string) => {
-    update((v) => ({ ...v, rooms: v.rooms.filter((r) => r.id !== id) }));
+    update((v) => ({ ...v, rooms: v.rooms.filter((r) => r.id !== id), routes: v.routes.filter((r) => !uses(r, 'room', new Set([id]))) }));
     useVenueUI.getState().select(null);
   },
 
@@ -117,7 +121,7 @@ export const venueActions = {
   },
   patchDoor: (id: string, change: Partial<Door>, key?: string) => update((v) => ({ ...v, doors: v.doors.map((d) => (d.id === id ? { ...d, ...change } : d)) }), key ?? `door:${id}:${Object.keys(change).join()}`),
   removeDoor: (id: string) => {
-    update((v) => ({ ...v, doors: v.doors.filter((d) => d.id !== id) }));
+    update((v) => ({ ...v, doors: v.doors.filter((d) => d.id !== id), routes: v.routes.filter((r) => !uses(r, 'door', new Set([id]))) }));
     useVenueUI.getState().select(null);
   },
 
@@ -133,6 +137,20 @@ export const venueActions = {
     useVenueUI.getState().select(null);
   },
 
+  /** Save a route between two rooms or doors, named after its ends. */
+  addRoute: (from: RouteEnd, to: RouteEnd) => {
+    const v = venue();
+    const route: Route = { id: venueId('p'), name: `${endName(v, from)} → ${endName(v, to)}`, from, to, visible: true };
+    update((x) => ({ ...x, routes: [...x.routes, route] }));
+    useVenueUI.getState().select({ kind: 'route', id: route.id });
+    return route;
+  },
+  patchRoute: (id: string, change: Partial<Route>, key?: string) => update((v) => ({ ...v, routes: v.routes.map((r) => (r.id === id ? { ...r, ...change } : r)) }), key ?? `route:${id}:${Object.keys(change).join()}`),
+  removeRoute: (id: string) => {
+    update((v) => ({ ...v, routes: v.routes.filter((r) => r.id !== id) }));
+    useVenueUI.getState().select(null);
+  },
+
   /** Delete whatever is selected. */
   removeSelected: () => {
     const sel = useVenueUI.getState().selected;
@@ -141,7 +159,11 @@ export const venueActions = {
     else if (sel.kind === 'room') venueActions.removeRoom(sel.id);
     else if (sel.kind === 'door') venueActions.removeDoor(sel.id);
     else if (sel.kind === 'furniture') venueActions.removeFurniture(sel.id);
+    else if (sel.kind === 'route') venueActions.removeRoute(sel.id);
   },
 };
+
+/** Does this route start or end at one of these rooms/doors? */
+const uses = (r: Route, kind: RouteEnd['kind'], ids: Set<string>) => (r.from.kind === kind && ids.has(r.from.id)) || (r.to.kind === kind && ids.has(r.to.id));
 
 export { dist };

@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { create } from 'zustand';
 import JSZip from 'jszip';
 import { importMyTemplates, refreshMyTemplates, useMyTemplates } from '../templates/custom/myTemplates';
+import { traceKey } from '../venue/trace';
 import { useEffect } from 'react';
 import { MERGE_WITH_PREVIOUS, useProjectStore } from '../store/useProjectStore';
 import { newObjectId } from '../store/ids';
@@ -111,7 +112,7 @@ export interface PdfRequest {
 /** The open "pick a PDF page" dialog, if any. */
 export const usePdfPicker = create<{ request: PdfRequest | null }>(() => ({ request: null }));
 
-async function pdfToPng(file: File): Promise<{ blob: Blob; width: number; height: number; page: number } | null> {
+export async function pdfToPng(file: File): Promise<{ blob: Blob; width: number; height: number; page: number } | null> {
   const { openPdf, renderPage } = await import('./pdf');
   const doc = await openPdf(file);
   let page = 1;
@@ -278,6 +279,10 @@ export async function exportZip(): Promise<Blob> {
   await refreshMyTemplates();
   const mine = useMyTemplates.getState().list;
   if (mine.length) zip.file('my-templates.json', JSON.stringify(mine));
+  // The venue's traced floor plan image.
+  const trace = s.venue.trace;
+  const traceBlob = trace && (await getBlob(traceKey(trace.id)));
+  if (trace && traceBlob) zip.file(`trace/${trace.id}.${EXT[trace.mime] ?? 'png'}`, traceBlob);
   for (const g of Object.values(s.graphics)) {
     const blob = await getBlob(g.id);
     if (blob) zip.file(`images/${g.id}.${EXT[g.mime] ?? 'bin'}`, blob);
@@ -301,6 +306,10 @@ export async function importZip(file: Blob) {
     await putBlob(m[1], blob);
     if (mime !== 'image/svg+xml') await storeDisplayCopy(m[1], await decode(blob), blob).catch(() => undefined);
     refresh(m[1]);
+  }
+  for (const path of Object.keys(zip.files)) {
+    const m = path.match(/^trace\/([^/.]+)\.\w+$/);
+    if (m) await putBlob(traceKey(m[1]), new Blob([await zip.file(path)!.async('arraybuffer')], { type: project.venue?.trace?.mime ?? 'image/png' }));
   }
   const mine = zip.file('my-templates.json');
   if (mine) await importMyTemplates(JSON.parse(await mine.async('string'))).catch(() => undefined);

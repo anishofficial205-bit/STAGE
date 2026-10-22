@@ -15,6 +15,12 @@ import { useVenueUI } from '../../venue/ui';
 import { centroid, polygonArea, roomOutline } from '../../venue/rooms';
 import { getFurniture } from '../../venue/furniture';
 import { formatArea } from './format';
+import { endPoint, formatTime, solveRoute, WALK } from '../../venue/routes';
+import { calibrateTrace, patchTrace, useTraceUrl } from '../../venue/trace';
+import { roomAt } from '../../venue/rooms';
+import { Modal } from '../Modal';
+import { fromDisplay, toDisplay } from '../../units';
+import type { RouteEnd, Trace } from '../../venue/types';
 
 interface View {
   cx: number;
@@ -33,7 +39,8 @@ type Drag =
   | { kind: 'click'; start: [number, number]; moved: boolean }
   | { kind: 'rect'; start: Pt; startPx: [number, number]; moved: boolean }
   | { kind: 'door'; door: Door; wall: Wall; moved: boolean; key: string }
-  | { kind: 'furniture'; start: Pt; item: Furniture; moved: boolean; key: string };
+  | { kind: 'furniture'; start: Pt; item: Furniture; moved: boolean; key: string }
+  | { kind: 'trace'; start: Pt; trace: Trace; moved: boolean; key: string };
 
 /** The current stage's floors and seats, for the grey footprint. */
 function useFootprint() {
@@ -42,7 +49,8 @@ function useFootprint() {
   const data = useActiveData();
   return useMemo(() => {
     const t = getTemplate(templateId)!;
-    const floors = t.stage?.(params, data).floors.map((f) => f.outline) ?? [];
+    // Raised floors only: a flat room floor (Black Box, Build Your Own) isn't the stage.
+    const floors = t.stage?.(params, data).floors.filter((f) => f.height > 0.01).map((f) => f.outline) ?? [];
     const seats = t.seats?.(params, data) ?? [];
     let path = '';
     for (const s of seats) path += `M${(s.x - 0.22).toFixed(2)} ${(s.z - 0.22).toFixed(2)}h0.44v0.44h-0.44z`;
@@ -71,6 +79,17 @@ function Grid({ view, w, h }: { view: View; w: number; h: number }) {
   for (let x = Math.floor(x0 / minor) * minor; x <= x1; x += minor) lines.push(<line key={`x${x}`} x1={x} y1={z0} x2={x} y2={z1} className={x % 5 === 0 ? 'plan-grid is-major' : 'plan-grid'} />);
   for (let z = Math.floor(z0 / minor) * minor; z <= z1; z += minor) lines.push(<line key={`z${z}`} x1={x0} y1={z} x2={x1} y2={z} className={z % 5 === 0 ? 'plan-grid is-major' : 'plan-grid'} />);
   return <g>{lines}</g>;
+}
+
+/** A filled arrowhead at the end of a path, `size` long. */
+function arrowHead(path: Pt[], size: number): Pt[] {
+  const b = path[path.length - 1];
+  const a = path[path.length - 2] ?? b;
+  const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+  const d: Pt = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+  const n: Pt = [-d[1], d[0]];
+  const base: Pt = [b[0] - d[0] * size, b[1] - d[1] * size];
+  return [b, [base[0] + n[0] * size * 0.5, base[1] + n[1] * size * 0.5], [base[0] - n[0] * size * 0.5, base[1] - n[1] * size * 0.5]];
 }
 
 /** Nearest wall to a point within `r` (beyond its half thickness), with where along it. */
@@ -179,6 +198,9 @@ export function PlanView() {
   const [cursor, setCursor] = useState('default');
   const [pointer, setPointer] = useState<Pt | null>(null);
   const [rectEnd, setRectEnd] = useState<Pt | null>(null);
+  const routeStart = useVenueUI((s) => s.routeStart);
+  const calPoints = useVenueUI((s) => s.calPoints);
+  const traceUrl = useTraceUrl(venue.trace?.id);
 
   useEffect(() => {
     const el = svg.current;
@@ -191,11 +213,14 @@ export function PlanView() {
   /** Frame the stage and everything drawn. */
   const fit = useCallback(() => {
     const { min, max } = footprint.bounds;
-    const xs = [min[0], max[0], ...walls.flatMap((w) => [w.a[0], w.b[0]])];
-    const zs = [min[2], max[2], ...walls.flatMap((w) => [w.a[1], w.b[1]])];
+    const t = venue.trace && !venue.trace.hidden ? venue.trace : null;
+    const tx = t ? [t.x, t.x + t.width * t.mPerPx] : [];
+    const tz = t ? [t.z, t.z + t.height * t.mPerPx] : [];
+    const xs = [min[0], max[0], ...tx, ...walls.flatMap((w) => [w.a[0], w.b[0]])];
+    const zs = [min[2], max[2], ...tz, ...walls.flatMap((w) => [w.a[1], w.b[1]])];
     const [x0, x1, z0, z1] = [Math.min(...xs) - 3, Math.max(...xs) + 3, Math.min(...zs) - 3, Math.max(...zs) + 3];
     setView({ cx: (x0 + x1) / 2, cz: (z0 + z1) / 2, scale: Math.max(2, Math.min(size.w / (x1 - x0), size.h / (z1 - z0))) });
-  }, [footprint.bounds, walls, size]);
+  }, [footprint.bounds, walls, size, venue.trace]);
   useEffect(() => {
     if (!view && size.w > 10) fit();
   }, [view, size, fit]);
@@ -283,6 +308,33 @@ export function PlanView() {
       }
       ui.setNotice(null);
       venueActions.addDoor(near.wall.id, Math.round(near.s / 0.05) * 0.05, ui.doorPreset, near.side);
+    } else if (tool === 'route') {
+      // A door (by its opening) wins over the room around it.
+      const door = doors.find((d) => {
+        const w = walls.find((x) => x.id === d.wallId);
+        if (!w) return false;
+        const [s0, s1] = doorSpan(w, d);
+        return dist(wallFrame(w, (s0 + s1) / 2).at, p) < (s1 - s0) / 2 + 10 / v.scale;
+      });
+      const room = door ? undefined : roomAt(walls, rooms, p);
+      const end: RouteEnd | null = door ? { kind: 'door', id: door.id } : room ? { kind: 'room', id: room.id } : null;
+      if (!end) {
+        ui.setNotice('Click a room or a door.');
+        return;
+      }
+      if (!ui.routeStart) {
+        ui.setRouteStart(end);
+        ui.setNotice('Now click where the route ends.');
+        return;
+      }
+      if (ui.routeStart.kind === end.kind && ui.routeStart.id === end.id) return;
+      const route = venueActions.addRoute(ui.routeStart, end);
+      ui.setRouteStart(null);
+      const res = solveRoute(useProjectStore.getState().venue, route);
+      ui.setNotice(res.path ? null : 'No way through — add a door between those rooms.');
+    } else if (tool === 'calibrate') {
+      const pts = [...ui.calPoints, p].slice(-2);
+      ui.setCalPoints(pts);
     } else if (tool === 'furniture') {
       const at = snapAt(clientX, clientY, e, { noAngle: true }).at;
       const place = placeFurniture(walls, ui.furnitureType, at);
@@ -317,6 +369,7 @@ export function PlanView() {
       else if (k === 'm') ui.setTool('room');
       else if (k === 'd') ui.setTool('door');
       else if (k === 'f') ui.setTool('furniture');
+      else if (k === 'p') ui.setTool('route');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -355,6 +408,17 @@ export function PlanView() {
         drag.current = { kind: 'wall', start: toWorld(e.clientX, e.clientY), wall: w, moved: false, key: `wall-move:${w.id}:${Date.now()}` };
         return;
       }
+      const routeEl = target.closest('[data-route]');
+      if (routeEl) {
+        useVenueUI.getState().select({ kind: 'route', id: routeEl.getAttribute('data-route')! });
+        drag.current = { kind: 'pan', start: [e.clientX, e.clientY], view: v, moved: false };
+        return;
+      }
+      const traceEl = target.closest('[data-trace]');
+      if (traceEl && venue.trace && !venue.trace.locked) {
+        drag.current = { kind: 'trace', start: toWorld(e.clientX, e.clientY), trace: venue.trace, moved: false, key: `trace-move:${Date.now()}` };
+        return;
+      }
       const roomEl = target.closest('[data-room]');
       if (roomEl) {
         useVenueUI.getState().select({ kind: 'room', id: roomEl.getAttribute('data-room')! });
@@ -376,7 +440,7 @@ export function PlanView() {
     if (tool === 'wall') useVenueUI.getState().setHover(snapAt(e.clientX, e.clientY, e));
     if (!d) {
       const t = e.target as Element;
-      setCursor(tool !== 'select' ? 'crosshair' : t.closest('[data-end]') ? 'grab' : t.closest('[data-wall],[data-door],[data-furniture]') ? 'move' : t.closest('[data-room]') ? 'pointer' : 'default');
+      setCursor(tool !== 'select' ? 'crosshair' : t.closest('[data-end]') ? 'grab' : t.closest('[data-wall],[data-door],[data-furniture],[data-trace]') ? 'move' : t.closest('[data-room]') ? 'pointer' : 'default');
       return;
     }
     if (d.kind === 'rect') {
@@ -406,6 +470,14 @@ export function PlanView() {
       d.moved = true;
       if (d.kind === 'wall') venueActions.moveWall(d.wall, dx, dz, d.key);
       else venueActions.patchFurniture(d.item.id, { x: d.item.x + dx, z: d.item.z + dz }, d.key);
+      return;
+    }
+    if (d.kind === 'trace') {
+      const dx = world[0] - d.start[0];
+      const dz = world[1] - d.start[1];
+      if (!d.moved && Math.hypot(dx, dz) * v.scale < 3) return;
+      d.moved = true;
+      patchTrace({ x: d.trace.x + dx, z: d.trace.z + dz }, d.key);
       return;
     }
     if (d.kind === 'door') {
@@ -441,7 +513,7 @@ export function PlanView() {
       return;
     }
     if (d.kind === 'click' && !d.moved && e.button === 0 && tool !== 'select') clickPending.current = true;
-    if (d.kind === 'pan' && !d.moved && e.button === 0 && tool === 'select' && !(e.target as Element).closest('[data-room]')) useVenueUI.getState().select(null);
+    if (d.kind === 'pan' && !d.moved && e.button === 0 && tool === 'select' && !(e.target as Element).closest('[data-room],[data-route]')) useVenueUI.getState().select(null);
   };
 
   const rooms2 = useMemo(() => rooms.map((r) => ({ r, ...roomOutline(walls, r) })), [rooms, walls]);
@@ -479,6 +551,23 @@ export function PlanView() {
       >
         <g transform={`translate(${size.w / 2} ${size.h / 2}) scale(${v.scale}) translate(${-v.cx} ${-v.cz})`}>
           <Grid view={v} w={size.w} h={size.h} />
+          {venue.trace && !venue.trace.hidden && traceUrl && (
+            <image
+              href={traceUrl}
+              x={venue.trace.x}
+              y={venue.trace.z}
+              width={venue.trace.width * venue.trace.mPerPx}
+              height={venue.trace.height * venue.trace.mPerPx}
+              opacity={venue.trace.opacity}
+              preserveAspectRatio="none"
+              className="plan-trace"
+              data-trace={selected?.kind === 'trace' && !venue.trace.locked ? '1' : undefined}
+              style={{ pointerEvents: selected?.kind === 'trace' && !venue.trace.locked && tool === 'select' ? 'auto' : 'none' }}
+            />
+          )}
+          {venue.trace && selected?.kind === 'trace' && !venue.trace.hidden && (
+            <rect x={venue.trace.x} y={venue.trace.z} width={venue.trace.width * venue.trace.mPerPx} height={venue.trace.height * venue.trace.mPerPx} className="plan-trace-frame" style={{ strokeWidth: 2 / v.scale }} pointerEvents="none" />
+          )}
           {/* Stage and seating footprint (read-only). */}
           <g className="plan-footprint">
             {footprint.floors.map((f, i) => (
@@ -507,6 +596,24 @@ export function PlanView() {
           {furniture.map((f) => (
             <FurnitureSymbol key={f.id} item={f} scale={v.scale} selected={selected?.kind === 'furniture' && selected.id === f.id} />
           ))}
+          {venue.routes.map((r) => {
+            const isSel = selected?.kind === 'route' && selected.id === r.id;
+            if (!r.visible && !isSel) return null;
+            const res = solveRoute(venue, r);
+            if (!res.path) return null;
+            const mid = res.path[Math.floor(res.path.length / 2)];
+            const prev = res.path[Math.max(0, Math.floor(res.path.length / 2) - 1)];
+            const at: Pt = res.path.length === 2 ? [(res.path[0][0] + res.path[1][0]) / 2, (res.path[0][1] + res.path[1][1]) / 2] : mid ?? prev;
+            return (
+              <g key={r.id} data-route={r.id} className={`plan-route ${res.audience.length ? 'is-warning' : ''} ${isSel ? 'is-selected' : ''}`}>
+                <polyline points={pts(res.path)} className="plan-route__hit" style={{ strokeWidth: 12 / v.scale }} />
+                <polyline points={pts(res.path)} style={{ strokeWidth: (isSel ? 4 : 3) / v.scale }} />
+                <polygon points={pts(arrowHead(res.path, 12 / v.scale))} className="plan-route__head" />
+                <circle cx={res.path[0][0]} cy={res.path[0][1]} r={4 / v.scale} />
+                <Label at={[at[0], at[1] - 12 / v.scale]} text={`${formatLength(res.length, units)} · ${formatTime(res.length / WALK)}`} scale={v.scale} accent={isSel} />
+              </g>
+            );
+          })}
           {rooms2.map(({ r, polygon }) => {
             const c = centroid(polygon);
             return (
@@ -544,6 +651,18 @@ export function PlanView() {
             const fr = wallFrame(doorHover.wall, doorHover.s);
             return <circle cx={fr.at[0]} cy={fr.at[1]} r={6 / v.scale} className="plan-snap is-end" style={{ strokeWidth: 2 / v.scale }} />;
           })()}
+          {tool === 'route' && routeStart && (() => {
+            const p = endPoint(venue, routeStart);
+            return p ? <circle cx={p[0]} cy={p[1]} r={8 / v.scale} className="plan-snap is-end" style={{ strokeWidth: 3 / v.scale }} /> : null;
+          })()}
+          {tool === 'calibrate' && calPoints.length > 0 && (
+            <g className="plan-cal">
+              {calPoints.length === 2 && <line x1={calPoints[0][0]} y1={calPoints[0][1]} x2={calPoints[1][0]} y2={calPoints[1][1]} style={{ strokeWidth: 2 / v.scale }} />}
+              {calPoints.map((p, i) => (
+                <circle key={i} cx={p[0]} cy={p[1]} r={5 / v.scale} style={{ strokeWidth: 2 / v.scale }} />
+              ))}
+            </g>
+          )}
           {ghost && <FurnitureSymbol item={{ id: 'ghost', type: furnitureType, x: ghost.at[0], z: ghost.at[1], rotation: ghost.rotation }} scale={v.scale} ghost />}
         </g>
         <ScaleBar scale={v.scale} units={units} h={size.h} />
@@ -553,6 +672,7 @@ export function PlanView() {
           </button>
         </foreignObject>
       </svg>
+      {tool === 'calibrate' && calPoints.length === 2 && <CalibrateDialog a={calPoints[0]} b={calPoints[1]} />}
       {notice && (
         <div className="plan-notice" role="status">
           {notice}
@@ -579,5 +699,37 @@ function ScaleBar({ scale, units, h }: { scale: number; units: 'm' | 'ft'; h: nu
         {n} {units}
       </text>
     </g>
+  );
+}
+
+/** After clicking two points on the traced plan: how far apart are they really? */
+function CalibrateDialog({ a, b }: { a: Pt; b: Pt }) {
+  const units = useProjectStore((s) => s.units);
+  const measured = dist(a, b);
+  const [value, setValue] = useState(() => toDisplay(measured, units).toFixed(2));
+  const close = () => useVenueUI.getState().setTool('select');
+  const apply = () => {
+    const v = parseFloat(value);
+    if (!(v > 0)) return;
+    calibrateTrace(a, b, fromDisplay(v, units));
+    useVenueUI.getState().setNotice(null);
+    close();
+  };
+  return (
+    <Modal title="Set the plan’s scale" onClose={close}>
+      <p className="modal__text">Type the real distance between the two points you clicked (for example a dimension written on the plan). The image is resized so the plan is true to scale.</p>
+      <label className="field">
+        <span className="field__label">Real distance ({units})</span>
+        <input className="field__input" type="text" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && apply()} autoFocus />
+      </label>
+      <div className="modal__actions">
+        <button className="btn" onClick={close}>
+          Cancel
+        </button>
+        <button className="btn btn--primary" onClick={apply}>
+          Set scale
+        </button>
+      </div>
+    </Modal>
   );
 }

@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react';
 import { Field } from '../fields';
 import { Collapsible } from '../Collapsible';
 import { useProjectStore } from '../../store/useProjectStore';
@@ -10,6 +11,8 @@ import { useVenueUI, type VenueTool } from '../../venue/ui';
 import { polygonArea, roomAt, roomOutline } from '../../venue/rooms';
 import { FURNITURE, getFurniture } from '../../venue/furniture';
 import { formatArea } from './format';
+import { HURRY, WALK, endName, formatTime, solveRoute } from '../../venue/routes';
+import { importTrace, patchTrace, removeTrace } from '../../venue/trace';
 
 const TOOLS: { id: VenueTool; label: string; key: string; hint: string }[] = [
   { id: 'select', label: 'Select', key: 'V', hint: 'Click anything (here or in 3D) to select it. Drag walls, wall ends, doors and furniture to move them. Drag the background to pan, scroll to zoom.' },
@@ -17,7 +20,72 @@ const TOOLS: { id: VenueTool; label: string; key: string; hint: string }[] = [
   { id: 'room', label: 'Room', key: 'M', hint: 'Drag out a rectangle to make a room with four walls — or click inside an area your walls already close in.' },
   { id: 'door', label: 'Door', key: 'D', hint: 'Click on a wall to put a door there. It swings to the side you click on.' },
   { id: 'furniture', label: 'Furniture', key: 'F', hint: 'Pick a piece, then click in the plan to place it. Near a wall it turns its back to the wall. R rotates the selected piece 90° (Shift: 15°).' },
+  { id: 'route', label: 'Route', key: 'P', hint: 'Click where the route starts (a room or a door), then where it ends. The walking path goes through doors, around walls, and is saved with its length and walking time.' },
 ];
+
+/** Import a floor plan to trace over, then calibrate its scale. */
+function TraceSection() {
+  const trace = useProjectStore((s) => s.venue.trace);
+  const tool = useVenueUI((s) => s.tool);
+  const selected = useVenueUI((s) => s.selected?.kind === 'trace');
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pick = async (f: File) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await importTrace(f);
+      useVenueUI.getState().setTool('calibrate');
+      useVenueUI.getState().setNotice('Now click two points on the plan whose real distance you know (e.g. the ends of a dimension line).');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not import that file.');
+    }
+    setBusy(false);
+  };
+  return (
+    <Collapsible id="venue-trace" title="Trace a floor plan">
+      <input ref={input} type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void pick(f); e.target.value = ''; }} />
+      {!trace ? (
+        <>
+          <p className="hint">Import a JPG, PNG or PDF of the venue’s floor plan. It shows faintly under the plan so you can draw walls and rooms over it.</p>
+          <button className="btn" onClick={() => input.current?.click()} disabled={busy}>
+            {busy ? 'Importing…' : 'Import plan to trace…'}
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="hint">{trace.name}</p>
+          <Field def={{ key: 'opacity', label: 'Opacity (%)', group: '', type: 'number', unit: 'none', default: 50, min: 5, max: 100, step: 5 }} value={Math.round(trace.opacity * 100)} units="m" onChange={(v) => patchTrace({ opacity: (v as number) / 100 })} />
+          <div className="btn-row">
+            <button className={`btn btn--small ${tool === 'calibrate' ? 'is-active' : ''}`} onClick={() => { useVenueUI.getState().setTool('calibrate'); useVenueUI.getState().setNotice('Click two points on the plan whose real distance you know.'); }}>
+              Calibrate scale…
+            </button>
+            <button className={`btn btn--small ${selected ? 'is-active' : ''}`} onClick={() => { useVenueUI.getState().setTool('select'); useVenueUI.getState().select(selected ? null : { kind: 'trace', id: trace.id }); }} disabled={trace.locked} title={trace.locked ? 'Unlock it first' : 'Drag the image to line it up'}>
+              Move image
+            </button>
+          </div>
+          <div className="btn-row">
+            <button className={`btn btn--small ${trace.locked ? 'is-active' : ''}`} onClick={() => patchTrace({ locked: !trace.locked })}>
+              {trace.locked ? '🔒 Locked' : 'Lock'}
+            </button>
+            <button className={`btn btn--small ${trace.hidden ? 'is-active' : ''}`} onClick={() => patchTrace({ hidden: !trace.hidden })}>
+              {trace.hidden ? 'Hidden' : 'Hide'}
+            </button>
+            <button className="btn btn--small" onClick={() => input.current?.click()}>
+              Replace…
+            </button>
+            <button className="btn btn--small btn--danger" onClick={removeTrace}>
+              Remove
+            </button>
+          </div>
+          <p className="hint">Scale: 1 px = {(trace.mPerPx * 1000).toFixed(1)} mm · image {(trace.width * trace.mPerPx).toFixed(1)} × {(trace.height * trace.mPerPx).toFixed(1)} m</p>
+        </>
+      )}
+      {error && <p className="panel-msg panel-msg--warning">{error}</p>}
+    </Collapsible>
+  );
+}
 
 /** Left side in Venue mode: the drawing tools and their options. */
 export function VenueTools() {
@@ -75,6 +143,16 @@ export function VenueTools() {
         {counts.walls} wall{counts.walls === 1 ? '' : 's'} · {counts.rooms} room{counts.rooms === 1 ? '' : 's'} · {counts.doors} door{counts.doors === 1 ? '' : 's'}
       </p>
     </Collapsible>
+  );
+}
+
+/** Left side in Venue mode. */
+export function VenueLeft() {
+  return (
+    <>
+      <VenueTools />
+      <TraceSection />
+    </>
   );
 }
 
@@ -264,6 +342,48 @@ export function VenueProperties() {
       );
     }
   }
+  if (selected?.kind === 'route') {
+    const route = venue.routes.find((r) => r.id === selected.id);
+    if (route) {
+      const res = solveRoute(venue, route);
+      return (
+        <div className="props">
+          <Head title="Route" />
+          <label className="field">
+            <span className="field__label">Name</span>
+            <input className="field__input" value={route.name} onChange={(e) => venueActions.patchRoute(route.id, { name: e.target.value }, `route-name:${route.id}`)} />
+          </label>
+          <p className="hint">
+            From {endName(venue, route.from)} to {endName(venue, route.to)}
+          </p>
+          {res.path ? (
+            <dl className="route-stats">
+              <dt>Distance</dt>
+              <dd>{formatLength(res.length, units)}</dd>
+              <dt>Walking (1.2 m/s)</dt>
+              <dd>{formatTime(res.length / WALK)}</dd>
+              <dt>Hurrying (2 m/s)</dt>
+              <dd>{formatTime(res.length / HURRY)}</dd>
+            </dl>
+          ) : (
+            <p className="panel-msg panel-msg--warning">No way through — the walls close it off. Add a door between those spaces.</p>
+          )}
+          {res.audience.length > 0 && <p className="panel-msg panel-msg--warning">Passes through {res.audience.join(', ')} — an audience area during the show.</p>}
+          <label className="field field--inline">
+            <span className="field__label">Show on the plan</span>
+            <button type="button" role="switch" aria-checked={route.visible} className={`switch ${route.visible ? 'is-on' : ''}`} onClick={() => venueActions.patchRoute(route.id, { visible: !route.visible })}>
+              <span className="switch__knob" />
+            </button>
+          </label>
+          <div className="btn-row">
+            <button className="btn btn--danger" onClick={() => venueActions.removeRoute(route.id)}>
+              Delete route
+            </button>
+          </div>
+        </div>
+      );
+    }
+  }
   const total = walls.reduce((t, w) => t + wallLength(w), 0);
   const entrances = doors.filter((d) => d.entrance);
   return (
@@ -298,6 +418,30 @@ export function VenueProperties() {
           </ul>
         </section>
       )}
+      <section className="group">
+        <h3 className="group__title">Routes</h3>
+        {venue.routes.length ? (
+          <ul className="venue-list">
+            {venue.routes.map((r) => {
+              const res = solveRoute(venue, r);
+              return (
+                <li key={r.id} className="route-row">
+                  <button className="route-row__eye" onClick={() => venueActions.patchRoute(r.id, { visible: !r.visible })} title={r.visible ? 'Hide on the plan' : 'Show on the plan'} aria-label={r.visible ? `Hide ${r.name}` : `Show ${r.name}`}>
+                    {r.visible ? '👁' : '–'}
+                  </button>
+                  <button className="btn btn--ghost" onClick={() => useVenueUI.getState().select({ kind: 'route', id: r.id })}>
+                    {res.audience.length > 0 && <span title="Passes through an audience area">⚠</span>}
+                    {r.name}
+                    <span className="hint">{res.path ? formatTime(res.length / WALK) : 'no way'}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <p className="hint">Use the Route tool to time a walk, e.g. green room to SL entrance.</p>
+        )}
+      </section>
       <section className="group">
         <h3 className="group__title">Stage entrances</h3>
         {entrances.length ? (

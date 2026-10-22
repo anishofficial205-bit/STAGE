@@ -51,11 +51,45 @@ export interface Furniture {
   rotation: number;
 }
 
+/** A scanned or drawn floor plan shown faintly under the plan to trace over. */
+export interface Trace {
+  /** Image id in IndexedDB. */
+  id: string;
+  name: string;
+  mime: string;
+  /** Image size in pixels. */
+  width: number;
+  height: number;
+  /** World position of the image's top-left corner, and metres per pixel. */
+  x: number;
+  z: number;
+  mPerPx: number;
+  opacity: number;
+  locked: boolean;
+  hidden: boolean;
+}
+
+/** One end of a route: a room or a door. */
+export interface RouteEnd {
+  kind: 'room' | 'door';
+  id: string;
+}
+
+export interface Route {
+  id: string;
+  name: string;
+  from: RouteEnd;
+  to: RouteEnd;
+  visible: boolean;
+}
+
 export interface Venue {
   walls: Wall[];
   rooms: Room[];
   doors: Door[];
   furniture: Furniture[];
+  trace: Trace | null;
+  routes: Route[];
 }
 
 export interface RoomType {
@@ -110,7 +144,7 @@ export const WALL_MATERIALS: Record<string, { label: string; color: string; plan
 
 export const WALL_DEFAULTS = { thickness: 0.2, height: 4, material: 'plaster' };
 
-export const emptyVenue = (): Venue => ({ walls: [], rooms: [], doors: [], furniture: [] });
+export const emptyVenue = (): Venue => ({ walls: [], rooms: [], doors: [], furniture: [], trace: null, routes: [] });
 
 let counter = 0;
 export const venueId = (prefix: string) => `${prefix}${Date.now().toString(36)}${(counter++).toString(36)}`;
@@ -167,5 +201,17 @@ export function sanitizeVenue(raw: unknown): Venue {
     if (!f || typeof f.type !== 'string' || !isNum(f.x) || !isNum(f.z)) continue;
     furniture.push({ id: typeof f.id === 'string' ? f.id : venueId('f'), type: f.type, x: f.x, z: f.z, rotation: isNum(f.rotation) ? f.rotation : 0 });
   }
-  return { walls, rooms, doors, furniture };
+  const t = r.trace as Partial<Trace> | null | undefined;
+  const trace: Trace | null =
+    t && typeof t.id === 'string' && isNum(t.width) && isNum(t.height) && isNum(t.x) && isNum(t.z) && isNum(t.mPerPx) && t.mPerPx > 0
+      ? { id: t.id, name: typeof t.name === 'string' ? t.name : 'Floor plan', mime: typeof t.mime === 'string' ? t.mime : 'image/png', width: t.width, height: t.height, x: t.x, z: t.z, mPerPx: t.mPerPx, opacity: isNum(t.opacity) ? Math.min(1, Math.max(0.05, t.opacity)) : 0.5, locked: !!t.locked, hidden: !!t.hidden }
+      : null;
+  const ends = new Set([...rooms.map((x) => `room:${x.id}`), ...doors.map((x) => `door:${x.id}`)]);
+  const isEnd = (e: unknown): e is RouteEnd => !!e && typeof e === 'object' && ends.has(`${(e as RouteEnd).kind}:${(e as RouteEnd).id}`);
+  const routes: Route[] = [];
+  for (const o of Array.isArray(r.routes) ? r.routes : []) {
+    if (!o || !isEnd(o.from) || !isEnd(o.to)) continue;
+    routes.push({ id: typeof o.id === 'string' ? o.id : venueId('p'), name: typeof o.name === 'string' ? o.name : 'Route', from: { kind: o.from.kind, id: o.from.id }, to: { kind: o.to.kind, id: o.to.id }, visible: o.visible !== false });
+  }
+  return { walls, rooms, doors, furniture, trace, routes };
 }

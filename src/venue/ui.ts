@@ -1,10 +1,10 @@
 import { create } from 'zustand';
-import type { Pt } from './types';
+import type { Pt, RouteEnd } from './types';
 import type { SnapResult } from './geometry';
 
-export type VenueTool = 'select' | 'wall' | 'room' | 'door' | 'furniture';
+export type VenueTool = 'select' | 'wall' | 'room' | 'door' | 'furniture' | 'route' | 'calibrate';
 export type VenueLayout = 'split' | 'plan' | '3d';
-export type VenueSelection = { kind: 'wall' | 'room' | 'door' | 'furniture'; id: string } | null;
+export type VenueSelection = { kind: 'wall' | 'room' | 'door' | 'furniture' | 'route' | 'trace'; id: string } | null;
 
 const LAYOUT_KEY = 'stage-builder:venue-layout';
 const savedLayout = (): VenueLayout => {
@@ -31,6 +31,11 @@ export const useVenueUI = create<{
   furnitureType: string;
   /** A message under the plan (e.g. "That area isn't enclosed by walls"). */
   notice: string | null;
+  /** Route tool: the start picked so far. Calibrate tool: the points clicked so far. */
+  routeStart: RouteEnd | null;
+  calPoints: Pt[];
+  setRouteStart: (e: RouteEnd | null) => void;
+  setCalPoints: (p: Pt[]) => void;
   setChoice: (c: Partial<{ roomType: string; doorPreset: 'single' | 'double' | 'opening' | 'loading'; furnitureType: string }>) => void;
   setNotice: (notice: string | null) => void;
   setTool: (tool: VenueTool) => void;
@@ -50,9 +55,13 @@ export const useVenueUI = create<{
   doorPreset: 'single',
   furnitureType: 'dressing-table',
   notice: null,
+  routeStart: null,
+  calPoints: [],
+  setRouteStart: (routeStart) => set({ routeStart }),
+  setCalPoints: (calPoints) => set({ calPoints }),
   setChoice: (c) => set(c),
   setNotice: (notice) => set({ notice }),
-  setTool: (tool) => set({ tool, draft: [], hover: null, notice: null, ...(tool !== 'select' ? { selected: null } : {}) }),
+  setTool: (tool) => set({ tool, draft: [], hover: null, notice: null, routeStart: null, calPoints: [], ...(tool !== 'select' ? { selected: null } : {}) }),
   setDraft: (draft) => set({ draft }),
   setHover: (hover) => set({ hover }),
   select: (selected) => set({ selected }),

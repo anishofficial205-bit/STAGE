@@ -647,3 +647,18 @@ kbd { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11
 .venue-list .btn { width: 100%; display: flex; justify-content: flex-start; align-items: center; gap: 8px; }
 .venue-list .hint { margin-left: auto; }
 .venue-list__swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.plan-trace { image-rendering: auto; }
+.plan-trace-frame { fill: none; stroke: #2f6fde; stroke-dasharray: 0.4 0.25; }
+.plan-route polyline { fill: none; stroke: #2f6fde; stroke-linecap: round; stroke-linejoin: round; }
+.plan-route .plan-route__hit { stroke: transparent; }
+.plan-route circle, .plan-route__head { fill: #2f6fde; }
+.plan-route.is-warning polyline:not(.plan-route__hit) { stroke: #e8590c; }
+.plan-route.is-warning circle, .plan-route.is-warning .plan-route__head { fill: #e8590c; }
+.plan-route.is-selected polyline:not(.plan-route__hit) { filter: drop-shadow(0 0 2px rgba(47,111,222,0.6)); }
+.plan-cal line { stroke: #e8590c; stroke-dasharray: 0.3 0.2; }
+.plan-cal circle { fill: #fff; stroke: #e8590c; }
+.route-stats { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; margin: 6px 0 10px; font-size: 13px; }
+.route-stats dt { color: var(--muted); }
+.route-stats dd { margin: 0; font-weight: 600; text-align: right; }
+.route-row { display: flex; align-items: center; gap: 2px; }
+.route-row__eye { border: 0; background: none; cursor: pointer; width: 24px; font-size: 13px; color: var(--muted); }

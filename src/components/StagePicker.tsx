@@ -7,7 +7,7 @@ import { Modal } from './Modal';
 import { Collapsible } from './Collapsible';
 import { ObjectLibrary } from './objects/ObjectLibrary';
 import { GraphicsPanel } from './graphics/GraphicsPanel';
-import { VenueTools } from './venue/VenuePanels';
+import { VenueLeft } from './venue/VenuePanels';
 import { deleteMyTemplate, refreshMyTemplates, useMyTemplates, applySavedTemplate, type SavedTemplate } from '../templates/custom/myTemplates';
 
 /** Custom stages saved from Build Your Own, usable in any project. */
@@ -117,7 +117,7 @@ export function StagePicker() {
   if (mode === 'venue')
     return (
       <aside className="sidebar sidebar--left">
-        <VenueTools />
+        <VenueLeft />
       </aside>
     );
   if (mode !== 'stage') return <aside className="sidebar sidebar--left" />;
