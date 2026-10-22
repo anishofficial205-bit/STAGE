@@ -283,6 +283,12 @@ export async function exportZip(): Promise<Blob> {
   const trace = s.venue.trace;
   const traceBlob = trace && (await getBlob(traceKey(trace.id)));
   if (trace && traceBlob) zip.file(`trace/${trace.id}.${EXT[trace.mime] ?? 'png'}`, traceBlob);
+  // Uploaded gobo images.
+  for (const l of Object.values(s.lightingByTemplate))
+    for (const g of l.gobos) {
+      const b = await getBlob(`gobo-${g.id}`);
+      if (b) zip.file(`gobos/${g.id}.${EXT[b.type] ?? 'png'}`, b);
+    }
   for (const g of Object.values(s.graphics)) {
     const blob = await getBlob(g.id);
     if (blob) zip.file(`images/${g.id}.${EXT[g.mime] ?? 'bin'}`, blob);
@@ -308,6 +314,8 @@ export async function importZip(file: Blob) {
     refresh(m[1]);
   }
   for (const path of Object.keys(zip.files)) {
+    const gm = path.match(/^gobos\/([^/.]+)\.\w+$/);
+    if (gm) await putBlob(`gobo-${gm[1]}`, new Blob([await zip.file(path)!.async('arraybuffer')], { type: 'image/png' }));
     const m = path.match(/^trace\/([^/.]+)\.\w+$/);
     if (m) await putBlob(traceKey(m[1]), new Blob([await zip.file(path)!.async('arraybuffer')], { type: project.venue?.trace?.mime ?? 'image/png' }));
   }

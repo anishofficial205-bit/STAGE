@@ -14,9 +14,6 @@ const lighting = () => {
 };
 const update = (fn: (l: Lighting) => Lighting, key?: string) => useProjectStore.getState().setLighting(fn, key);
 
-/** Number of fixtures that cast real shadows by default (the first few added). */
-const DEFAULT_SHADOWS = 4;
-
 /** Where a new fixture of this type goes when it's just clicked in the library. */
 function defaultSpot(type: FixtureType, l: Lighting): { pos: Vec3; mount: string | null; target: Vec3 } {
   const c = stageCentre();
@@ -84,7 +81,8 @@ export const lightActions = {
       intensity: type === 'house' ? 70 : 80,
       on: true,
       color: type === 'practical' ? '#ffd7a1' : '#ffffff',
-      castShadow: !spec.point && type !== 'house' && type !== 'cyc' && l.fixtures.filter((x) => x.castShadow).length < DEFAULT_SHADOWS,
+      // On by default: in Presentation quality the brightest few of these get real shadows.
+      castShadow: !spec.point && type !== 'house' && type !== 'cyc',
     };
     update((x) => ({ ...x, fixtures: [...x.fixtures, f] }));
     useLightsUI.getState().select({ kind: 'fixture', ids: [f.id] });
