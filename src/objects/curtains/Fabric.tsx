@@ -21,10 +21,11 @@ export interface PlacedPanel extends PanelShape {
 }
 
 /**
- * Pleated cloth panels with a front and a back face. Untouched faces use `fallback`
+ * Cloth panels (pleated unless smooth) with a front and a back face. Untouched faces use `fallback`
  * (e.g. velour in the curtain's colour); styling a face (or adding a graphic) overrides it.
+ * `plain` cloth (cycs, scrims) is a flat colour rather than a woven texture.
  */
-export function Fabric({ panels, fallback, back = fallback, opacity }: { panels: PlacedPanel[]; fallback: FaceStyle; back?: FaceStyle; opacity?: number }) {
+export function Fabric({ panels, fallback, back = fallback, opacity, plain }: { panels: PlacedPanel[]; fallback: FaceStyle; back?: FaceStyle; opacity?: number; plain?: boolean }) {
   const geometries = useMemo(() => panels.map(panelGeometry), [panels]);
   useEffect(() => () => geometries.forEach((g) => g.dispose()), [geometries]);
   // Shadows only refresh on change; a moving curtain is a change.
@@ -37,10 +38,10 @@ export function Fabric({ panels, fallback, back = fallback, opacity }: { panels:
       {geometries.map((g, i) => (
         <group key={i} position={panels[i].offset ?? [0, 0, 0]}>
           <mesh geometry={g} castShadow={opacity === undefined} receiveShadow>
-            <FaceMat face="front" color={fallback.color} side={THREE.FrontSide} defaultStyle={fallback} opacity={opacity} />
+            <FaceMat face="front" color={fallback.color} side={THREE.FrontSide} defaultStyle={plain ? undefined : fallback} roughness={fallback.roughness} opacity={opacity} />
           </mesh>
           <mesh geometry={g} castShadow={opacity === undefined} receiveShadow>
-            <FaceMat face="back" color={back.color} side={THREE.BackSide} defaultStyle={back} opacity={opacity} />
+            <FaceMat face="back" color={back.color} side={THREE.BackSide} defaultStyle={plain ? undefined : back} roughness={back.roughness} opacity={opacity} />
           </mesh>
         </group>
       ))}

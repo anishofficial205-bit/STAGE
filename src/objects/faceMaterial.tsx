@@ -51,7 +51,10 @@ export function FaceMat({ face, color, side, opacity = 1, roughness = 0.85, meta
   const highlighted = useObjectUI((s) => !!ctx && ((s.hoverFace?.objectId === ctx.objectId && (s.hoverFace.face === id || s.hoverFace.face === ALL_FACES)) || (s.selectedFace?.objectId === ctx.objectId && s.selectedFace.face === id)));
   const style = (ctx ? ctx.styles[id] ?? ctx.styles[ALL_FACES] : undefined) ?? defaultStyle;
   const size = ctx?.sizes[id] ?? { w: 1, h: 1 };
-  const props = style ? styleProps(style, color, size) : { color, roughness, metalness, map: map ?? null, transparent: opacity < 1, opacity, depthWrite: opacity >= 1 };
+  const styled = style && styleProps(style, color, size);
+  // A see-through part (a scrim) stays see-through when it is styled or printed.
+  const sheer = styled && opacity < 1 ? { transparent: true, opacity: ('opacity' in styled ? (styled.opacity as number) : 1) * opacity, depthWrite: false } : {};
+  const props = styled ? { ...styled, ...sheer } : { color, roughness, metalness, map: map ?? null, transparent: opacity < 1, opacity, depthWrite: opacity >= 1 };
   const graphic = usePlacedGraphic(style?.graphic, size);
   // Lit faces (LED walls) show their graphic as light, not just paint.
   const glow = graphic && emissiveMap !== undefined ? graphic.map : emissiveMap ?? null;

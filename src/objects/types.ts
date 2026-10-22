@@ -62,6 +62,8 @@ export interface SetObjectType {
   hangLines?: (params: Params) => [Vec3, Vec3][];
   /** This object is something you can step up onto; returns its top height (e.g. a platform). */
   platformTop?: (params: Params) => number;
+  /** Measured from the audience floor rather than the stage it's over (a stage skirt hangs down the front to the ground). */
+  onGround?: boolean;
   /** Steps/ramps: snap against a platform's edge and match its height via this param. */
   climbs?: { heightParam: string };
   /**

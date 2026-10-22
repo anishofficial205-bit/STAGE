@@ -30,6 +30,7 @@ import { hangingPanelObject } from './hangingPanel';
 import { fixtureObject } from './fixture';
 import { mainCurtainObject } from './curtains/mainCurtain';
 import { valanceObject } from './curtains/valance';
+import { borderObject, cycClothObject, legObject, scrimObject, stageSkirtObject, travelerObject } from './curtains/drapes';
 import { propObjects } from './props';
 
 export const objectTypes: SetObjectType[] = [
@@ -58,6 +59,12 @@ export const objectTypes: SetObjectType[] = [
   hangingPanelObject,
   mainCurtainObject,
   valanceObject,
+  legObject,
+  borderObject,
+  travelerObject,
+  cycClothObject,
+  scrimObject,
+  stageSkirtObject,
   fixtureObject,
   ...propObjects,
 ];

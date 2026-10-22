@@ -36,7 +36,7 @@ export function place(obj: SetObject, info: StageInfo, params: Params = obj.para
   const wx = info.centre[0] + obj.x;
   const wz = info.centre[1] + obj.z;
   const elevation = type.elevationParam ? num(params, type.elevationParam) : obj.elevation;
-  return { obj, type, size: type.size(params), wx, wz, baseY: floorHeightAt(info, wx, wz) + elevation, elevation };
+  return { obj, type, size: type.size(params), wx, wz, baseY: (type.onGround ? 0 : floorHeightAt(info, wx, wz)) + elevation, elevation };
 }
 
 export function corners(p: Pick<Placed, 'size' | 'wx' | 'wz'> & { obj: Pick<SetObject, 'rotation'> }): Pt[] {

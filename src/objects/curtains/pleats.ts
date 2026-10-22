@@ -26,6 +26,8 @@ export interface PanelShape {
   ruche?: (t: number) => number;
   /** Flat, unpleated cloth (cycs, scrims) */
   smooth?: boolean;
+  /** Bow the panel forward (+z) by this much at its middle, as an elliptical arc (a skirt round a curved apron). */
+  bow?: number;
 }
 
 /** Span of cloth per pleat when closed (m): fuller cloth folds tighter. */
@@ -46,7 +48,7 @@ const pleatCount = (s: Pick<PanelShape, 'closedSpan' | 'fullness'>) => Math.max(
 export function panelGeometry(s: PanelShape): THREE.BufferGeometry {
   const waves = s.smooth ? 1 : pleatCount(s);
   const depth = foldDepth(s);
-  const nx = s.smooth ? 2 : Math.min(900, waves * 10);
+  const nx = s.smooth ? (s.bow ? 48 : 2) : Math.min(900, waves * 10);
   const shaped = !!(s.bottom || s.ruche);
   const ny = shaped ? 36 : 6;
   const pos = new Float32Array((nx + 1) * (ny + 1) * 3);
@@ -67,7 +69,7 @@ export function panelGeometry(s: PanelShape): THREE.BufferGeometry {
       if (r > 0) z += r * 0.07 * Math.sin(2 * Math.PI * rows * v) * Math.min(1, v * 6);
       pos[k * 3] = s.x0 + t * s.span;
       pos[k * 3 + 1] = bottom + v * (s.height - bottom);
-      pos[k * 3 + 2] = z;
+      pos[k * 3 + 2] = z + (s.bow ? s.bow * Math.sqrt(Math.max(0, 1 - (2 * t - 1) ** 2)) : 0);
       uv[k * 2] = s.u[0] + t * (s.u[1] - s.u[0]);
       uv[k * 2 + 1] = v;
       k++;
