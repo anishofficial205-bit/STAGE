@@ -5,7 +5,6 @@ import { resetTips, showTip } from './Tips';
 import { exportZip, importZip } from '../graphics/library';
 import { PrintCheckDialog } from './graphics/PrintCheck';
 import { ExportDialog } from './export/ExportDialog';
-import { SaveStatus } from './Autosave';
 import { SHORTCUTS_EVENT } from './ShortcutsSheet';
 import { useDismiss } from './useDismiss';
 import { useObjectUI } from '../objects/ui';
@@ -15,11 +14,11 @@ import { useLightsUI } from '../lighting/ui';
 import { blockingPdf } from '../blocking/sheets';
 import { download } from '../graphics/specSheet';
 import { exportName } from '../export/exports';
-import { ProgressTracker } from './ProgressTracker';
 import { useShell } from './shell';
 import { recordWithPicture } from '../projects/library';
 import { useActiveBlocking, useActiveLighting } from '../store/useProjectStore';
 import { CameraBar } from './CameraBar';
+import { SaveStatus } from './Autosave';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -99,23 +98,10 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <div className="topbar__title">
-        <input
-          className="project-name"
-          value={s.projectName}
-          onChange={(e) => s.setProjectName(e.target.value)}
-          aria-label="Project name"
-          spellCheck={false}
-        />
-        <span className="topbar__mode">
-          <ProgressTracker />
-          <SaveStatus />
-        </span>
-      </div>
-
       <CameraBar />
 
       <div className="topbar__right" ref={menus}>
+        <SaveStatus />
         <span className="glass topbar__group">
           <button className="round" onClick={s.undo} disabled={!s.past.length} title="Undo (⌘Z)" aria-label="Undo">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>

@@ -19,7 +19,7 @@ const SLOW = 1_000;
 
 /**
  * Autosave: shortly after any change, every 30 seconds as a fallback, and when
- * the tab is closed. The status stays a calm "Saved"; "Saving…" only appears
+ * the tab is closed. Nothing shows while all is well; "Saving…" only appears
  * when a save is taking longer than a second, and a failed save offers a retry.
  */
 export function SaveStatus() {
@@ -67,6 +67,8 @@ export function SaveStatus() {
 
   const ago = lastSavedAt ? Math.round((Date.now() - lastSavedAt) / 1000) : null;
   const saving = dirty && slow;
+  // All is well: stay out of sight (saving carries on in the background).
+  if (!failed && !saving) return null;
   const label = failed ? 'Couldn’t save — retry' : saving ? 'Saving…' : ago === null || ago < 60 ? 'Saved' : `Saved ${Math.round(ago / 60)} min ago`;
   return (
     <button
