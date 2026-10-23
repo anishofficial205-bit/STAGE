@@ -40,6 +40,7 @@ import { floorHeightAt } from '../helpers/stageInfo';
 import * as THREE from 'three';
 import { StageResizeHandles } from './StageResizeHandles';
 import { PlacementGhost } from './objects/PlacementGhost';
+import { LightClickPlacer } from './lights/LightClickPlacer';
 
 
 /** Builds a soft studio environment once, used only by reflective materials (metal, glass, mirror). */
@@ -213,6 +214,7 @@ export function Viewport() {
       <StageSurfacesLayer />
       <StageResizeHandles />
       <PlacementGhost />
+      <LightClickPlacer />
       <SeatLayer />
       <Capturer />
       <Reflections />

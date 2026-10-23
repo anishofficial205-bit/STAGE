@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Field } from '../fields';
 import { Collapsible } from '../Collapsible';
 import { useActiveLighting, useProjectStore } from '../../store/useProjectStore';
@@ -13,31 +13,58 @@ import { MAX_REAL, MAX_SHADOWS, lightBudget } from './budget';
 import { LooksSection, GroupsSection } from './LooksPanel';
 import { Plain } from '../../glossary/Plain';
 import { MoreOptions } from '../MoreOptions';
+import { MOODS, SIMPLE_LIGHTS, applyMood, useLightPlacing } from '../../lighting/moods';
 
 export const LIGHT_DRAG_TYPE = 'application/x-stage-light';
 
 const ICONS: Record<FixtureType, string> = { profile: '◢', fresnel: '◉', par: '⬤', follow: '➹', cyc: '▬', moving: '◍', uplight: '▲', practical: '♨', house: '☼' };
 
-function Library() {
+/** One fixture tile. Click: choose it, then click on stage where you want light (lights that stand on the floor are placed straight away). Drag: place it by hand. */
+function LightTile({ t, name }: { t: FixtureType; name?: string }) {
+  const choosing = useLightPlacing((s) => s.type === t);
+  const spec = FIXTURES[t];
   return (
-    <div className="library__grid">
-      {(Object.keys(FIXTURES) as FixtureType[]).map((t) => (
-        <button
-          key={t}
-          className="tile"
-          draggable
-          onDragStart={(e) => {
-            e.dataTransfer.setData(LIGHT_DRAG_TYPE, t);
-            e.dataTransfer.effectAllowed = 'copy';
-          }}
-          onClick={() => lightActions.addFixture(t)}
-          title={`${FIXTURES[t].label} — ${FIXTURES[t].help} Drag onto a pipe, or click to hang it on an electric.`}
-        >
-          <span className="tile__icon tile__icon--light">{ICONS[t]}</span>
-          <span className="tile__name"><Plain text={FIXTURES[t].label} stacked /></span>
-        </button>
-      ))}
-    </div>
+    <button
+      className={`tile ${choosing ? 'is-active' : ''}`}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData(LIGHT_DRAG_TYPE, t);
+        e.dataTransfer.effectAllowed = 'copy';
+      }}
+      onClick={() => {
+        if (spec.mount !== 'rig') return void lightActions.addFixture(t);
+        const p = useLightPlacing.getState();
+        if (p.type === t) p.cancel();
+        else p.start(t);
+      }}
+      title={`${name ?? spec.label} — ${spec.help} Click it, then click where you want light on stage. Or drag it onto a bar to place it by hand.`}
+    >
+      <span className="tile__icon tile__icon--light">{ICONS[t]}</span>
+      <span className="tile__name">{name ? <span className="term term--stacked"><span className="term__plain">{name}</span><small className="term__tech" title={spec.help}>{spec.label}</small></span> : <Plain text={spec.label} stacked />}</span>
+    </button>
+  );
+}
+
+function Library() {
+  const simple = SIMPLE_LIGHTS.map((x) => x.type);
+  return (
+    <>
+      <div className="library__grid">
+        {SIMPLE_LIGHTS.map((x) => (
+          <LightTile key={x.type} t={x.type} name={x.name} />
+        ))}
+      </div>
+      <Collapsible id="light-more-types" title="More light types" defaultOpen={false}>
+        <div className="library__grid">
+          {(Object.keys(FIXTURES) as FixtureType[])
+            .filter((t) => !simple.includes(t))
+            .map((t) => (
+              <LightTile key={t} t={t} />
+            ))}
+        </div>
+        <p className="hint">Place manually: drag any light onto a light bar, a side pole or the floor.</p>
+      </Collapsible>
+    </>
   );
 }
 
@@ -217,6 +244,17 @@ function GoboControls({ fixtures }: { fixtures: Fixture[] }) {
   );
 }
 
+const QUICK_LIGHT_COLOURS: [string, string][] = [
+  ['White', '#ffffff'],
+  ['Warm white', '#ffd7a1'],
+  ['Amber', '#ffb36b'],
+  ['Red', '#ff4a3d'],
+  ['Pink', '#ff6ec7'],
+  ['Blue', '#4a7dff'],
+  ['Cyan', '#5fd4ff'],
+  ['Green', '#5ee07a'],
+];
+
 function FixtureProps({ fixtures }: { fixtures: Fixture[] }) {
   const units = useProjectStore((s) => s.units);
   const positions = useActiveLighting().positions;
@@ -244,54 +282,75 @@ function FixtureProps({ fixtures }: { fixtures: Fixture[] }) {
         {sameType ? spec.label : 'Mixed types'}
         {one ? ` · on ${mount}` : ''}
       </p>
-      {one && <Field def={num('channel', 'Channel', 1, 999, 1)} value={f.channel} units={units} onChange={(v) => lightActions.patch(ids, { channel: v as number }, `ch:${f.id}`)} />}
-      <label className="field field--inline">
-        <span className="field__label">On</span>
-        <button type="button" role="switch" aria-checked={f.on} className={`switch ${f.on ? 'is-on' : ''}`} onClick={() => lightActions.patch(ids, { on: !f.on })}>
-          <span className="switch__knob" />
-        </button>
-      </label>
-      <Field def={num('intensity', 'Brightness (%)', 0, 100, 1)} value={f.intensity} units={units} onChange={(v) => lightActions.patch(ids, { intensity: v as number }, `int:${ids.join()}`)} />
+      <section className="group">
+        <h3 className="group__title">Colour</h3>
+        <div className="color-field">
+          {QUICK_LIGHT_COLOURS.map(([name, hex]) => (
+            <button
+              key={hex}
+              type="button"
+              className={`swatch ${f.color.toLowerCase() === hex ? 'is-active' : ''}`}
+              style={{ background: hex }}
+              title={name}
+              aria-label={name}
+              onClick={() => lightActions.patch(ids, { color: hex, gel: undefined, kelvin: undefined, on: true })}
+            />
+          ))}
+          <input type="color" className="color-field__picker" value={f.color} onChange={(e) => lightActions.patch(ids, { color: e.target.value, gel: undefined, kelvin: undefined }, `color:${ids.join()}`)} title="Any colour" aria-label="Any colour" />
+        </div>
+      </section>
+      <Field def={num('intensity', 'Brightness (%)', 0, 100, 1)} value={f.intensity} units={units} onChange={(v) => lightActions.patch(ids, { intensity: v as number, on: (v as number) > 0 }, `int:${ids.join()}`)} />
       {!spec.point && sameType && (
-        <>
-          <Field def={num('beam', 'Beam angle (°)', spec.beam[0], spec.beam[1], 1)} value={f.beam} units={units} onChange={(v) => lightActions.patch(ids, { beam: v as number }, `beam:${ids.join()}`)} />
-          <Field def={num('soft', 'Edge softness (%)', 0, 100, 1)} value={Math.round(f.soft * 100)} units={units} onChange={(v) => lightActions.patch(ids, { soft: (v as number) / 100 }, `soft:${ids.join()}`)} />
-        </>
+        <Field def={num('sharp', 'Softer ↔ Sharper', 0, 100, 1, 'How hard the edge of the pool of light is.')} value={100 - Math.round(f.soft * 100)} units={units} onChange={(v) => lightActions.patch(ids, { soft: (100 - (v as number)) / 100 }, `soft:${ids.join()}`)} />
       )}
-      {!spec.point && (
-        <section className="group">
-          <h3 className="group__title">Focus</h3>
-          <div className="btn-row">
-            <button className={`btn ${focusMode ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().setFocusMode(!focusMode)} title="Then click a point on stage">
-              ⌖ Click to focus{fixtures.length > 1 ? ' all' : ''}
-            </button>
-          </div>
-          {focusMode && <p className="panel-msg panel-msg--info">Click a point on the stage to aim {fixtures.length > 1 ? 'these lights' : 'this light'} there.</p>}
-          <p className="hint">Or drag the blue target marker in the view.</p>
-          {one && (f.type === 'moving' || f.type === 'follow') && (
-            <>
-              <Field def={num('pan', 'Pan (°)', -180, 180, 1)} value={pt.pan} units={units} onChange={(v) => lightActions.focus(ids, aimFrom(f, v as number, pt.tilt), `pan:${f.id}`)} />
-              <Field def={num('tilt', 'Tilt (°)', 0, 135, 1, '0° points straight down.')} value={pt.tilt} units={units} onChange={(v) => lightActions.focus(ids, aimFrom(f, pt.pan, v as number), `tilt:${f.id}`)} />
-            </>
-          )}
-        </section>
-      )}
-      <ColourControls fixtures={fixtures} />
-      {sameType && (f.type === 'profile' || f.type === 'moving' || f.type === 'follow') && <GoboControls fixtures={fixtures} />}
-      {!spec.point && f.type !== 'house' && (
+      <MoreOptions id="light">
+        {one && <Field def={num('channel', 'Channel', 1, 999, 1)} value={f.channel} units={units} onChange={(v) => lightActions.patch(ids, { channel: v as number }, `ch:${f.id}`)} />}
         <label className="field field--inline">
-          <span className="field__label">Cast shadows</span>
-          <button type="button" role="switch" aria-checked={f.castShadow} className={`switch ${f.castShadow ? 'is-on' : ''}`} onClick={() => lightActions.patch(ids, { castShadow: !f.castShadow })}>
+          <span className="field__label">On</span>
+          <button type="button" role="switch" aria-checked={f.on} className={`switch ${f.on ? 'is-on' : ''}`} onClick={() => lightActions.patch(ids, { on: !f.on })}>
             <span className="switch__knob" />
           </button>
         </label>
-      )}
-      {one && (
-        <label className="field">
-          <span className="field__label">Purpose (for the hookup list)</span>
-          <input className="field__input" value={f.purpose ?? ''} placeholder="e.g. DSL special" onChange={(e) => lightActions.patch(ids, { purpose: e.target.value }, `purpose:${f.id}`)} />
-        </label>
-      )}
+        {!spec.point && sameType && (
+          <>
+            <Field def={num('beam', 'Beam angle (°)', spec.beam[0], spec.beam[1], 1)} value={f.beam} units={units} onChange={(v) => lightActions.patch(ids, { beam: v as number }, `beam:${ids.join()}`)} />
+          </>
+        )}
+        {!spec.point && (
+          <section className="group">
+            <h3 className="group__title">Focus</h3>
+            <div className="btn-row">
+              <button className={`btn ${focusMode ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().setFocusMode(!focusMode)} title="Then click a point on stage">
+                ⌖ Click to focus{fixtures.length > 1 ? ' all' : ''}
+              </button>
+            </div>
+            {focusMode && <p className="panel-msg panel-msg--info">Click a point on the stage to aim {fixtures.length > 1 ? 'these lights' : 'this light'} there.</p>}
+            <p className="hint">Or drag the blue target marker in the view.</p>
+            {one && (f.type === 'moving' || f.type === 'follow') && (
+              <>
+                <Field def={num('pan', 'Pan (°)', -180, 180, 1)} value={pt.pan} units={units} onChange={(v) => lightActions.focus(ids, aimFrom(f, v as number, pt.tilt), `pan:${f.id}`)} />
+                <Field def={num('tilt', 'Tilt (°)', 0, 135, 1, '0° points straight down.')} value={pt.tilt} units={units} onChange={(v) => lightActions.focus(ids, aimFrom(f, pt.pan, v as number), `tilt:${f.id}`)} />
+              </>
+            )}
+          </section>
+        )}
+        <ColourControls fixtures={fixtures} />
+        {sameType && (f.type === 'profile' || f.type === 'moving' || f.type === 'follow') && <GoboControls fixtures={fixtures} />}
+        {!spec.point && f.type !== 'house' && (
+          <label className="field field--inline">
+            <span className="field__label">Cast shadows</span>
+            <button type="button" role="switch" aria-checked={f.castShadow} className={`switch ${f.castShadow ? 'is-on' : ''}`} onClick={() => lightActions.patch(ids, { castShadow: !f.castShadow })}>
+              <span className="switch__knob" />
+            </button>
+          </label>
+        )}
+        {one && (
+          <label className="field">
+            <span className="field__label">Purpose (for the hookup list)</span>
+            <input className="field__input" value={f.purpose ?? ''} placeholder="e.g. DSL special" onChange={(e) => lightActions.patch(ids, { purpose: e.target.value }, `purpose:${f.id}`)} />
+          </label>
+        )}
+      </MoreOptions>
       <div className="btn-row">
         <button className="btn" onClick={() => lightActions.duplicate(ids)}>
           Duplicate
@@ -343,12 +402,24 @@ function Overview() {
   const houseLevel = house.length ? Math.round(house.reduce((t, f) => t + (f.on ? f.intensity : 0), 0) / house.length) : 0;
   const { real, approx, shadows } = lightBudget(lighting.fixtures, quality);
   const lit = real.size + approx.size;
+  const [lastMood, setLastMood] = useState<string | null>(null);
   return (
     <div className="props">
       <div className="panel-head">
         <h2 className="panel-title">Lights</h2>
       </div>
-      <p className="sidebar__empty">Add lights from the library, then click one to aim and colour it. Turn on the work light to see what you’re building.</p>
+      <p className="sidebar__empty">{lighting.fixtures.length ? 'Pick a mood, or click a light to change its colour and brightness.' : 'Pick a mood to light your stage.'}</p>
+      <div className="mood-cards">
+        {MOODS.map((m) => {
+          const current = lighting.looks.some((k) => k.name === m.name) && lastMood === m.name;
+          return (
+            <button key={m.id} className={`mood-card ${current ? 'is-active' : ''}`} onClick={() => (applyMood(m.id), setLastMood(m.name))} title={m.blurb}>
+              <img src={m.image} alt="" />
+              <span className="mood-card__name">{m.name}</span>
+            </button>
+          );
+        })}
+      </div>
       <label className="field field--inline">
         <span className="field__label">Work light</span>
         <button type="button" role="switch" aria-checked={workLight} className={`switch ${workLight ? 'is-on' : ''}`} onClick={() => useLightsUI.getState().toggleWorkLight()}>
