@@ -4,6 +4,7 @@ import { useSightlines } from '../../sightlines/store';
 import { rowLetter } from '../../helpers/seats';
 import { blockingFor, seatViewOf, stepSeat } from './seatActions';
 import { useStageSeats } from './useStageSeats';
+import { seatToolsInMenu } from '../CameraBar';
 
 const pct = (f: number) => `${Math.round(f * 100)}%`;
 
@@ -11,7 +12,8 @@ const pct = (f: number) => `${Math.round(f * 100)}%`;
 export function ViewTools() {
   const { seatView, sightlinesOn, progress, current, set } = useSightlines();
   const { seats } = useStageSeats();
-  if (!seats.length) return null;
+  const mode = useProjectStore((x) => x.mode);
+  if (!seats.length || seatToolsInMenu(mode)) return null;
   return (
     <div className="view-tools">
       <button

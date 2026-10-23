@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../store/useProjectStore';
-import { useViews } from './useViews';
 import { TOUR_EVENT } from './Tour';
 import { exportZip, importZip } from '../graphics/library';
 import { PrintCheckDialog } from './graphics/PrintCheck';
@@ -19,11 +18,10 @@ import { ProgressTracker } from './ProgressTracker';
 import { useShell } from './shell';
 import { recordWithPicture } from '../projects/library';
 import { useActiveBlocking, useActiveLighting } from '../store/useProjectStore';
-import { Plain } from '../glossary/Plain';
+import { CameraBar } from './CameraBar';
 
 export function TopBar() {
   const s = useProjectStore();
-  const views = useViews();
   const fileInput = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [printCheck, setPrintCheck] = useState(false);
@@ -110,24 +108,7 @@ export function TopBar() {
         </span>
       </div>
 
-      <nav className="topbar__views glass" aria-label="Camera views" data-tour="views">
-        {views.map((v) =>
-          v.id.startsWith('saved-') ? (
-            <span key={v.id} className="saved-view">
-              <button className="pill" onClick={() => s.requestView(v)}>
-                <Plain text={v.label} />
-              </button>
-              <button className="saved-view__x" onClick={() => s.deleteView(v.id)} title="Remove this saved view" aria-label={`Remove ${v.label}`}>
-                ×
-              </button>
-            </span>
-          ) : (
-            <button key={v.id} className={`pill ${v.id === 'reset' ? 'pill--muted' : ''}`} onClick={() => s.requestView(v)}>
-              <Plain text={v.label} />
-            </button>
-          ),
-        )}
-      </nav>
+      <CameraBar />
 
       <div className="topbar__right" ref={menus}>
         <span className="glass topbar__group">

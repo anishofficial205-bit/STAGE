@@ -14,6 +14,8 @@ import { useShell, useTaskDrawers } from './components/shell';
 import { DrawerTabs } from './components/DrawerTabs';
 import { LabelDeclutter } from './components/LabelDeclutter';
 import { StartScreen } from './components/StartScreen';
+import { ViewCube } from './components/ViewCube';
+import { CrossModeToast } from './components/CrossModeToast';
 import { useEffect } from 'react';
 import { startRecentSync } from './projects/library';
 import { LightPlot } from './components/lights/LightPlot';
@@ -27,7 +29,8 @@ import { useVenueUI } from './venue/ui';
  * the mode rail on the left, the top bar, the mode's tools and the selection panel.
  */
 export default function App() {
-  const venue = useProjectStore((s) => s.mode === 'venue');
+  const mode = useProjectStore((s) => s.mode);
+  const venue = mode === 'venue';
   const layout = useVenueUI((s) => s.layout);
   const panels = useShell((s) => s.panels);
   const drawers = useShell((s) => s.drawers);
@@ -35,7 +38,7 @@ export default function App() {
   useEffect(() => startRecentSync(), []);
   const show = venue ? layout : '3d';
   return (
-    <div className={`app ${panels ? '' : 'is-clean'} ${drawers.left ? 'has-left' : ''} ${drawers.right ? 'has-right' : ''}`}>
+    <div className={`app app--${mode} ${panels ? '' : 'is-clean'} ${drawers.left ? 'has-left' : ''} ${drawers.right ? 'has-right' : ''}`}>
       <main className={`viewport viewport--${show}`}>
         {show !== '3d' && (
           <div className="viewport__plan">
@@ -54,7 +57,9 @@ export default function App() {
       <PropertiesPanel />
       <NextStep />
       <DrawerTabs />
+      {!venue && <ViewCube />}
       <LabelDeclutter />
+      <CrossModeToast />
       <UndoToast />
       <Shortcuts />
       <PdfPagePicker />
