@@ -38,7 +38,7 @@ function PresetPlan({ w, d }: { w: number; d: number }) {
 import { lookup, plainText } from '../glossary/terms';
 import { usePlacing } from '../objects/placing';
 import { useShell } from './shell';
-import { ExampleProjects, MyTemplates } from './StagePicker';
+import { ExampleProjects, MyTemplates } from './ToolsPanel';
 
 /**
  * Generated entirely from the active template's params schema — templates never

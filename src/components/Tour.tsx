@@ -30,7 +30,7 @@ const FIRST_RUN: Step[] = [
 
 const MODE_TOURS: Partial<Record<Mode, Step[]>> = {
   venue: [
-    { target: 'venue-tools', side: 'right', title: 'Draw the building', text: 'Walls (W), rooms (M), doors (D) and furniture (F). Rooms show their name and area; mark doors that lead onto the stage.' },
+    { target: 'venue-tools', side: 'right', title: 'Draw the building', text: 'Walls (W), rooms (M), doors (D) and furniture (U). Rooms show their name and area; mark doors that lead onto the stage.' },
     { target: 'plan', side: 'right', title: 'Plan and 3D together', text: 'Draw on the plan and see it built in 3D. Selecting something in one selects it in the other. Import a floor plan to trace over it.' },
     { target: 'panel', side: 'left', title: 'Routes and entrances', text: 'Use the Route tool to time walks between rooms; named stage entrances are listed here and used in Blocking.' },
   ],

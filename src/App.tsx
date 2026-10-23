@@ -1,5 +1,5 @@
 import { TopBar } from './components/TopBar';
-import { StagePicker } from './components/StagePicker';
+import { ToolsPanel } from './components/ToolsPanel';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { Viewport } from './components/Viewport';
 import { ThumbnailRenderer } from './components/Thumbnails';
@@ -13,7 +13,7 @@ import { NextStep } from './components/NextStep';
 import { useShell, useTaskDrawers } from './components/shell';
 import { DrawerTabs } from './components/DrawerTabs';
 import { LabelDeclutter } from './components/LabelDeclutter';
-import { StartScreen } from './components/StartScreen';
+import { Home } from './components/Home';
 import { NewProjectDialog } from './components/NewProjectDialog';
 import { ViewCube } from './components/ViewCube';
 import { CrossModeToast } from './components/CrossModeToast';
@@ -56,7 +56,7 @@ export default function App() {
       </main>
       <ModeBar />
       <TopBar />
-      <StagePicker />
+      <ToolsPanel />
       <PropertiesPanel />
       <NextStep />
       <DrawerTabs />
@@ -72,7 +72,7 @@ export default function App() {
       <LightPlot />
       <Tour />
       <ThumbnailRenderer />
-      <StartScreen />
+      <Home />
       <NewProjectDialog />
     </div>
   );

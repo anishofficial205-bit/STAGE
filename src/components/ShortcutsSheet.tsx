@@ -12,12 +12,13 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
       ['⇧⌘Z / Ctrl+Y', 'Redo'],
       ['⌘S / Ctrl+S', 'Save now (your work also saves automatically)'],
       ['1 – 3', 'Switch step: Set, Lights, Blocking'],
-      ['4', 'Venue (Advanced)'],
-      ['5', 'Backstage & venue (advanced)'],
+      ['4', 'Backstage & venue (Advanced)'],
       ['⌘Z / ⇧⌘Z', 'Undo / redo works in every mode'],
-      ['F', 'Focus mode: hide the panels to see the full stage (Shift+F in Venue)'],
+      ['F', 'Focus mode: hide the panels to see the full stage'],
       ['?', 'Show this sheet'],
       ['Esc', 'Deselect, or leave a seat'],
+      ['Delete / Backspace', 'Delete what’s selected, in any mode (also things picked in Layers)'],
+      ['Right-click', 'Delete, hide, lock or edit anything — in the view or in Layers'],
     ],
   },
   {
@@ -39,7 +40,9 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
   {
     title: 'Venue plan',
     rows: [
-      ['W / V', 'Wall tool / select tool'],
+      ['V', 'Select tool'],
+      ['W / M / D / U / P', 'Walls, rooms, doors, furniture, routes'],
+      ['R', 'Rotate the selected furniture 90° (Shift: 15°)'],
       ['Click, double-click', 'Add a corner, finish the wall (click the first corner to close a room)'],
       ['Shift / ⌘/Ctrl while drawing', 'Any angle / no snapping'],
       ['Enter, Backspace, Esc', 'Finish, remove the last corner, cancel'],
@@ -51,7 +54,7 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
     rows: [
       ['Click / Shift-click', 'Select a light / add to the selection'],
       ['Drag a light', 'Move it along pipes, booms and truss (or the floor)'],
-      ['F', 'Click to focus the selected lights'],
+      ['A', 'Aim: click where the selected lights should point'],
       ['⌘D, Delete', 'Duplicate, delete'],
     ],
   },

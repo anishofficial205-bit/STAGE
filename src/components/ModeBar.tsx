@@ -5,7 +5,6 @@ import { useBlackBoxUI } from '../templates/blackBox/blocks';
 import { useObjectUI } from '../objects/ui';
 import { useShell } from './shell';
 import { recordWithPicture } from '../projects/library';
-import { useLightsUI } from '../lighting/ui';
 
 
 const ICONS: Record<Mode, string> = {
@@ -45,11 +44,8 @@ export function ModeBar() {
       const el = e.target as HTMLElement | null;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      // F: Focus mode — except where F already means something (Venue's furniture tool, aiming a selected light).
+      // F: Focus mode, in every mode.
       if (e.key.toLowerCase() === 'f') {
-        const m = useProjectStore.getState().mode;
-        const aiming = m === 'lights' && useLightsUI.getState().selected?.kind === 'fixture';
-        if ((m === 'venue' && !e.shiftKey) || aiming) return;
         e.preventDefault();
         useShell.getState().togglePanels();
         return;

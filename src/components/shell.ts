@@ -9,7 +9,7 @@ const KEY = 'stage-builder:panels';
 /** Below this width the side panels become drawers over the stage. */
 export const NARROW = 1100;
 /** Below this width only one drawer is open at a time. */
-export const TINY = 768;
+export const TINY = 1100;
 
 function initialPanels() {
   try {

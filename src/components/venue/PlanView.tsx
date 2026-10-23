@@ -369,7 +369,7 @@ export function PlanView() {
       else if (k === 'v') ui.setTool('select');
       else if (k === 'm') ui.setTool('room');
       else if (k === 'd') ui.setTool('door');
-      else if (k === 'f') ui.setTool('furniture');
+      else if (k === 'u') ui.setTool('furniture');
       else if (k === 'p') ui.setTool('route');
     };
     window.addEventListener('keydown', onKey);

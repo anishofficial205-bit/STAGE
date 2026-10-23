@@ -92,7 +92,7 @@ function Positions() {
 export function LightsLeft() {
   const templateId = useProjectStore((s) => s.templateId);
   useEffect(() => lightActions.ensureReady(), [templateId]);
-  // Keys: Delete removes, ⌘/Ctrl+D duplicates, F focuses, Esc deselects.
+  // Keys: Delete removes, ⌘/Ctrl+D duplicates, A aims, Esc deselects.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
@@ -111,7 +111,7 @@ export function LightsLeft() {
       } else if (sel.kind === 'fixture' && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
         e.preventDefault();
         lightActions.duplicate(sel.ids);
-      } else if (sel.kind === 'fixture' && e.key.toLowerCase() === 'f' && !e.metaKey && !e.ctrlKey) ui.setFocusMode(true);
+      } else if (sel.kind === 'fixture' && e.key.toLowerCase() === 'a' && !e.metaKey && !e.ctrlKey) ui.setFocusMode(true);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -309,7 +309,7 @@ function FixtureProps({ fixtures }: { fixtures: Fixture[] }) {
           <section className="group">
             <h3 className="group__title">Focus</h3>
             <div className="btn-row">
-              <button className={`btn ${focusMode ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().setFocusMode(!focusMode)} title="Then click a point on stage">
+              <button className={`btn ${focusMode ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().setFocusMode(!focusMode)} title="Then click a point on stage (A)">
                 ⌖ Click to focus{fixtures.length > 1 ? ' all' : ''}
               </button>
             </div>

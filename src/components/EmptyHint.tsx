@@ -13,20 +13,6 @@ export function EmptyHint() {
   if (!empty || seatView || dismissed === templateId || mode !== 'set') return null;
   const first = STARTER_SETS[templateId]?.[0];
   return (
-      <div className="empty-hint" role="note">
-        <div>
-          <strong>Your stage is empty.</strong> When the size is right, switch to{' '}
-          <button className="btn btn--link" onClick={() => useProjectStore.getState().setMode('set')}>
-            Set mode
-          </button>{' '}
-          (key 2) to add scenery and props.
-        </div>
-        <button className="empty-hint__close" onClick={() => setDismissed(templateId)} aria-label="Dismiss">
-          ×
-        </button>
-      </div>
-    );
-  return (
     <div className="empty-hint" role="note">
       <span className="empty-hint__arrow" aria-hidden>←</span>
       <div>

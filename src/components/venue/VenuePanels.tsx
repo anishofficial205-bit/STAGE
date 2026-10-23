@@ -20,7 +20,7 @@ const TOOLS: { id: VenueTool; label: string; key: string; hint: string }[] = [
   { id: 'wall', label: 'Wall', key: 'W', hint: 'Click to start, click to add corners, double-click (or Enter) to finish; click the first corner to close. Snaps to the grid, 90°/45°, wall ends and the stage — Shift for any angle, ⌘/Ctrl to place freely.' },
   { id: 'room', label: 'Room', key: 'M', hint: 'Drag out a rectangle to make a room with four walls — or click inside an area your walls already close in.' },
   { id: 'door', label: 'Door', key: 'D', hint: 'Click on a wall to put a door there. It swings to the side you click on.' },
-  { id: 'furniture', label: 'Furniture', key: 'F', hint: 'Pick a piece, then click in the plan to place it. Near a wall it turns its back to the wall. R rotates the selected piece 90° (Shift: 15°).' },
+  { id: 'furniture', label: 'Furniture', key: 'U', hint: 'Pick a piece, then click in the plan to place it. Near a wall it turns its back to the wall. R rotates the selected piece 90° (Shift: 15°).' },
   { id: 'route', label: 'Route', key: 'P', hint: 'Click where the route starts (a room or a door), then where it ends. The walking path goes through doors, around walls, and is saved with its length and walking time.' },
 ];
 

@@ -147,7 +147,7 @@ function ProjectCard({ p, current, onOpen }: { p: ProjectRecord; current: boolea
 }
 
 /** Home: what to build today — new project, recent projects and templates. */
-export function StartScreen() {
+export function Home() {
   const home = useShell((s) => s.home);
   const setHome = useShell((s) => s.setHome);
   const recent = useRecentProjects((s) => s.list);

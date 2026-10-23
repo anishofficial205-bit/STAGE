@@ -101,7 +101,7 @@ export function MyTemplates() {
   );
 }
 
-export function StagePicker() {
+export function ToolsPanel() {
   const mode = useProjectStore((s) => s.mode);
   if (mode === 'set')
     return (

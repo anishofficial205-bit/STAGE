@@ -100,7 +100,7 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   setProjectName: (name: string) => void;
   setUnits: (units: Units) => void;
   toggleLabels: () => void;
-  /** Switch mode (Venue, Stage, Set, Lights, Blocking). Clears the selection when leaving Set. */
+  /** Switch mode (Set, Lights, Blocking, Venue). Clears the set selection when leaving Set. */
   setMode: (mode: Mode) => void;
   setOtherLayers: (v: OtherLayers) => void;
   /** Change the venue. `key` merges rapid edits (drags) into one undo step. */
@@ -110,8 +110,6 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   setLightQuality: (q: 'draft' | 'presentation') => void;
   /** Change the active stage's blocking. `key` merges rapid edits (drags) into one undo step. */
   setBlocking: (update: (blocking: Blocking) => Blocking, key?: string, history?: boolean) => void;
-  /** Switch template, either from defaults or carrying the stage width/depth/height across. */
-  switchTemplate: (id: string, mode: 'fresh' | 'similar') => void;
   resetToDefaults: () => void;
   applyPreset: (index: number) => void;
   setParam: (key: string, value: Params[string]) => void;
@@ -200,7 +198,7 @@ export function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
     blockingByTemplate: {},
     lightQuality: 'draft',
     mode: 'set',
-    otherLayers: 'show',
+    otherLayers: 'dim',
   };
 }
 
@@ -301,7 +299,7 @@ function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
     lightQuality: d.lightQuality === 'presentation' ? 'presentation' : 'draft',
     blockingByTemplate: Object.fromEntries(Object.entries(d.blockingByTemplate && typeof d.blockingByTemplate === 'object' ? d.blockingByTemplate : {}).filter(([id]) => getTemplate(id)).map(([id, b]) => [id, sanitizeBlocking(b)])),
     mode: isMode(d.mode) && modeEnabled(d.mode) ? d.mode : base.mode,
-    otherLayers: d.otherLayers === 'dim' || d.otherLayers === 'hide' ? d.otherLayers : 'show',
+    otherLayers: d.otherLayers === 'show' || d.otherLayers === 'hide' ? d.otherLayers : 'dim',
   };
 }
 
@@ -445,35 +443,6 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setBlocking: (update, key, history = true) => {
       if (history) commit(key);
       set((s) => ({ blockingByTemplate: { ...s.blockingByTemplate, [s.templateId]: update(s.blockingByTemplate[s.templateId] ?? emptyBlocking()) }, dirty: true }));
-    },
-
-    switchTemplate: (id, mode) => {
-      const s = get();
-      const from = getTemplate(s.templateId)!;
-      const to = getTemplate(id)!;
-      commit();
-      let params: Params;
-      if (mode === 'fresh') {
-        params = applyConstraints(to, defaultParams(to));
-      } else {
-        // Start from the target's own settings and carry the shared dimensions across.
-        params = { ...s.paramsByTemplate[id] };
-        const src = s.paramsByTemplate[s.templateId];
-        for (const dim of ['width', 'depth', 'height'] as const) {
-          const a = from.dimensions?.[dim];
-          const b = to.dimensions?.[dim];
-          if (a && b) params[b] = src[a];
-        }
-        params = applyConstraints(to, params);
-      }
-      set({
-        templateId: id,
-        paramsByTemplate: { ...s.paramsByTemplate, [id]: params },
-        dataByTemplate: to.data ? { ...s.dataByTemplate, [id]: mode === 'fresh' ? to.data.initial(params) : to.data.sanitize(s.dataByTemplate[id], params) } : s.dataByTemplate,
-        selectedIds: [],
-        ...announce(`Switched to ${to.name}`),
-        dirty: true,
-      });
     },
 
     resetToDefaults: () => {

@@ -73,7 +73,11 @@ export function CrossModeToast() {
       const solid = (h: THREE.Intersection) => {
         const m = (h.object as THREE.Mesh).material as THREE.Material | THREE.Material[];
         const mat = Array.isArray(m) ? m[0] : m;
-        return !(mat && mat.transparent && mat.opacity < 0.35 && !(h.object.parent?.userData?.fixture));
+        // Things faded because they belong to another mode count as they really are.
+        const orig = mat?.userData?.dim?.orig as { transparent: boolean; opacity: number } | undefined;
+        const transparent = orig ? orig.transparent : mat?.transparent;
+        const opacity = orig ? orig.opacity : mat?.opacity ?? 1;
+        return !(mat && transparent && opacity < 0.35 && !(h.object.parent?.userData?.fixture));
       };
       const hit = hits.find((h) => (h.object as THREE.Mesh).isMesh && visible(h.object) && solid(h));
       const owner = hit && ownerOf(hit.object);

@@ -319,7 +319,7 @@ export function CustomScene({ p, data }: { p: Params; data: CustomData }) {
   const preview = useContext(SceneModeContext).thumbnail;
   useBlockKeys(!preview);
 
-  // Leaving the Stage mode (or this template) drops the tool and the picked shape.
+  // Deselecting the stage (or leaving this template) drops the tool and the picked shape.
   useEffect(() => {
     if (!active && !preview) {
       useCustomUI.getState().setTool(null);

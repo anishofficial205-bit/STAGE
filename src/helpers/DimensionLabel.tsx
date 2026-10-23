@@ -15,7 +15,7 @@ interface Props {
   offset?: Vec3;
   /** Optional prefix, e.g. "Arch". */
   label?: string;
-  /** Stage dimensions show in Stage mode; a set piece's show when it's selected or hovered. */
+  /** Stage dimensions show while the stage is selected; a set piece's show when it's selected or hovered. */
   kind?: LabelKind;
   selected?: boolean;
   hoverKey?: string;

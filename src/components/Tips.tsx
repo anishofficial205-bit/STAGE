@@ -4,13 +4,14 @@ import { create } from 'zustand';
 import { useProjectStore } from '../store/useProjectStore';
 import { viewportBridge } from '../objects/ui';
 import type { Vec3 } from '../types';
+import { useShell } from './shell';
 
 /**
  * One-time tips: a small bubble the first time you do something, next to the
  * thing it's about. Each shows once (remembered in this browser); "Reset tips"
  * in Help brings them back.
  */
-export type TipId = 'stage' | 'object' | 'light' | 'graphic' | 'path' | 'export';
+export type TipId = 'stage' | 'object' | 'light' | 'graphic' | 'path' | 'export' | 'new-project' | 'presets' | 'layers';
 
 const TEXT: Record<TipId, string> = {
   stage: 'Change size here, or drag its edges.',
@@ -19,6 +20,9 @@ const TEXT: Record<TipId, string> = {
   graphic: 'Drag inside to reposition · Choose Fit or Fill.',
   path: 'Press Space to play the scene.',
   export: 'Lighting plans and blocking sheets use technical terms crews know.',
+  'new-project': 'Start here: pick a stage and its size.',
+  presets: 'Each card is a ready-made size. Double-click one to start straight away.',
+  layers: 'Everything in your scene is listed here — right-click to delete or hide.',
 };
 
 const KEY = (id: TipId) => `stage-builder:tip:${id}`;
@@ -79,6 +83,23 @@ function screenOf(a: Anchor): { x: number; y: number } | null {
 
 /** Watches for the first time things happen and shows the matching tip. */
 function useTriggers() {
+  // Home, the New project dialog and the first time in the editor.
+  useEffect(() => {
+    const later = (f: () => void, ms: number) => window.setTimeout(f, ms);
+    const onShell = (s: ReturnType<typeof useShell.getState>, p?: ReturnType<typeof useShell.getState>) => {
+      if (s.home && !s.newProject && (!p || !p.home || p.newProject)) later(() => document.querySelector('.home__new') && showTip('new-project', { selector: '.home__new' }), 900);
+      if (s.newProject && !s.changingStage && (!p || !p.newProject)) {
+        if (useTips.getState().tip?.id === 'new-project') useTips.getState().dismiss();
+        later(() => showTip('presets', { selector: '.np__card.is-active' }), 600);
+      }
+      if (!s.home && !s.newProject && p && (p.home || p.newProject)) {
+        if (useTips.getState().tip?.id === 'presets' || useTips.getState().tip?.id === 'new-project') useTips.getState().dismiss();
+        later(() => !useShell.getState().home && showTip('layers', { selector: '.outliner__head' }), 2500);
+      }
+    };
+    onShell(useShell.getState());
+    return useShell.subscribe((s, p) => onShell(s, p));
+  }, []);
   useEffect(
     () =>
       useProjectStore.subscribe((s, p) => {
@@ -147,11 +168,11 @@ export function Tips() {
     if (tip) setTipMode(mode);
   }, [tip]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (tip && mode !== tipMode && tip.id !== 'export') dismiss();
+    if (tip && mode !== tipMode && !['export', 'new-project', 'presets', 'layers'].includes(tip.id)) dismiss();
   }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!tip || !pos) return null;
-  const x = Math.min(Math.max(pos.x, 150), window.innerWidth - 150);
+  const x = Math.min(Math.max(pos.x, 172), window.innerWidth - 172);
   const above = pos.y > 140;
   return (
     <div className={`tip ${above ? 'tip--above' : 'tip--below'}`} role="status" style={{ left: x, top: above ? pos.y - 12 : pos.y + 40 }}>

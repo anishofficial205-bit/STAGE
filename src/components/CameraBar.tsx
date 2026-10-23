@@ -47,11 +47,22 @@ export function CameraBar() {
         Reset
       </button>
       <span className="menu" ref={ref}>
-        <button className="pill" onClick={() => setOpen(!open)} aria-expanded={open}>
+        <button className="pill pill--more" onClick={() => setOpen(!open)} aria-expanded={open}>
           More views ▾
         </button>
         {open && (
           <span className="menu__list menu__list--views" role="menu">
+            {/* Narrow screens: the three main buttons move in here. */}
+            <button role="menuitem" className="menu__narrow" onClick={() => (go(audience), close())}>
+              Audience view
+            </button>
+            <button role="menuitem" className="menu__narrow" onClick={() => (go(top), close())}>
+              Top view
+            </button>
+            <button role="menuitem" className="menu__narrow" onClick={() => (go(reset), close())}>
+              Reset
+            </button>
+            <span className="menu__sep menu__narrow" />
             {others.map((v) =>
               v.id.startsWith('saved-') ? (
                 <span key={v.id} className="menu__item-row">

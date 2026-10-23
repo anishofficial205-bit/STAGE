@@ -5,7 +5,7 @@ import { useProjectStore } from '../store/useProjectStore';
 import { useExportState } from '../export/state';
 import type { Mode } from '../modes';
 
-const DIM = 0.22;
+const DIM = 0.3;
 type Orig = { transparent: boolean; opacity: number; depthWrite: boolean };
 
 function eachMaterial(root: THREE.Object3D, fn: (m: THREE.Material) => void) {
