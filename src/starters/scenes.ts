@@ -55,7 +55,7 @@ export const STARTER_SCENES: StarterScene[] = [
   {
     id: 'play',
     title: 'A play',
-    blurb: 'Proscenium stage, a living-room set, warm lights and two performers.',
+    blurb: 'A framed stage with a living-room set, warm lights and two performers.',
     image: 'starters/play.jpg',
     templateId: 'proscenium',
     build: () => {
@@ -147,7 +147,7 @@ export const STARTER_SCENES: StarterScene[] = [
   {
     id: 'scratch',
     title: 'Start from scratch',
-    blurb: 'An empty proscenium stage. Nothing else.',
+    blurb: 'An empty framed stage. Nothing else.',
     image: 'starters/scratch.jpg',
     templateId: 'proscenium',
     build: () => {},

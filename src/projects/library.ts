@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand';
 import { PROJECTS, deleteRecord, getAllRecords, getRecord, putRecord } from '../graphics/db';
-import { useProjectStore } from '../store/useProjectStore';
+import { newProjectId, useProjectStore } from '../store/useProjectStore';
 import { exportCurrentView } from '../export/exports';
 
 export interface ProjectRecord {
@@ -109,6 +109,27 @@ export async function recordWithPicture() {
       /* no picture */
     }
   });
+}
+
+/** Rename a project in the list (and the open project, if it's this one). */
+export async function renameProject(id: string, name: string) {
+  const store = useProjectStore.getState();
+  if (store.projectId === id) store.setProjectName(name);
+  await serial(async () => {
+    const prev = await getRecord<ProjectRecord>(PROJECTS, id);
+    if (prev) await putRecord(PROJECTS, id, { ...prev, name, file: { ...(prev.file as object), projectName: name } });
+  });
+  await refreshRecent();
+}
+
+/** A copy of a project with its own id, named "… copy". */
+export async function duplicateProject(id: string) {
+  const prev = await getRecord<ProjectRecord>(PROJECTS, id);
+  if (!prev) return;
+  const copyId = newProjectId();
+  const name = `${prev.name} copy`;
+  await putRecord(PROJECTS, copyId, { ...prev, id: copyId, name, savedAt: Date.now(), file: { ...(prev.file as object), projectId: copyId, projectName: name } } satisfies ProjectRecord);
+  await refreshRecent();
 }
 
 export const deleteProject = async (id: string) => {

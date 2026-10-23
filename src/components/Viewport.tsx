@@ -41,6 +41,7 @@ import * as THREE from 'three';
 import { StageResizeHandles } from './StageResizeHandles';
 import { PlacementGhost } from './objects/PlacementGhost';
 import { LightClickPlacer } from './lights/LightClickPlacer';
+import { useShell } from './shell';
 
 
 /** Builds a soft studio environment once, used only by reflective materials (metal, glass, mirror). */
@@ -65,7 +66,7 @@ function ViewportSync() {
   // Dev-only hooks for automated checks (camera + store); stripped from production builds.
   const three = useThree();
   viewportBridge.three = three;
-  if (import.meta.env.DEV) Object.assign(window, { __three: three, __store: useProjectStore, __objectUI: useObjectUI, __lightsUI: useLightsUI, __blockingUI: useBlockingUI, __blockingSelect: (ids: string[]) => useBlockingUI.getState().select({ kind: 'performer', ids }), __posesAt: posesAt, __entrances: () => computeEntrances(useProjectStore.getState(), useProjectStore.getState().blockingByTemplate[useProjectStore.getState().templateId] ?? emptyBlocking()) });
+  if (import.meta.env.DEV) Object.assign(window, { __three: three, __store: useProjectStore, __shell: useShell, __objectUI: useObjectUI, __lightsUI: useLightsUI, __blockingUI: useBlockingUI, __blockingSelect: (ids: string[]) => useBlockingUI.getState().select({ kind: 'performer', ids }), __posesAt: posesAt, __entrances: () => computeEntrances(useProjectStore.getState(), useProjectStore.getState().blockingByTemplate[useProjectStore.getState().templateId] ?? emptyBlocking()) });
   useEffect(() => {
     if (width <= 0 || height <= 0) return;
     setAspect(width / height);
