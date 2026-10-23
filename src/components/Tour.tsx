@@ -32,14 +32,14 @@ const MODE_TOURS: Partial<Record<Mode, Step[]>> = {
     { target: 'panel', side: 'left', title: 'Routes and entrances', text: 'Use the Route tool to time walks between rooms; named stage entrances are listed here and used in Blocking.' },
   ],
   lights: [
-    { target: 'light-library', side: 'right', title: 'Hang some lights', text: 'Drag a light onto a pipe, boom or truss — or click to hang it on an electric. Shift-click to select several.' },
+    { target: 'light-library', side: 'right', title: 'Hang some lights', text: 'Drag a light onto a light bar, side pole or lighting frame — or click it to hang it above the stage. Shift-click to select several.' },
     { target: 'panel', side: 'left', title: 'Aim and colour', text: 'Select a light to focus it (click a point on stage, or drag its target), pick a gel or colour temperature, add a gobo.' },
-    { target: 'light-looks', side: 'right', title: 'Looks', text: 'Save lighting states as looks and fade between them. The work light (right) helps while you build; Light plot exports the drawing for the crew.' },
+    { target: 'light-looks', side: 'right', title: 'Looks', text: 'Save lighting states as looks and fade between them. The work light (right) helps while you build; the Lighting plan prints the drawing for the crew.' },
   ],
   blocking: [
     { target: 'cast', side: 'right', title: 'Your cast', text: 'Add performers, name and colour them. Shift-click several to group them or set a formation.' },
     { target: 'panel', side: 'left', title: 'Paths', text: 'Select a performer and draw their path. Paths can start or end at an entrance; add pauses and timing.' },
-    { target: 'playbar', side: 'top', title: 'Play it', text: 'Play the scene (Space), scrub, slow it down. Run checks to catch performers seen in the wings, hidden or colliding.' },
+    { target: 'playbar', side: 'top', title: 'Play it', text: 'Play the scene (Space), scrub, slow it down. Checks catch performers seen waiting at the side, hidden or bumping into each other.' },
   ],
 };
 

@@ -7,6 +7,7 @@ import { isOffStage, place } from '../../objects/geometry';
 import { setProps } from '../../objects/actions';
 import { isGroup, leafIds } from '../../objects/groups';
 import type { SetObject } from '../../objects/types';
+import { Plain } from '../../glossary/Plain';
 
 /** IDs of objects that are partly off the stage (shown with a warning). */
 export function useOffStageIds() {
@@ -136,7 +137,9 @@ export function LayersPanel() {
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
-            <span className="layer__name">{o.name}</span>
+            <span className="layer__name">
+              <Plain text={o.name} />
+            </span>
           )}
           {warn && (
             <span className="layer__warn" title="Partly off the stage">

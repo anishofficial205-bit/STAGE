@@ -51,6 +51,7 @@ function ExampleProjects() {
 import { LightsLeft } from './lights/LightsPanels';
 import { BlockingLeft } from './blocking/BlockingPanels';
 import { deleteMyTemplate, refreshMyTemplates, useMyTemplates, applySavedTemplate, type SavedTemplate } from '../templates/custom/myTemplates';
+import { Plain } from '../glossary/Plain';
 
 /** Custom stages saved from Build Your Own, usable in any project. */
 function MyTemplates() {
@@ -188,7 +189,9 @@ export function StagePicker() {
               aria-pressed={t.id === templateId}
             >
               <span className="card__thumb">{images[t.id] ? <img src={images[t.id]} alt="" /> : <span className="card__loading" />}</span>
-              <span className="card__name">{t.name}</span>
+              <span className="card__name">
+                <Plain text={t.name} />
+              </span>
               <span className="card__desc">{t.description}</span>
             </button>
           </li>

@@ -8,6 +8,7 @@ import type { NumberParam, ParamDef, ParamValue } from '../../types';
 import { useOffStageIds } from './LayersPanel';
 import { ArrayTool, MultiProperties } from './ArrangeTools';
 import { FacesSection } from './FacesSection';
+import { Plain } from '../../glossary/Plain';
 
 const pos = (key: string, label: string, help?: string): NumberParam => ({ key, label, group: 'Position', type: 'number', default: 0, min: -200, max: 200, step: 0.05, help });
 
@@ -43,7 +44,10 @@ export function ObjectProperties() {
           Done
         </button>
       </div>
-      <p className="hint obj-props__type">{type.name}{o.locked ? ' · locked' : ''}</p>
+      <p className="hint obj-props__type">
+        <Plain text={type.name} />
+        {o.locked ? ' · locked' : ''}
+      </p>
       {offStage.has(o.id) && <p className="panel-msg panel-msg--warning">This object is partly off the stage.</p>}
 
       <section className="group">

@@ -17,6 +17,7 @@ import { poseAt, sceneDuration, sceneTracks, type Pose } from './motion';
 import { actingCentre } from './actions';
 import type { Blocking } from './types';
 import type { BlockingWarning } from './ui';
+import { plainText } from '../glossary/terms';
 
 const ray = new THREE.Raycaster();
 const from = new THREE.Vector3();
@@ -106,7 +107,7 @@ export async function runChecks(scene3d: THREE.Scene, onProgress: (p: number) =>
           const where = pose.entrance ? ents.get(pose.entrance)?.name : 'off stage';
           const key = `wings:${p.id}`;
           seen.add(key);
-          hit(key, { kind: 'wings', time, performerIds: [p.id], text: `${p.name} can be seen ${pose.onStage ? 'walking off' : `waiting at ${where}`} from ${see.length} of ${seats.length} sample seats`, seats: see }, time);
+          hit(key, { kind: 'wings', time, performerIds: [p.id], text: `${p.name} can be seen ${pose.onStage ? 'walking off' : `waiting at ${where ? plainText(where) : 'the side'}`} from ${see.length} of ${seats.length} sample seats`, seats: see }, time);
         }
       } else if (seats.length) {
         // Hidden by the set?

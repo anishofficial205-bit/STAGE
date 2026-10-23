@@ -19,6 +19,7 @@ import { ProgressTracker } from './ProgressTracker';
 import { useShell } from './shell';
 import { recordWithPicture } from '../projects/library';
 import { useActiveBlocking, useActiveLighting } from '../store/useProjectStore';
+import { Plain } from '../glossary/Plain';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -114,7 +115,7 @@ export function TopBar() {
           v.id.startsWith('saved-') ? (
             <span key={v.id} className="saved-view">
               <button className="pill" onClick={() => s.requestView(v)}>
-                {v.label}
+                <Plain text={v.label} />
               </button>
               <button className="saved-view__x" onClick={() => s.deleteView(v.id)} title="Remove this saved view" aria-label={`Remove ${v.label}`}>
                 ×
@@ -122,7 +123,7 @@ export function TopBar() {
             </span>
           ) : (
             <button key={v.id} className={`pill ${v.id === 'reset' ? 'pill--muted' : ''}`} onClick={() => s.requestView(v)}>
-              {v.label}
+              <Plain text={v.label} />
             </button>
           ),
         )}

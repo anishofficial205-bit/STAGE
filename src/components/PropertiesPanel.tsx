@@ -11,6 +11,7 @@ import { LightsProperties } from './lights/LightsPanels';
 import { BlockingProperties } from './blocking/BlockingPanels';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
+import { Plain } from '../glossary/Plain';
 
 /**
  * Generated entirely from the active template's params schema — templates never
@@ -39,7 +40,9 @@ function TemplateProperties() {
   return (
     <>
       <div className="panel-head">
-        <h2 className="panel-title">{template.name}</h2>
+        <h2 className="panel-title">
+          <Plain text={template.name} />
+        </h2>
         <button className="btn btn--link" onClick={resetToDefaults} title="Put every setting of this stage back to its default">
           Reset to defaults
         </button>

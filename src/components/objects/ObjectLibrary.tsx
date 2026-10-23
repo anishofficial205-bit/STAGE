@@ -3,6 +3,7 @@ import { addObjectAt } from '../../objects/actions';
 import { OBJECT_DRAG_TYPE } from '../../objects/ui';
 import { CurtainTools } from '../../objects/curtains/Tools';
 import { CURTAINS } from '../../objects/curtains/mainCurtain';
+import { Plain } from '../../glossary/Plain';
 
 const CATEGORY_TOOLS: Record<string, () => JSX.Element> = { [CURTAINS]: CurtainTools };
 
@@ -30,7 +31,7 @@ export function ObjectLibrary() {
                   title={`${t.name} — drag into the view, or click to place at stage centre`}
                 >
                   <span className="tile__icon">{t.icon}</span>
-                  <span className="tile__name">{t.name}</span>
+                  <span className="tile__name"><Plain text={t.name} stacked /></span>
                 </button>
               ))}
           </div>

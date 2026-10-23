@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { addObjectAt } from '../actions';
 import { Modal } from '../../components/Modal';
 import { addFalseProscenium, addMaskingSets } from './masking';
+import { Plain } from '../../glossary/Plain';
 
 function MaskingDialog({ onClose }: { onClose: () => void }) {
   const [count, setCount] = useState(3);
@@ -34,16 +35,16 @@ export function CurtainTools() {
   return (
     <div className="library__tools">
       <button className="btn btn--small" onClick={() => addObjectAt('main-curtain')} title="Hang a main curtain just behind the arch (or across the front of the stage)">
-        + Main curtain
+        + <Plain text="Main curtain" />
       </button>
       <button className="btn btn--small" onClick={() => setMasking(true)} title="Pairs of legs plus a border at even depths">
-        + Masking sets…
+        + <Plain text="Masking sets…" />
       </button>
       <button className="btn btn--small" onClick={addFalseProscenium} title="Front legs (tormentors) and border (teaser) that frame a false proscenium">
-        + Tormentors &amp; teaser
+        + <Plain text="Tormentors & teaser" />
       </button>
       <button className="btn btn--small" onClick={() => addObjectAt('stage-skirt')} title="Cover the front of a raised stage, sized automatically">
-        + Stage skirt
+        + <Plain text="Stage skirt" />
       </button>
       {masking && <MaskingDialog onClose={() => setMasking(false)} />}
     </div>

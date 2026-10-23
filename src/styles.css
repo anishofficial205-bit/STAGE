@@ -1111,3 +1111,15 @@ input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color:
 .start__unit:hover, .start__unit:focus-visible { border-color: rgba(255, 179, 122, 0.5); background: rgba(255, 255, 255, 0.07); outline: none; }
 button.rail__logo { border: 0; padding: 0; cursor: pointer; }
 button.rail__logo:hover { filter: brightness(1.12); }
+
+/* Plain words first, technical term second */
+.term { display: inline-flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.term--stacked { flex-direction: column; align-items: center; gap: 1px; text-align: center; }
+.term__tech { font-size: 0.82em; color: var(--muted); font-weight: 400; cursor: help; text-decoration: underline dotted rgba(255, 255, 255, 0.25); text-underline-offset: 2px; }
+.term--stacked .term__tech { font-size: 10px; }
+.dim-label .term__tech, .scene-tag .term__tech, .entrance-tag .term__tech, .channel-tag .term__tech { color: rgba(255, 255, 255, 0.55); font-size: 10px; text-decoration: none; }
+
+.topbar__title { flex-shrink: 0; }
+.topbar__views { flex: 0 1 auto; min-width: 0; }
+.pill .term, .btn .term, .tracker .term { flex-wrap: nowrap; white-space: nowrap; }
+.entrance-tag .term, .channel-tag .term, .dim-label .term, .scene-tag .term { flex-wrap: nowrap; gap: 5px; }

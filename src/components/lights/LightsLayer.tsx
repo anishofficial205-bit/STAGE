@@ -20,6 +20,7 @@ import { goboTexture, useGoboTextures } from '../../lighting/gobos';
 import { FixtureModel, PracticalModel } from './models';
 import { beamCone, hazeMaterial, poolTexture } from './haze';
 import { lightBudget } from './budget';
+import { Plain } from '../../glossary/Plain';
 
 const ACCENT = '#f27a35';
 /** Light output at 100% (decay 0, so brightness doesn't depend on throw distance). */
@@ -263,7 +264,7 @@ function FixtureView({ f, real, shadow, approx, selected, active, haze, presenta
         {showTag && !exporting && (
           <Html position={[0, spec.point ? 1.8 : 0.42, 0]} center zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
             <span className={`channel-tag ${selected ? 'is-selected' : ''} ${level > 0 ? '' : 'is-off'}`} data-lp={labelPriority('light', selected, hot)}>
-              {f.channel} · {f.name}
+              {f.channel} · <Plain text={f.name} />
             </span>
           </Html>
         )}
@@ -296,7 +297,7 @@ function TargetMarker({ f }: { f: Fixture }) {
       </mesh>
       <Html position={f.target} center zIndexRange={[15, 0]} style={{ pointerEvents: 'none', transform: 'translateY(-22px)' }}>
         <span className="channel-tag" data-lp={LABEL_PRIORITY.light + 10}>
-          Aim · {f.name}
+          Aim · <Plain text={f.name} />
         </span>
       </Html>
     </group>

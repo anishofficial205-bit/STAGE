@@ -8,6 +8,7 @@ import { useBlockingUI, type BlockingWarning } from '../../blocking/ui';
 import { viewportBridge } from '../../objects/ui';
 import { download } from '../../graphics/specSheet';
 import { exportName } from '../../export/exports';
+import { Plain } from '../../glossary/Plain';
 
 const ICON: Record<BlockingWarning['kind'], string> = { wings: '👁', hidden: '▦', collision: '⚠', upstaged: '↺' };
 const fmt = (t: number) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
@@ -54,7 +55,9 @@ export function ChecksSection() {
         <h3 className="group__title">Checks</h3>
         <Field def={{ key: 'hs', label: 'Flag when hidden from more than (%) of seats', group: '', type: 'number', unit: 'none', default: 20, min: 5, max: 90, step: 5 }} value={b.checks.hiddenShare} units={units} onChange={(v) => setChecks({ hiddenShare: v as number })} />
         <label className="field field--inline">
-          <span className="field__label">Check for upstaging</span>
+          <span className="field__label">
+            Flag: <Plain text="Upstaging" />
+          </span>
           <button type="button" role="switch" aria-checked={b.checks.upstaged} className={`switch ${b.checks.upstaged ? 'is-on' : ''}`} onClick={() => setChecks({ upstaged: !b.checks.upstaged })}>
             <span className="switch__knob" />
           </button>

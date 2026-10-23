@@ -20,6 +20,7 @@ import { actingCentre, blockingActions, posesAt } from '../../blocking/actions';
 import { useBlockingUI } from '../../blocking/ui';
 import { initials, type Performer, type Pt } from '../../blocking/types';
 import { Figure } from './Figure';
+import { Plain } from '../../glossary/Plain';
 
 const ACCENT = '#f27a35';
 const WARN = '#e03131';
@@ -231,7 +232,7 @@ function EntranceView({ e, selected, active }: { e: Entrance; selected: boolean;
       {!exporting && showName && (
         <Html position={[0, 0.25, -0.2]} center zIndexRange={[13, 0]} style={{ pointerEvents: 'none' }}>
           <span className={`entrance-tag ${selected ? 'is-selected' : ''}`} style={{ ['--dot' as string]: color }} data-lp={labelPriority('entrance', selected, hot)}>
-            {e.name}
+            <Plain text={e.name} />
           </span>
         </Html>
       )}

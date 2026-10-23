@@ -8,6 +8,8 @@ import { useBlockingUI } from '../../blocking/ui';
 import { computeEntrances } from '../../blocking/entrances';
 import { SPEEDS, initials, type Path, type Performer } from '../../blocking/types';
 import { ChecksSection } from './ChecksPanel';
+import { Plain } from '../../glossary/Plain';
+import { plainText } from '../../glossary/terms';
 
 function Scenes() {
   const b = useActiveBlocking();
@@ -134,7 +136,7 @@ function Entrances() {
         {list.map((e) => (
           <li key={e.id}>
             <button className="btn btn--ghost" onClick={() => useBlockingUI.getState().select({ kind: 'entrance', id: e.id })}>
-              {e.name} <span className="hint">{labels[e.source]}</span>
+              <Plain text={e.name} /> <span className="hint">{plainText(labels[e.source])}</span>
             </button>
           </li>
         ))}
@@ -229,7 +231,7 @@ function PerformerProps({ ids }: { ids: string[] }) {
                 <option value="">On stage</option>
                 {entrances.map((en) => (
                   <option key={en.id} value={en.id}>
-                    Off stage, at {en.name}
+                    Off stage, at <Plain text={en.name} />
                   </option>
                 ))}
               </select>
@@ -242,7 +244,7 @@ function PerformerProps({ ids }: { ids: string[] }) {
                 ✎ Draw path
               </button>
               <button className={`btn ${tool === 'mark' ? 'is-active' : ''}`} onClick={() => useBlockingUI.getState().setTool(tool === 'mark' ? null : 'mark')} title="Click the floor to put down spike marks">
-                ✚ Spike marks
+                ✚ <Plain text="Spike marks" />
               </button>
             </div>
             {tool === 'path' && <p className="panel-msg panel-msg--info">Click points on the floor; double-click or Enter to finish. Click an entrance to exit there (or, as the first click, to enter from it).</p>}
@@ -258,7 +260,7 @@ function PerformerProps({ ids }: { ids: string[] }) {
             </ul>
             {marks.length > 0 && <p className="hint">Spike marks: {marks.map((_, i) => `${initials(p.name)}${i + 1}`).join(', ')}</p>}
             <button className="btn btn--small" onClick={() => { const pose = posesAt(useBlockingUI.getState().time).get(p.id); if (pose) blockingActions.addMark(p.id, [pose.x, pose.z]); }}>
-              + Spike mark where they stand
+              + Floor mark where they stand
             </button>
           </section>
         </>
@@ -311,7 +313,7 @@ function PathProps({ path }: { path: Path }) {
           <option value="">On stage</option>
           {entrances.map((en) => (
             <option key={en.id} value={en.id}>
-              Exits at {en.name}
+              Exits at <Plain text={en.name} />
             </option>
           ))}
         </select>
@@ -384,7 +386,9 @@ export function BlockingProperties() {
       return (
         <div className="props">
           <div className="panel-head">
-            <h2 className="panel-title">Spike mark · {p.name}</h2>
+            <h2 className="panel-title">
+              <Plain text="Spike mark" /> · {p.name}
+            </h2>
           </div>
           <button className="btn btn--danger" onClick={() => blockingActions.removeMark(m.id)}>
             Delete mark

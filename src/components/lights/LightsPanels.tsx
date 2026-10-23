@@ -11,6 +11,7 @@ import { floorHeightAt } from '../../helpers/stageInfo';
 import type { ParamDef } from '../../types';
 import { MAX_REAL, MAX_SHADOWS, lightBudget } from './budget';
 import { LooksSection, GroupsSection } from './LooksPanel';
+import { Plain } from '../../glossary/Plain';
 
 export const LIGHT_DRAG_TYPE = 'application/x-stage-light';
 
@@ -32,7 +33,7 @@ function Library() {
           title={`${FIXTURES[t].label} — ${FIXTURES[t].help} Drag onto a pipe, or click to hang it on an electric.`}
         >
           <span className="tile__icon tile__icon--light">{ICONS[t]}</span>
-          <span className="tile__name">{FIXTURES[t].label}</span>
+          <span className="tile__name"><Plain text={FIXTURES[t].label} stacked /></span>
         </button>
       ))}
     </div>
@@ -46,25 +47,25 @@ function Positions() {
     <>
       <div className="btn-row">
         <button className="btn btn--small" onClick={() => lightActions.addPosition('electric')}>
-          + Electric
+          + <Plain text="Electric" />
         </button>
         <button className="btn btn--small" onClick={() => lightActions.addPosition('foh')}>
-          + FOH truss
+          + <Plain text="FOH truss" />
         </button>
         <button className="btn btn--small" onClick={() => lightActions.addPosition('boom')}>
-          + Boom
+          + <Plain text="Boom" />
         </button>
       </div>
       <ul className="venue-list">
         {positions.map((p) => (
           <li key={p.id}>
             <button className={`btn btn--ghost ${selected.includes(p.id) ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().select({ kind: 'position', ids: [p.id] })}>
-              {p.name}
+              <Plain text={p.name} />
             </button>
           </li>
         ))}
       </ul>
-      <p className="hint">Lights snap to electrics, FOH, booms, truss from the set and the stage’s rigging — or the floor.</p>
+      <p className="hint">Lights snap to the light bars, the frame over the audience, side poles, lighting frames from the set and the stage’s own rigging — or the floor.</p>
     </>
   );
 }
@@ -314,7 +315,7 @@ function PositionProps({ p }: { p: HangPosition }) {
         </button>
       </div>
       <p className="hint">
-        {p.kind === 'boom' ? 'Boom' : p.kind === 'foh' ? 'Front-of-house truss' : 'Electric (lighting batten)'} · {count} light{count === 1 ? '' : 's'} on it
+        <Plain text={p.kind === 'boom' ? 'Boom' : p.kind === 'foh' ? 'Front-of-house truss' : 'Electric (lighting batten)'} /> · {count} light{count === 1 ? '' : 's'} on it
       </p>
       <div className="field-pair">
         <Field def={len('x', 'X', -100, 100)} value={p.x} units={units} onChange={(v) => lightActions.patchPosition(p.id, { x: v as number })} />
@@ -363,9 +364,11 @@ function Overview() {
         </div>
       )}
       <section className="group">
-        <h3 className="group__title">Haze</h3>
+        <h3 className="group__title">Atmosphere</h3>
         <label className="field field--inline">
-          <span className="field__label">Haze (visible beams)</span>
+          <span className="field__label">
+            <Plain text="Haze (visible beams)" />
+          </span>
           <button type="button" role="switch" aria-checked={lighting.haze.on} className={`switch ${lighting.haze.on ? 'is-on' : ''}`} onClick={() => lightActions.setHaze({ on: !lighting.haze.on })}>
             <span className="switch__knob" />
           </button>
@@ -393,10 +396,10 @@ function Overview() {
       </section>
       <div className="btn-row">
         <button className="btn" onClick={lightActions.renumber} disabled={!lighting.fixtures.length} title="Number channels from front of house to the back">
-          Renumber channels
+          <Plain text="Renumber channels" />
         </button>
         <button className="btn" onClick={() => useLightsUI.getState().setPlotOpen(true)} disabled={!lighting.fixtures.length}>
-          Light plot
+          <Plain text="Light plot" />
         </button>
       </div>
     </div>

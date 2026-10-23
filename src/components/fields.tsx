@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { displayStep, formatNumber, fromDisplay, toDisplay, type Units } from '../units';
 import type { BooleanParam, ColorParam, NumberParam, ParamDef, SelectParam } from '../types';
+import { Plain } from '../glossary/Plain';
 
 /**
  * Form controls generated from a param definition. Used by the properties
@@ -17,7 +18,7 @@ export function Field(props: FieldProps<ParamDef, unknown>) {
   const { def } = props;
   const label = (
     <span className="field__label">
-      {def.label}
+      <Plain text={def.label} />
       {def.help && (
         <span className="field__help" title={def.help} aria-label={def.help}>
           ?
