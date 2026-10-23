@@ -59,7 +59,7 @@ export function ChecksSection() {
             <span className="switch__knob" />
           </button>
         </label>
-        <button className="btn btn--primary" onClick={() => void runBlockingChecks()} disabled={checking !== null || !b.performers.length}>
+        <button className="btn" onClick={() => void runBlockingChecks()} disabled={checking !== null || !b.performers.length}>
           {checking !== null ? `Checking… ${Math.round(checking * 100)}%` : 'Run checks'}
         </button>
         {stale && <p className="hint">The blocking has changed since the last check.</p>}

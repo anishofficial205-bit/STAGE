@@ -6,13 +6,16 @@
  */
 import { useEffect, useMemo } from 'react';
 import * as THREE from 'three';
-import { Edges } from '@react-three/drei';
+import { Edges, Html } from '@react-three/drei';
+import { hoverProps, labelPriority, useHovered, useShowLabel } from '../../helpers/labels';
+import { formatArea } from './format';
+import { useExportState } from '../../export/state';
 import type { ThreeEvent } from '@react-three/fiber';
 import { useProjectStore } from '../../store/useProjectStore';
 import { doorSpan, wallFrame, wallPieces } from '../../venue/geometry';
 import { FLOOR_MATERIALS, WALL_MATERIALS, type Door, type Furniture, type Pt, type Wall } from '../../venue/types';
 import { useVenueUI, type VenueSelection } from '../../venue/ui';
-import { roomOutline } from '../../venue/rooms';
+import { polygonArea, roomOutline } from '../../venue/rooms';
 import { getFurniture } from '../../venue/furniture';
 
 const CUTAWAY = 1;
@@ -135,7 +138,7 @@ export function VenueLayer() {
   return (
     <group>
       {rooms.map(({ r, poly }) =>
-        poly.length >= 3 ? <RoomFloor key={r.id} id={r.id} poly={poly} color={FLOOR_MATERIALS[r.floor]?.color ?? '#ccc'} selected={is('room', r.id)} active={active} /> : null,
+        poly.length >= 3 ? <RoomFloor key={r.id} id={r.id} name={r.name} poly={poly} color={FLOOR_MATERIALS[r.floor]?.color ?? '#ccc'} selected={is('room', r.id)} active={active} /> : null,
       )}
       {venue.walls.map((w) => (
         <WallView key={w.id} wall={w} walls={venue.walls} doors={venue.doors} cutaway={cutaway} selected={is('wall', w.id)} active={active} />
@@ -151,7 +154,23 @@ export function VenueLayer() {
   );
 }
 
-function RoomFloor({ id, poly, color, selected, active }: { id: string; poly: Pt[]; color: string; selected: boolean; active: boolean }) {
+function RoomFloor({ id, name, poly, color, selected, active }: { id: string; name: string; poly: Pt[]; color: string; selected: boolean; active: boolean }) {
   const pick = usePick({ kind: 'room', id }, active);
-  return <Prism poly={poly} height={0.012} y0={0.002} color={color} selected={selected} pick={pick} userData={{ venueRoom: id }} />;
+  const show = useShowLabel('room', { selected, hoverKey: `room:${id}` });
+  const hot = useHovered(`room:${id}`);
+  const units = useProjectStore((s) => s.units);
+  const exporting = useExportState((s) => s.exporting);
+  const centre = useMemo<Pt>(() => [poly.reduce((a, p) => a + p[0], 0) / poly.length, poly.reduce((a, p) => a + p[1], 0) / poly.length], [poly]);
+  return (
+    <group {...hoverProps(`room:${id}`)}>
+      <Prism poly={poly} height={0.012} y0={0.002} color={color} selected={selected} pick={pick} userData={{ venueRoom: id }} />
+      {show && !exporting && (
+        <Html position={[centre[0], 0.3, centre[1]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}>
+          <span className="scene-tag" data-lp={labelPriority('room', selected, hot)}>
+            {name} <span className="scene-tag__sub">{formatArea(polygonArea(poly), units)}</span>
+          </span>
+        </Html>
+      )}
+    </group>
+  );
 }

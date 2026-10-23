@@ -6,6 +6,8 @@
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Html, Line } from '@react-three/drei';
+import { DimensionLabel } from '../../helpers/DimensionLabel';
+import { hoverProps } from '../../helpers/labels';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } from '../../store/useProjectStore';
@@ -396,6 +398,20 @@ const sameView = (a: ObjectViewProps, b: ObjectViewProps) =>
   a.active === b.active;
 
 const ObjectView = memo(ObjectViewInner, sameView);
+
+/** Width, depth and height of a piece: shown when it's the one selected piece, or hovered. */
+function ObjectDims({ id, w, d, h }: { id: string; w: number; d: number; h: number }) {
+  const sole = useProjectStore((s) => s.selectedIds.length === 1 && s.selectedIds[0] === id);
+  const props = { kind: 'object-dim' as const, selected: sole, hoverKey: `obj:${id}` };
+  if (w < 0.01 && d < 0.01) return null;
+  return (
+    <>
+      <DimensionLabel start={[-w / 2, 0, d / 2]} end={[w / 2, 0, d / 2]} offset={[0, 0, 0.25]} {...props} />
+      <DimensionLabel start={[w / 2, 0, -d / 2]} end={[w / 2, 0, d / 2]} offset={[0.25, 0, 0]} {...props} />
+      {h > 0.01 && <DimensionLabel start={[w / 2, 0, d / 2]} end={[w / 2, h, d / 2]} offset={[0.2, 0, 0.2]} {...props} />}
+    </>
+  );
+}
 const NO_RIGGING: [Vec3, Vec3][] = [];
 
 function ObjectViewInner({ p, selected, offStage, rigging, locked, flagged, active }: ObjectViewProps) {
@@ -462,11 +478,27 @@ function ObjectViewInner({ p, selected, offStage, rigging, locked, flagged, acti
     e.stopPropagation();
     useProjectStore.getState().select([obj.id]);
   };
-  const interactive = locked || !active ? {} : { ...drag, onDoubleClick, onPointerOver: () => (document.body.style.cursor = 'move'), onPointerOut: () => (document.body.style.cursor = '') };
+  const hover = hoverProps(`obj:${obj.id}`);
+  const interactive =
+    locked || !active
+      ? hover
+      : {
+          ...drag,
+          onDoubleClick,
+          onPointerOver: () => {
+            document.body.style.cursor = 'move';
+            hover.onPointerOver();
+          },
+          onPointerOut: () => {
+            document.body.style.cursor = '';
+            hover.onPointerOut();
+          },
+        };
   return (
     <>
       <group position={[p.wx, p.baseY, p.wz]} rotation-y={toRad(obj.rotation)} userData={{ objectId: obj.id }} {...interactive}>
         <ObjectFaces.Provider value={faceCtx}>{built}</ObjectFaces.Provider>
+        {!exporting && <ObjectDims id={obj.id} w={size.width} d={size.depth} h={size.height} />}
         {!exporting && active && (selected || offStage || flagged) && <BoxOutline w={size.width} d={size.depth} h={size.height} color={flagged ? BLOCK : selected ? (offStage ? WARN : SELECT) : WARN} />}
       </group>
       {placementOf(type, obj.params) === 'hanging' && <Cables p={p} lines={rigging} />}

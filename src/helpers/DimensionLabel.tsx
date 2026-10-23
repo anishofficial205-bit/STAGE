@@ -6,6 +6,7 @@ import { formatLength } from '../units';
 import type { Vec3 } from '../types';
 import { COLORS } from './materials';
 import { SceneModeContext } from '../components/StageScene';
+import { labelPriority, useHovered, useShowLabel, type LabelKind } from './labels';
 
 interface Props {
   start: Vec3;
@@ -14,16 +15,21 @@ interface Props {
   offset?: Vec3;
   /** Optional prefix, e.g. "Arch". */
   label?: string;
+  /** Stage dimensions show in Stage mode; a set piece's show when it's selected or hovered. */
+  kind?: LabelKind;
+  selected?: boolean;
+  hoverKey?: string;
 }
 
 const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 
 /**
  * A measurement line between two points with a text label in the current unit.
- * Hidden when labels are toggled off in the top bar.
+ * Shown according to the label rules for each mode (see helpers/labels).
  */
-export function DimensionLabel({ start, end, offset = [0, 0, 0], label }: Props) {
-  const show = useProjectStore((s) => s.showLabels);
+export function DimensionLabel({ start, end, offset = [0, 0, 0], label, kind = 'stage-dim', selected, hoverKey }: Props) {
+  const show = useShowLabel(kind, { selected, hoverKey });
+  const hovered = useHovered(hoverKey);
   const units = useProjectStore((s) => s.units);
   const { thumbnail } = useContext(SceneModeContext);
   const exporting = useExportState((s) => s.exporting);
@@ -64,7 +70,7 @@ export function DimensionLabel({ start, end, offset = [0, 0, 0], label }: Props)
         <meshBasicMaterial color={COLORS.dimension} />
       </mesh>
       <Html position={mid} center zIndexRange={[20, 0]} style={{ pointerEvents: 'none' }}>
-        <div className="dim-label">
+        <div className="dim-label" data-lp={labelPriority(kind, selected, hovered)}>
           {label && <span className="dim-label__name">{label}</span>}
           {formatLength(length, units)}
         </div>

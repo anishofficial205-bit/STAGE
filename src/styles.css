@@ -988,3 +988,67 @@ input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color:
   .view-tools, .venue-bar { left: 12px; top: 80px; }
   .playbar { bottom: 124px; }
 }
+
+/* ------------------------------------------------------------------
+   Colour hierarchy: orange is for the one primary action on screen.
+   ------------------------------------------------------------------ */
+:root {
+  --primary: var(--accent);
+  --primary-text: #fff;
+  --control: #d9c8bc;
+  --control-on: #c99a76;
+  --selected-bg: rgba(255, 255, 255, 0.14);
+  --label-bg: rgba(18, 12, 9, 0.88);
+  --label-text: #fff;
+  --label-border: rgba(255, 255, 255, 0.14);
+  --warn: #f5b54a;
+  --error: #ff6b5b;
+  --next-bg: rgba(40, 26, 19, 0.82);
+}
+input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color: var(--control); }
+.field__slider { accent-color: var(--control); }
+.switch.is-on { background: var(--control-on); }
+
+/* Mode rail: a quiet highlight for the current mode */
+.rail__mode.is-active .rail__icon { background: var(--selected-bg); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+.rail__mode.is-active { color: #fff; }
+.rail__tool.is-dim, .rail__tool.is-hide, .rail__tool.is-on { color: #fff; }
+
+/* Export: secondary */
+.topbar__share { height: 46px; border-radius: 999px; padding: 0 16px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; color: var(--text); cursor: pointer; box-shadow: none; }
+.topbar__share:hover { background: rgba(40, 26, 19, 0.9); }
+
+/* Next step: soft */
+.next-step { background: var(--next-bg); backdrop-filter: blur(18px); border: 1px solid rgba(255, 179, 122, 0.22); color: var(--muted); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35); }
+.next-step__icon { background: rgba(255, 255, 255, 0.08); color: #ffd2ae; }
+.next-step__text b { color: var(--text); }
+
+/* Selected states that aren't the primary action: warm tint, not solid orange */
+.btn.is-active, .chip.is-active, .tool-btn.is-active { background: var(--selected-bg); border-color: rgba(255, 255, 255, 0.22); color: #fff; }
+.segmented button.is-active { background: var(--selected-bg); color: #fff; }
+.card.is-active { border-color: rgba(255, 255, 255, 0.45); box-shadow: none; }
+
+/* 3D labels: neutral dark chips; only warnings and errors use colour */
+.dim-label, .scene-tag, .channel-tag, .perf-tag, .entrance-tag, .seat-tag, .draw-label, .hold-tag {
+  background: var(--label-bg);
+  color: var(--label-text);
+  border: 1px solid var(--label-border);
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.dim-label__name, .scene-tag__sub { color: rgba(255, 255, 255, 0.6); font-weight: 400; }
+.scene-tag__sub { margin-left: 4px; }
+.scene-tag--warn { background: rgba(60, 38, 8, 0.9); color: var(--warn); border-color: rgba(245, 181, 74, 0.5); }
+.perf-tag, .entrance-tag { display: inline-flex; align-items: center; gap: 5px; }
+.perf-tag::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--perf, #fff); }
+.entrance-tag::before { content: ''; width: 6px; height: 6px; border-radius: 2px; background: var(--dot, #fff); }
+.perf-tag.is-flagged { background: rgba(70, 16, 12, 0.92); border-color: var(--error) !important; color: #ffd9d4; }
+.entrance-tag.is-selected, .channel-tag.is-selected { border-color: rgba(255, 255, 255, 0.6); }
+.channel-tag { min-width: 0; text-align: left; }
+.channel-tag.is-off { opacity: 0.6; }
+.layer__warn { background: var(--warn); color: #2a1a05; }
+.draw-label.is-accent { background: var(--label-bg); border-color: rgba(255, 255, 255, 0.5); color: #fff; }

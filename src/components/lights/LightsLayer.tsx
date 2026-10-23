@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Html, Line } from '@react-three/drei';
+import { LABEL_PRIORITY, hoverProps, labelPriority, useHovered, useShowLabel } from '../../helpers/labels';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useActiveLighting, useProjectStore } from '../../store/useProjectStore';
@@ -176,7 +177,22 @@ function FixtureView({ f, real, shadow, approx, selected, active, haze, presenta
       if (r) lightActions.move(f.id, r.pos, r.mount, d.key);
     },
   });
-  const pick = active ? { ...drag, onPointerOver: () => (document.body.style.cursor = 'grab'), onPointerOut: () => (document.body.style.cursor = '') } : {};
+  const hover = hoverProps(`light:${f.id}`);
+  const pick = active
+    ? {
+        ...drag,
+        onPointerOver: () => {
+          document.body.style.cursor = 'grab';
+          hover.onPointerOver();
+        },
+        onPointerOut: () => {
+          document.body.style.cursor = '';
+          hover.onPointerOut();
+        },
+      }
+    : hover;
+  const showTag = useShowLabel('light', { selected, hoverKey: `light:${f.id}` });
+  const hot = useHovered(`light:${f.id}`);
   const half = Math.min(rad(spec.point ? 60 : f.beam) / 2, rad(89));
   const cone = useMemo(() => new THREE.EdgesGeometry(beamCone(0.7, Math.min(0.45, 0.7 * Math.tan(half)), 10)), [half]);
   const beam = useMemo(() => (haze.on && !spec.point && f.type !== 'house' ? beamCone(throwLen * 1.04, throwLen * 1.04 * Math.tan(half)) : null), [haze.on, spec.point, f.type, throwLen, half]);
@@ -244,9 +260,11 @@ function FixtureView({ f, real, shadow, approx, selected, active, haze, presenta
             <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.6} depthTest={false} />
           </mesh>
         )}
-        {active && !exporting && (
+        {showTag && !exporting && (
           <Html position={[0, spec.point ? 1.8 : 0.42, 0]} center zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
-            <span className={`channel-tag ${selected ? 'is-selected' : ''} ${level > 0 ? '' : 'is-off'}`}>{f.channel}</span>
+            <span className={`channel-tag ${selected ? 'is-selected' : ''} ${level > 0 ? '' : 'is-off'}`} data-lp={labelPriority('light', selected, hot)}>
+              {f.channel} · {f.name}
+            </span>
           </Html>
         )}
       </group>
@@ -276,6 +294,11 @@ function TargetMarker({ f }: { f: Fixture }) {
         <sphereGeometry args={[0.14, 16, 12]} />
         <meshBasicMaterial color={ACCENT} depthTest={false} transparent opacity={0.9} />
       </mesh>
+      <Html position={f.target} center zIndexRange={[15, 0]} style={{ pointerEvents: 'none', transform: 'translateY(-22px)' }}>
+        <span className="channel-tag" data-lp={LABEL_PRIORITY.light + 10}>
+          Aim · {f.name}
+        </span>
+      </Html>
     </group>
   );
 }

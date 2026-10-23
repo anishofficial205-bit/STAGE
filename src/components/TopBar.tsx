@@ -10,6 +10,7 @@ import { SHORTCUTS_EVENT } from './ShortcutsSheet';
 import { MODES } from '../modes';
 import { useDismiss } from './useDismiss';
 import { useObjectUI } from '../objects/ui';
+import { useLabelPrefs } from '../helpers/labels';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -20,6 +21,8 @@ export function TopBar() {
   const [render, setRender] = useState(false);
   const [menu, setMenu] = useState<'view' | 'help' | 'file' | null>(null);
   const mode = MODES.find((m) => m.id === s.mode);
+  const allDims = useLabelPrefs((l) => l.allDimensions);
+  const toggleAllDims = useLabelPrefs((l) => l.toggleAllDimensions);
   const menus = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setMenu(null), []);
   useDismiss(menu !== null, close, menus);
@@ -132,9 +135,9 @@ export function TopBar() {
                   </button>
                 </span>
               </span>
-              <span className="menu__row" title="Show or hide dimension labels">
-                Dimension labels
-                <button className={`switch ${s.showLabels ? 'is-on' : ''}`} role="switch" aria-checked={s.showLabels} onClick={s.toggleLabels} aria-label="Dimension labels">
+              <span className="menu__row" title="Each mode shows only its own labels. Turn this on to see every dimension in every mode.">
+                All dimension labels
+                <button className={`switch ${allDims ? 'is-on' : ''}`} role="switch" aria-checked={allDims} onClick={toggleAllDims} aria-label="All dimension labels">
                   <span className="switch__knob" />
                 </button>
               </span>
@@ -163,7 +166,8 @@ export function TopBar() {
           )}
         </span>
         <span className="menu">
-          <button className="btn btn--primary topbar__share" onClick={() => toggle('file')} aria-expanded={menu === 'file'}>
+          <button className="glass topbar__share" onClick={() => toggle('file')} aria-expanded={menu === 'file'}>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
             Export
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
           </button>

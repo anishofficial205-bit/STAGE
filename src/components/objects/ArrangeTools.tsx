@@ -145,7 +145,7 @@ export function ArrayTool() {
           <Field def={{ key: 'angle', label: 'Total angle (°)', group: '', type: 'number', unit: 'none', default: 90, min: 5, max: 360, step: 5 }} value={o.angle} units={units} onChange={set('angle')} />
         </>
       )}
-      <button className="btn btn--primary" onClick={() => makeArray(o)}>
+      <button className="btn" onClick={() => makeArray(o)}>
         Create array
       </button>
     </Collapsible>

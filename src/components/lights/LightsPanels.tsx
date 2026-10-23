@@ -395,7 +395,7 @@ function Overview() {
         <button className="btn" onClick={lightActions.renumber} disabled={!lighting.fixtures.length} title="Number channels from front of house to the back">
           Renumber channels
         </button>
-        <button className="btn btn--primary" onClick={() => useLightsUI.getState().setPlotOpen(true)} disabled={!lighting.fixtures.length}>
+        <button className="btn" onClick={() => useLightsUI.getState().setPlotOpen(true)} disabled={!lighting.fixtures.length}>
           Light plot
         </button>
       </div>

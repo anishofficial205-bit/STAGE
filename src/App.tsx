@@ -12,6 +12,7 @@ import { ModeBar } from './components/ModeBar';
 import { NextStep } from './components/NextStep';
 import { useShell, useTaskDrawers } from './components/shell';
 import { DrawerTabs } from './components/DrawerTabs';
+import { LabelDeclutter } from './components/LabelDeclutter';
 import { LightPlot } from './components/lights/LightPlot';
 import { PlanView } from './components/venue/PlanView';
 import { VenueViewBar } from './components/venue/VenuePanels';
@@ -49,6 +50,7 @@ export default function App() {
       <PropertiesPanel />
       <NextStep />
       <DrawerTabs />
+      <LabelDeclutter />
       <UndoToast />
       <Shortcuts />
       <PdfPagePicker />

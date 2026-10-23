@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { Html, Line } from '@react-three/drei';
+import { LABEL_PRIORITY, hoverProps, labelPriority, useHovered, useShowLabel } from '../../helpers/labels';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useActiveBlocking, useProjectStore } from '../../store/useProjectStore';
@@ -131,7 +132,22 @@ function PerformerView({ p, pose, y, selected, active, flagged }: { p: Performer
       blockingActions.setStart(Object.keys(d.orig), (_s, id) => ({ x: d.orig[id][0] + dx, z: d.orig[id][1] + dz, onStage: true, entrance: undefined }), d.key);
     },
   });
-  const pick = active ? { ...drag, onPointerOver: () => (document.body.style.cursor = 'grab'), onPointerOut: () => (document.body.style.cursor = '') } : {};
+  const hover = hoverProps(`perf:${p.id}`);
+  const pick = active
+    ? {
+        ...drag,
+        onPointerOver: () => {
+          document.body.style.cursor = 'grab';
+          hover.onPointerOver();
+        },
+        onPointerOut: () => {
+          document.body.style.cursor = '';
+          hover.onPointerOut();
+        },
+      }
+    : hover;
+  const showName = useShowLabel('performer', { selected, hoverKey: `perf:${p.id}` });
+  const hot = useHovered(`perf:${p.id}`);
   const off = !pose.onStage;
   const scale = p.height / 1.7;
   return (
@@ -148,9 +164,9 @@ function PerformerView({ p, pose, y, selected, active, flagged }: { p: Performer
         <meshBasicMaterial color={flagged ? WARN : selected ? ACCENT : p.color} transparent opacity={off ? 0.5 : 0.95} />
       </mesh>
       {selected && active && !exporting && <FacingArrow p={p} facing={pose.facing} />}
-      {!exporting && (
+      {!exporting && (showName || flagged) && (
         <Html position={[0, p.height * (p.posture === 'lying' ? 0.25 : p.posture === 'sitting' ? 0.8 : 1) + 0.28, 0]} center zIndexRange={[14, 0]} style={{ pointerEvents: 'none' }}>
-          <span className={`perf-tag ${off ? 'is-off' : ''} ${flagged ? 'is-flagged' : ''}`} style={{ borderColor: p.color }}>
+          <span className={`perf-tag ${off ? 'is-off' : ''} ${flagged ? 'is-flagged' : ''}`} style={{ ['--perf' as string]: p.color }} data-lp={labelPriority('performer', selected || flagged, hot)}>
             {p.name}
           </span>
         </Html>
@@ -193,24 +209,28 @@ function EntranceView({ e, selected, active }: { e: Entrance; selected: boolean;
   const exporting = useExportState((s) => s.exporting);
   const y = 0.03;
   const color = selected ? ACCENT : e.source === 'custom' ? '#7048e8' : '#e8590c';
+  const hover = hoverProps(`ent:${e.id}`);
+  const showName = useShowLabel('entrance', { selected, hoverKey: `ent:${e.id}` });
+  const hot = useHovered(`ent:${e.id}`);
   const pick = active
     ? {
+        ...hover,
         onClick: (ev: ThreeEvent<MouseEvent>) => {
           if (ev.delta > 4 || useBlockingUI.getState().tool) return;
           ev.stopPropagation();
           useBlockingUI.getState().select({ kind: 'entrance', id: e.id });
         },
       }
-    : {};
+    : hover;
   return (
     <group position={[e.x, y, e.z]} rotation-y={rad(e.facing)} userData={{ blockingHelper: true }}>
       <mesh rotation-x={-Math.PI / 2} rotation-z={Math.PI / 2} position={[0, 0.02, 0.15]} {...pick}>
         <circleGeometry args={[0.32, 3]} />
         <meshBasicMaterial color={color} transparent opacity={0.85} depthWrite={false} />
       </mesh>
-      {!exporting && (
+      {!exporting && showName && (
         <Html position={[0, 0.25, -0.2]} center zIndexRange={[13, 0]} style={{ pointerEvents: 'none' }}>
-          <span className="entrance-tag" style={{ background: color }}>
+          <span className={`entrance-tag ${selected ? 'is-selected' : ''}`} style={{ ['--dot' as string]: color }} data-lp={labelPriority('entrance', selected, hot)}>
             {e.name}
           </span>
         </Html>
@@ -234,6 +254,8 @@ function PathView({ tr, color, order, floorAt, selected, active }: { tr: Track; 
     }
     return out;
   }, [tr, floorAt]);
+  const performerPicked = useBlockingUI((s) => s.selected?.kind === 'performer' && s.selected.ids.includes(tr.path.performerId));
+  const showNum = useShowLabel('path', { selected: selected || performerPicked });
   if (pts.length < 2) return null;
   const pick = active
     ? {
@@ -257,9 +279,9 @@ function PathView({ tr, color, order, floorAt, selected, active }: { tr: Track; 
           </mesh>
         </group>
       ))}
-      {!exporting && (
+      {!exporting && showNum && (
         <Html position={[pts[0][0], pts[0][1] + 0.15, pts[0][2]]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}>
-          <span className="path-num" style={{ background: color }}>
+          <span className="path-num" style={{ background: color }} data-lp={LABEL_PRIORITY.path}>
             {order}
           </span>
         </Html>
@@ -309,7 +331,7 @@ function PointHandle({ at, y, hold, onStart, onMove, onDelete }: { at: Pt; y: nu
       </mesh>
       {hold ? (
         <Html position={[0, 0.3, 0]} center zIndexRange={[12, 0]} style={{ pointerEvents: 'none' }}>
-          <span className="hold-tag">⏸ {hold}s</span>
+          <span className="hold-tag" data-lp={LABEL_PRIORITY.path}>⏸ {hold}s</span>
         </Html>
       ) : null}
     </group>
@@ -318,6 +340,7 @@ function PointHandle({ at, y, hold, onStart, onMove, onDelete }: { at: Pt; y: nu
 
 function MarkView({ x, z, y, color, label, selected, onSelect }: { x: number; z: number; y: number; color: string; label: string; selected: boolean; onSelect?: () => void }) {
   const exporting = useExportState((s) => s.exporting);
+  const showLabel = useShowLabel('entrance', { selected });
   return (
     <group position={[x, y + 0.012, z]} userData={{ blockingHelper: true }}>
       {[0, Math.PI / 2].map((r) => (
@@ -326,9 +349,9 @@ function MarkView({ x, z, y, color, label, selected, onSelect }: { x: number; z:
           <meshBasicMaterial color={selected ? ACCENT : color} />
         </mesh>
       ))}
-      {!exporting && (
+      {!exporting && showLabel && (
         <Html position={[0.22, 0.05, 0.22]} center zIndexRange={[11, 0]} style={{ pointerEvents: 'none' }}>
-          <span className="mark-tag" style={{ color }}>
+          <span className="mark-tag" style={{ color }} data-lp={LABEL_PRIORITY.path - 5}>
             {label}
           </span>
         </Html>
