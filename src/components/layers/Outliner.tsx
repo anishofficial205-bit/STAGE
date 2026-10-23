@@ -14,10 +14,9 @@ import { ICONS as LIGHT_ICONS } from '../lights/LightsPanels';
 import { ModeIcon } from '../ModeBar';
 import { useOffStageIds } from '../../objects/offStage';
 import { useTallWarnings } from '../sightlines/useTallWarnings';
-import { useDismiss } from '../useDismiss';
-import { useShell } from '../shell';
-import { DOMAIN_MODE, editIn, modeLabel, pick, useSelections, type Domain, type Pick } from './selection';
-import { can, duplicate, isHidden, isLocked, remove, rename, toggleHidden, toggleLocked, type Item } from './ops';
+import { useItemMenu } from './ItemMenu';
+import { DOMAIN_MODE, pick, useSelections, type Domain, type Pick } from './selection';
+import { can, isHidden, isLocked, rename, toggleHidden, toggleLocked, type Item } from './ops';
 import type { OtherLayers } from '../../modes';
 import type { SetObject } from '../../objects/types';
 
@@ -380,8 +379,8 @@ export function Outliner() {
     );
   };
 
-  const [menu, setMenu] = useState<{ n: Node; x: number; y: number } | null>(null);
-  const openMenu = (n: Node, x: number, y: number) => setMenu({ n, x, y });
+  const openMenu = (n: Node, x: number, y: number) =>
+    useItemMenu.getState().open({ item: n, pick: n.select ?? { domain: n.domain, kind: n.kind, ids: [n.id] }, x, y, onRename: () => setEditing(n.key) });
 
   const template = getTemplate(templateId);
   const stageNode: Node = { key: 'stage', domain: 'stage', kind: 'stage', id: 'stage', name: `Stage — ${template?.name ?? 'Stage'}`, icon: <StageIcon />, select: { domain: 'stage', kind: 'stage', ids: ['stage'] } };
@@ -417,7 +416,6 @@ export function Outliner() {
           );
         })}
       </ul>
-      {menu && <RowMenu n={menu.n} x={menu.x} y={menu.y} onClose={() => setMenu(null)} onRename={() => setEditing(menu.n.key)} />}
     </div>
   );
 }
@@ -449,64 +447,5 @@ function OtherLayersToggle({ value }: { value: OtherLayers }) {
       <Eye off={value === 'hide'} />
       <span>{value === 'show' ? 'Others' : value === 'dim' ? 'Dimmed' : 'Hidden'}</span>
     </button>
-  );
-}
-
-/** The ⋯ / right-click menu of a row. */
-function RowMenu({ n, x, y, onClose, onRename }: { n: Node; x: number; y: number; onClose: () => void; onRename: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useDismiss(true, onClose, ref);
-  const caps = can(n);
-  const mode = useProjectStore((s) => s.mode);
-  const target = DOMAIN_MODE[n.domain];
-  const items = n.select && n.select.ids.length && n.kind !== 'heading' ? [n] : [];
-  const act = (f: () => void) => () => {
-    onClose();
-    f();
-  };
-  return (
-    <div className="menu__list layer-menu" role="menu" ref={ref} style={{ left: Math.min(x, window.innerWidth - 200), top: Math.min(y, window.innerHeight - 260) }}>
-      {n.domain === 'stage' ? (
-        <>
-          <button role="menuitem" onClick={act(() => editIn({ domain: 'stage', kind: 'stage', ids: ['stage'] }))}>
-            Stage settings
-          </button>
-          <button role="menuitem" onClick={act(() => useShell.getState().setNewProject(true, true))}>
-            Change stage type…
-          </button>
-        </>
-      ) : (
-        <>
-          {caps.rename && (
-            <button role="menuitem" onClick={act(onRename)}>
-              Rename
-            </button>
-          )}
-          {caps.duplicate && (
-            <button role="menuitem" onClick={act(() => duplicate(items))}>
-              Duplicate
-            </button>
-          )}
-          {caps.hide && (
-            <button role="menuitem" onClick={act(() => toggleHidden(n))}>
-              {isHidden(n) ? 'Show' : 'Hide'}
-            </button>
-          )}
-          {caps.lock && (
-            <button role="menuitem" onClick={act(() => toggleLocked(n))}>
-              {isLocked(n) ? 'Unlock' : 'Lock'}
-            </button>
-          )}
-          {target !== mode && n.select && (
-            <button role="menuitem" onClick={act(() => editIn(n.select!))}>
-              Edit in {modeLabel(target)}
-            </button>
-          )}
-          <button role="menuitem" className="is-danger" onClick={act(() => remove([n]))}>
-            Delete
-          </button>
-        </>
-      )}
-    </div>
   );
 }

@@ -14,6 +14,7 @@ import { LooksSection, GroupsSection } from './LooksPanel';
 import { Plain } from '../../glossary/Plain';
 import { MoreOptions } from '../MoreOptions';
 import { MOODS, SIMPLE_LIGHTS, applyMood, useLightPlacing } from '../../lighting/moods';
+import { removePick } from '../layers/ops';
 
 export const LIGHT_DRAG_TYPE = 'application/x-stage-light';
 
@@ -106,8 +107,7 @@ export function LightsLeft() {
       if (!sel) return;
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
-        if (sel.kind === 'fixture') lightActions.remove(sel.ids);
-        else sel.ids.forEach(lightActions.removePosition);
+        removePick({ domain: 'lights', kind: sel.kind, ids: sel.ids });
       } else if (sel.kind === 'fixture' && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'd') {
         e.preventDefault();
         lightActions.duplicate(sel.ids);
@@ -344,7 +344,7 @@ function FixtureProps({ fixtures }: { fixtures: Fixture[] }) {
         <button className="btn" onClick={() => lightActions.duplicate(ids)}>
           Duplicate
         </button>
-        <button className="btn btn--danger" onClick={() => lightActions.remove(ids)}>
+        <button className="btn btn--danger" onClick={() => removePick({ domain: 'lights', kind: 'fixture', ids })}>
           Delete
         </button>
       </div>
@@ -375,7 +375,7 @@ function PositionProps({ p }: { p: HangPosition }) {
       <Field def={len('length', p.kind === 'boom' ? 'Height of the pole' : 'Length', 0.5, 60)} value={p.length} units={units} onChange={(v) => lightActions.patchPosition(p.id, { length: v as number })} />
       <p className="hint">Drag it in the view to move it; the lights on it move too.</p>
       <div className="btn-row">
-        <button className="btn btn--danger" onClick={() => lightActions.removePosition(p.id)}>
+        <button className="btn btn--danger" onClick={() => removePick({ domain: 'lights', kind: 'position', ids: [p.id] })}>
           Delete position
         </button>
       </div>

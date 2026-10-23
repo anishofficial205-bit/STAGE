@@ -73,11 +73,22 @@ export function selectOwn(p: Pick, additive = false) {
 export function pick(p: Pick, additive = false) {
   if (DOMAIN_MODE[p.domain] === useProjectStore.getState().mode) return selectOwn(p, additive);
   const cur = useForeign.getState().sel;
+  clearOwn();
   if (additive && cur && cur.domain === p.domain && cur.kind === p.kind) {
     const ids = [...cur.ids];
     for (const id of p.ids) ids.includes(id) ? ids.splice(ids.indexOf(id), 1) : ids.push(id);
     useForeign.getState().set(ids.length ? { ...cur, ids } : null);
   } else useForeign.getState().set(p);
+}
+
+/** Clear the current mode's own selection (a pick from another mode replaces it). */
+function clearOwn() {
+  const s = useProjectStore.getState();
+  if (s.selectedIds.length) s.select([]);
+  if (s.stageSelected) s.selectStage(false);
+  if (useLightsUI.getState().selected) useLightsUI.getState().select(null);
+  if (useBlockingUI.getState().selected) useBlockingUI.getState().select(null);
+  if (useVenueUI.getState().selected) useVenueUI.getState().select(null);
 }
 
 /** Switch to the mode that edits this and select it there. */

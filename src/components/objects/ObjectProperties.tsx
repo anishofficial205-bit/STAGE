@@ -15,6 +15,7 @@ import { useRef } from 'react';
 import { ALL_FACES } from '../../objects/faceMaterial';
 import { ACCEPT, importOnto } from '../../graphics/library';
 import type { SetObject } from '../../objects/types';
+import { removePick } from '../layers/ops';
 
 const QUICK_COLOURS: [string, string][] = [
   ['White', '#f2efe9'],
@@ -73,7 +74,7 @@ export function ObjectProperties() {
   const objects = useActiveObjects();
   const selectedIds = useProjectStore((s) => s.selectedIds);
   const units = useProjectStore((s) => s.units);
-  const { removeObjects, duplicateObjects, select } = useProjectStore.getState();
+  const { duplicateObjects, select } = useProjectStore.getState();
   const offStage = useOffStageIds();
   const selected = objects.filter((o) => selectedIds.includes(o.id));
 
@@ -161,7 +162,7 @@ export function ObjectProperties() {
         <button className="btn" onClick={() => setProps(o.id, { locked: !o.locked })}>
           {o.locked ? 'Unlock' : 'Lock'}
         </button>
-        <button className="btn btn--danger" onClick={() => removeObjects([o.id])} title="Delete">
+        <button className="btn btn--danger" onClick={() => removePick({ domain: 'set', kind: 'object', ids: [o.id] })} title="Delete">
           Delete
         </button>
       </div>

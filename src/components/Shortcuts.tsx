@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { useProjectStore } from '../store/useProjectStore';
 import { nudge } from '../objects/actions';
 import { M_PER_FT } from '../units';
+import { removePick } from './layers/ops';
+import { useForeign } from './layers/selection';
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
@@ -26,6 +28,17 @@ export function Shortcuts() {
         else s.undo();
         return;
       }
+      // Something picked in Layers from another mode: Delete removes it, Esc lets go.
+      const foreign = useForeign.getState().sel;
+      if (!typing && foreign && !mod) {
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+          e.preventDefault();
+          if (foreign.domain !== 'stage') removePick(foreign);
+          useForeign.getState().set(null);
+          return;
+        }
+        if (e.key === 'Escape') return useForeign.getState().set(null);
+      }
       if (!typing && e.key === 'Escape' && s.stageSelected) {
         s.selectStage(false);
         return;
@@ -41,7 +54,7 @@ export function Shortcuts() {
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
         e.preventDefault();
-        s.removeObjects(s.selectedIds);
+        removePick({ domain: 'set', kind: 'object', ids: s.selectedIds });
       } else if (mod && key === 'd') {
         e.preventDefault();
         s.duplicateObjects(s.selectedIds);

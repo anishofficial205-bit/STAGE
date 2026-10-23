@@ -4,7 +4,7 @@ import { leafIds } from '../../objects/groups';
 import { lightActions } from '../../lighting/actions';
 import { blockingActions } from '../../blocking/actions';
 import { venueActions } from '../../venue/actions';
-import type { Domain } from './selection';
+import type { Domain, Pick } from './selection';
 
 /** One thing in the layers list that can be acted on. */
 export interface Item {
@@ -87,8 +87,61 @@ export function duplicate(items: Item[]) {
   if (fx.length) lightActions.duplicate(fx);
 }
 
-/** Delete items (groups of set pieces take everything inside them). */
+/** The item's name as the user sees it (for "Deleted 'Wall panel 3'"). */
+export function nameOf(it: Item): string {
+  const v = useProjectStore.getState().venue;
+  if (it.domain === 'set') return objects().find((o) => o.id === it.id)?.name ?? 'set piece';
+  if (it.kind === 'fixture') return lighting()?.fixtures.find((f) => f.id === it.id)?.name ?? 'light';
+  if (it.kind === 'position') return lighting()?.positions.find((p) => p.id === it.id)?.name ?? 'light bar';
+  if (it.kind === 'performer') return blocking()?.performers.find((p) => p.id === it.id)?.name ?? 'performer';
+  if (it.domain === 'performers' && it.kind === 'group') return blocking()?.groups.find((g) => g.id === it.id)?.name ?? 'group';
+  if (it.kind === 'room') return v.rooms.find((r) => r.id === it.id)?.name ?? 'room';
+  if (it.kind === 'route') return v.routes.find((r) => r.id === it.id)?.name ?? 'route';
+  if (it.kind === 'door') return v.doors.find((d) => d.id === it.id)?.entrance ?? 'door';
+  if (it.kind === 'path') {
+    const b = blocking();
+    const path = b?.scenes.flatMap((sc) => sc.paths).find((x) => x.id === it.id);
+    const who = path && b?.performers.find((x) => x.id === path.performerId)?.name;
+    return who ? `${who}’s path` : 'path';
+  }
+  if (it.kind === 'mark') return 'spike mark';
+  if (it.kind === 'entrance') return blocking()?.entrances.find((e) => e.id === it.id)?.name ?? 'entrance';
+  if (it.kind === 'furniture') return 'furniture';
+  if (it.kind === 'wall') return 'wall';
+  return it.kind;
+}
+
+/** How many things a group holds (0 for anything that isn't a group). */
+export function groupSize(it: Item): number {
+  if (it.domain === 'set' && it.kind === 'folder') return leafIds(it.id, objects()).length;
+  if (it.domain === 'performers' && it.kind === 'group') return blocking()?.groups.find((g) => g.id === it.id)?.ids.length ?? 0;
+  return 0;
+}
+
+/** Take a group apart, keeping what's inside it. */
+export function ungroup(it: Item) {
+  if (it.domain === 'set') {
+    const store = useProjectStore.getState();
+    const folder = objects().find((o) => o.id === it.id);
+    store.batch(`Ungrouped “${folder?.name ?? 'group'}”`, () =>
+      store.updateObjects((list) => list.filter((o) => o.id !== it.id).map((o) => (o.parent === it.id ? { ...o, parent: folder?.parent } : o))),
+    );
+  } else useProjectStore.getState().batch(`Ungrouped “${nameOf(it)}”`, () => blockingActions.removeGroup(it.id));
+}
+
+/** Delete items as one undo step, with "Deleted 'Wall panel 3' · Undo". Groups take everything inside them. */
 export function remove(items: Item[]) {
+  items = items.filter((i) => i.domain !== 'stage');
+  if (!items.length) return;
+  const label = items.length === 1 ? `Deleted “${nameOf(items[0])}”` : `Deleted ${items.length} items`;
+  useProjectStore.getState().batch(label, () => removeNow(items));
+}
+
+function removeNow(items: Item[]) {
+  // Everything in a cast group goes with it.
+  const castGroups = items.filter((i) => i.domain === 'performers' && i.kind === 'group');
+  const groupMembers = castGroups.flatMap((i) => blocking()?.groups.find((g) => g.id === i.id)?.ids ?? []).map((id) => ({ domain: 'performers' as const, kind: 'performer', id }));
+  items = [...items, ...groupMembers];
   const set = items.filter((i) => i.domain === 'set');
   if (set.length) useProjectStore.getState().removeObjects([...new Set(set.flatMap((i) => [i.id, ...leafIds(i.id, objects())]))]);
   const fx = items.filter((i) => i.kind === 'fixture').map((i) => i.id);
@@ -108,3 +161,6 @@ export function remove(items: Item[]) {
     else if (i.kind === 'wall') venueActions.removeWall(i.id);
   }
 }
+
+/** Delete what a selection points at. */
+export const removePick = (p: Pick) => remove(p.ids.map((id) => ({ domain: p.domain, kind: p.kind, id })));

@@ -2,9 +2,8 @@ import { useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { viewportBridge } from '../objects/ui';
 import { useProjectStore } from '../store/useProjectStore';
-import { useLightsUI } from '../lighting/ui';
-import { useBlockingUI } from '../blocking/ui';
-import { useVenueUI } from '../venue/ui';
+import { DOMAIN_MODE, editIn, type Pick } from './layers/selection';
+import { deleteItem, useItemMenu } from './layers/ItemMenu';
 import { usePlacing } from '../objects/placing';
 import { useLightPlacing } from '../lighting/moods';
 import { MODES, type Mode } from '../modes';
@@ -12,21 +11,23 @@ import { MODES, type Mode } from '../modes';
 interface Owner {
   mode: Mode;
   what: string;
-  select: () => void;
+  pick: Pick;
 }
+
+const owner = (what: string, domain: Pick['domain'], kind: string, id: string): Owner => ({ mode: DOMAIN_MODE[domain], what, pick: { domain, kind, ids: [id] } });
 
 /** Which mode owns a 3D object, from the markers each layer puts in userData. */
 function ownerOf(o: THREE.Object3D | null): Owner | null {
   for (let p = o; p; p = p.parent) {
     const u = p.userData ?? {};
-    if (u.fixture) return { mode: 'lights', what: 'a light', select: () => useLightsUI.getState().select({ kind: 'fixture', ids: [u.fixture] }) };
-    if (u.lightPosition) return { mode: 'lights', what: 'a light bar', select: () => useLightsUI.getState().select({ kind: 'position', ids: [u.lightPosition] }) };
-    if (u.performer) return { mode: 'blocking', what: 'a performer', select: () => useBlockingUI.getState().select({ kind: 'performer', ids: [u.performer] }) };
-    if (u.objectId) return { mode: 'set', what: 'a set piece', select: () => useProjectStore.getState().select([u.objectId]) };
-    if (u.venueRoom) return { mode: 'venue', what: 'a room', select: () => useVenueUI.getState().select({ kind: 'room', id: u.venueRoom }) };
-    if (u.venueWall) return { mode: 'venue', what: 'a wall', select: () => useVenueUI.getState().select({ kind: 'wall', id: u.venueWall }) };
-    if (u.venueDoor) return { mode: 'venue', what: 'a door', select: () => useVenueUI.getState().select({ kind: 'door', id: u.venueDoor }) };
-    if (u.venueFurniture) return { mode: 'venue', what: 'furniture', select: () => useVenueUI.getState().select({ kind: 'furniture', id: u.venueFurniture }) };
+    if (u.fixture) return owner('a light', 'lights', 'fixture', u.fixture);
+    if (u.lightPosition) return owner('a light bar', 'lights', 'position', u.lightPosition);
+    if (u.performer) return owner('a performer', 'performers', 'performer', u.performer);
+    if (u.objectId) return owner('a set piece', 'set', 'object', u.objectId);
+    if (u.venueRoom) return owner('a room', 'venue', 'room', u.venueRoom);
+    if (u.venueWall) return owner('a wall', 'venue', 'wall', u.venueWall);
+    if (u.venueDoor) return owner('a door', 'venue', 'door', u.venueDoor);
+    if (u.venueFurniture) return owner('furniture', 'venue', 'furniture', u.venueFurniture);
   }
   return null;
 }
@@ -51,7 +52,7 @@ export function CrossModeToast() {
     let down: [number, number] | null = null;
     let timer = 0;
     const onDown = (e: PointerEvent) => {
-      down = e.button === 0 ? [e.clientX, e.clientY] : null;
+      down = e.button === 0 || e.button === 2 ? [e.clientX, e.clientY] : null;
       if (!(e.target as HTMLElement).closest?.('.cross-toast')) setToast(null);
     };
     const onUp = (e: PointerEvent) => {
@@ -77,7 +78,15 @@ export function CrossModeToast() {
       const hit = hits.find((h) => (h.object as THREE.Mesh).isMesh && visible(h.object) && solid(h));
       const owner = hit && ownerOf(hit.object);
       const mode = useProjectStore.getState().mode;
-      if (!owner || owner.mode === mode) return;
+      if (!owner) return;
+      // Right-click on anything, from any mode: the item menu (set pieces in Set get the face menu, which has the same actions).
+      if (e.button === 2) {
+        if (mode === 'set' && owner.mode === 'set') return;
+        const p = owner.pick;
+        useItemMenu.getState().open({ item: { domain: p.domain, kind: p.kind, id: p.ids[0] }, pick: p, x: e.clientX, y: e.clientY });
+        return;
+      }
+      if (owner.mode === mode) return;
       window.clearTimeout(timer);
       setToast({ x: e.clientX, y: e.clientY, owner });
       timer = window.setTimeout(() => setToast(null), 3000);
@@ -102,13 +111,21 @@ export function CrossModeToast() {
       <button
         className="btn btn--small"
         onClick={() => {
-          useProjectStore.getState().setMode(toast.owner.mode);
-          // Pick it once its mode is showing.
-          window.setTimeout(toast.owner.select, 0);
+          editIn(toast.owner.pick);
           setToast(null);
         }}
       >
         Switch
+      </button>
+      <button
+        className="btn btn--small btn--danger"
+        onClick={() => {
+          const p = toast.owner.pick;
+          deleteItem({ domain: p.domain, kind: p.kind, id: p.ids[0] });
+          setToast(null);
+        }}
+      >
+        Delete
       </button>
     </div>
   );

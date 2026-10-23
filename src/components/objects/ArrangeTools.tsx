@@ -5,6 +5,7 @@ import { isGroup, unitsOf } from '../../objects/groups';
 import { setProps } from '../../objects/actions';
 import { align, distribute, flipSelection, makeArray, mirrorCopy, type AlignMode, type ArrayOptions } from '../../objects/arrange';
 import { Collapsible } from '../Collapsible';
+import { removePick } from '../layers/ops';
 
 const I = ({ d }: { d: string }) => (
   <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round">
@@ -33,7 +34,7 @@ function IconButton({ title, onClick, children, disabled }: { title: string; onC
 export function MultiProperties() {
   const objects = useActiveObjects();
   const selectedIds = useProjectStore((s) => s.selectedIds);
-  const { removeObjects, duplicateObjects, select, groupSelection, ungroupSelection } = useProjectStore.getState();
+  const { duplicateObjects, select, groupSelection, ungroupSelection } = useProjectStore.getState();
   const units = unitsOf(selectedIds, objects);
   const groupUnit = units.length === 1 ? objects.find((o) => o.id === units[0] && isGroup(o)) : undefined;
   const hasGroup = units.some((u) => isGroup(objects.find((o) => o.id === u)!));
@@ -107,7 +108,7 @@ export function MultiProperties() {
         <button className="btn" onClick={() => duplicateObjects(selectedIds)}>
           Duplicate
         </button>
-        <button className="btn btn--danger" onClick={() => removeObjects(selectedIds)}>
+        <button className="btn btn--danger" onClick={() => removePick({ domain: 'set', kind: 'object', ids: selectedIds })}>
           Delete
         </button>
       </div>

@@ -13,6 +13,7 @@ import { FURNITURE, getFurniture } from '../../venue/furniture';
 import { formatArea } from './format';
 import { HURRY, WALK, endName, formatTime, solveRoute } from '../../venue/routes';
 import { importTrace, patchTrace, removeTrace } from '../../venue/trace';
+import { removePick } from '../layers/ops';
 
 const TOOLS: { id: VenueTool; label: string; key: string; hint: string }[] = [
   { id: 'select', label: 'Select', key: 'V', hint: 'Click anything (here or in 3D) to select it. Drag walls, wall ends, doors and furniture to move them. Drag the background to pan, scroll to zoom.' },
@@ -235,7 +236,7 @@ function DoorProps({ door }: { door: Door }) {
         <p className="hint">Named entrances are used in Blocking for performers’ entrances and exits.</p>
       </section>
       <div className="btn-row">
-        <button className="btn btn--danger" onClick={() => venueActions.removeDoor(door.id)}>
+        <button className="btn btn--danger" onClick={() => removePick({ domain: 'venue', kind: 'door', ids: [door.id] })}>
           Delete door
         </button>
       </div>
@@ -276,7 +277,7 @@ export function VenueProperties() {
             {doors.filter((d) => d.wallId === wall.id).length} door(s) in this wall
           </p>
           <div className="btn-row">
-            <button className="btn btn--danger" onClick={() => venueActions.removeWall(wall.id)} title="Delete (Delete key)">
+            <button className="btn btn--danger" onClick={() => removePick({ domain: 'venue', kind: 'wall', ids: [wall.id] })} title="Delete (Delete key)">
               Delete wall
             </button>
           </div>
@@ -306,7 +307,7 @@ export function VenueProperties() {
             />
           ))}
           <div className="btn-row">
-            <button className="btn btn--danger" onClick={() => venueActions.removeRoom(room.id)} title="Removes the room label and floor; its walls stay">
+            <button className="btn btn--danger" onClick={() => removePick({ domain: 'venue', kind: 'room', ids: [room.id] })} title="Removes the room label and floor; its walls stay">
               Delete room
             </button>
           </div>
@@ -334,7 +335,7 @@ export function VenueProperties() {
             onChange={(v) => venueActions.patchFurniture(item.id, { rotation: v as number })}
           />
           <div className="btn-row">
-            <button className="btn btn--danger" onClick={() => venueActions.removeFurniture(item.id)}>
+            <button className="btn btn--danger" onClick={() => removePick({ domain: 'venue', kind: 'furniture', ids: [item.id] })}>
               Delete
             </button>
           </div>
@@ -376,7 +377,7 @@ export function VenueProperties() {
             </button>
           </label>
           <div className="btn-row">
-            <button className="btn btn--danger" onClick={() => venueActions.removeRoute(route.id)}>
+            <button className="btn btn--danger" onClick={() => removePick({ domain: 'venue', kind: 'route', ids: [route.id] })}>
               Delete route
             </button>
           </div>

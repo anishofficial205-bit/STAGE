@@ -10,6 +10,7 @@ import { SPEEDS, initials, type Path, type Performer } from '../../blocking/type
 import { ChecksSection } from './ChecksPanel';
 import { Plain } from '../../glossary/Plain';
 import { plainText } from '../../glossary/terms';
+import { removePick } from '../layers/ops';
 
 function Scenes() {
   const b = useActiveBlocking();
@@ -138,10 +139,7 @@ export function BlockingLeft() {
       } else if ((e.key === 'Delete' || e.key === 'Backspace') && ui.selected && !ui.tool) {
         e.preventDefault();
         const sel = ui.selected;
-        if (sel.kind === 'performer') blockingActions.removePerformers(sel.ids);
-        else if (sel.kind === 'path') blockingActions.removePath(sel.id);
-        else if (sel.kind === 'mark') blockingActions.removeMark(sel.id);
-        else if (sel.kind === 'entrance') blockingActions.removeEntrance(sel.id);
+        removePick(sel.kind === 'performer' ? { domain: 'performers', kind: 'performer', ids: sel.ids } : { domain: 'performers', kind: sel.kind, ids: [sel.id] });
       } else if (e.key === 'Escape' && !ui.tool) ui.select(null);
     };
     window.addEventListener('keydown', onKey);
@@ -242,7 +240,7 @@ function PerformerProps({ ids }: { ids: string[] }) {
         </>
       )}
       <div className="btn-row">
-        <button className="btn btn--danger" onClick={() => blockingActions.removePerformers(ids)}>
+        <button className="btn btn--danger" onClick={() => removePick({ domain: 'performers', kind: 'performer', ids })}>
           Delete
         </button>
       </div>
@@ -295,7 +293,7 @@ function PathProps({ path }: { path: Path }) {
         </select>
       </label>
       <div className="btn-row">
-        <button className="btn btn--danger" onClick={() => blockingActions.removePath(path.id)}>
+        <button className="btn btn--danger" onClick={() => removePick({ domain: 'performers', kind: 'path', ids: [path.id] })}>
           Delete path
         </button>
       </div>
@@ -360,7 +358,7 @@ export function BlockingProperties() {
             <input className="field__input" value={e.name} onChange={(ev) => blockingActions.renameEntrance(e.id, ev.target.value)} disabled={e.source === 'venue'} title={e.source === 'venue' ? 'Rename it on its door in Venue mode' : undefined} />
           </label>
           {e.source === 'custom' && (
-            <button className="btn btn--danger" onClick={() => blockingActions.removeEntrance(e.id)}>
+            <button className="btn btn--danger" onClick={() => removePick({ domain: 'performers', kind: 'entrance', ids: [e.id] })}>
               Delete entrance
             </button>
           )}
@@ -378,7 +376,7 @@ export function BlockingProperties() {
               <Plain text="Spike mark" /> · {p.name}
             </h2>
           </div>
-          <button className="btn btn--danger" onClick={() => blockingActions.removeMark(m.id)}>
+          <button className="btn btn--danger" onClick={() => removePick({ domain: 'performers', kind: 'mark', ids: [m.id] })}>
             Delete mark
           </button>
         </div>

@@ -21,6 +21,7 @@ import { roomAt } from '../../venue/rooms';
 import { Modal } from '../Modal';
 import { fromDisplay, toDisplay } from '../../units';
 import type { RouteEnd, Trace } from '../../venue/types';
+import { removePick } from '../layers/ops';
 
 interface View {
   cx: number;
@@ -360,7 +361,7 @@ export function PlanView() {
         ui.setDraft(ui.draft.slice(0, -1));
       } else if ((e.key === 'Backspace' || e.key === 'Delete') && ui.selected) {
         e.preventDefault();
-        venueActions.removeSelected();
+        removePick({ domain: 'venue', kind: ui.selected.kind, ids: [ui.selected.id] });
       } else if (k === 'r' && ui.selected?.kind === 'furniture') {
         const f = useProjectStore.getState().venue.furniture.find((x) => x.id === ui.selected!.id);
         if (f) venueActions.patchFurniture(f.id, { rotation: (((f.rotation + (e.shiftKey ? 15 : 90) + 180) % 360) + 360) % 360 - 180 });

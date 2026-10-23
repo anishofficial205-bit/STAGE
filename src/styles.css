@@ -1298,3 +1298,8 @@ button.rail__logo:hover { filter: brightness(1.12); }
 .layer__more { font-size: 14px; line-height: 1; padding: 0 3px; }
 .layer-menu { position: fixed; z-index: 60; min-width: 170px; }
 .foreign-props__actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+/* Delete and edit from any mode (Prompt 51) */
+.context-menu__rule { height: 1px; background: var(--border); margin: 4px 2px; }
+.context-menu button.is-danger, .layer-menu button.is-danger { color: #ff8f7a; }
+.cross-toast .btn--danger { margin-left: 2px; }

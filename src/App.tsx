@@ -25,6 +25,7 @@ import { PlanView } from './components/venue/PlanView';
 import { VenueViewBar } from './components/venue/VenuePanels';
 import { useProjectStore } from './store/useProjectStore';
 import { useVenueUI } from './venue/ui';
+import { ItemMenu } from './components/layers/ItemMenu';
 
 /**
  * Focus layout: the 3D stage fills the window and everything else floats over it —
@@ -62,6 +63,7 @@ export default function App() {
       {!venue && <ViewCube />}
       <LabelDeclutter />
       <CrossModeToast />
+      <ItemMenu />
       <Tips />
       <UndoToast />
       <Shortcuts />
