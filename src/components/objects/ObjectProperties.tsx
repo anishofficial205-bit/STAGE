@@ -9,6 +9,61 @@ import { useOffStageIds } from './LayersPanel';
 import { ArrayTool, MultiProperties } from './ArrangeTools';
 import { FacesSection } from './FacesSection';
 import { Plain } from '../../glossary/Plain';
+import { MoreOptions } from '../MoreOptions';
+import { useRef } from 'react';
+import { ALL_FACES } from '../../objects/faceMaterial';
+import { ACCEPT, importOnto } from '../../graphics/library';
+import type { SetObject } from '../../objects/types';
+
+const QUICK_COLOURS: [string, string][] = [
+  ['White', '#f2efe9'],
+  ['Bone', '#e8e1d2'],
+  ['Grey', '#8d8f93'],
+  ['Black', '#1c1c1e'],
+  ['Oak', '#b08a5a'],
+  ['Sage', '#8a9a7b'],
+  ['Navy', '#2b3a5c'],
+  ['Red', '#7e1c22'],
+];
+
+/** One colour for the whole piece, or a picture on it. Per-face materials are under More options. */
+function QuickLook({ o }: { o: SetObject }) {
+  const setFaceStyle = useProjectStore((s) => s.setFaceStyle);
+  const file = useRef<HTMLInputElement>(null);
+  const current = (o.faces?.[ALL_FACES]?.color ?? '').toLowerCase();
+  return (
+    <section className="group">
+      <h3 className="group__title">Colour</h3>
+      <div className="color-field">
+        {QUICK_COLOURS.map(([name, hex]) => (
+          <button
+            key={hex}
+            type="button"
+            className={`swatch ${current === hex ? 'is-active' : ''}`}
+            style={{ background: hex }}
+            title={name}
+            aria-label={name}
+            onClick={() => setFaceStyle(o.id, ALL_FACES, { material: 'paint', color: hex, roughness: 0.8 }, `quick-colour:${o.id}`)}
+          />
+        ))}
+        <button className="btn btn--small" onClick={() => file.current?.click()} title="Put a picture (JPG, PNG, SVG or PDF) on this piece">
+          + Picture…
+        </button>
+        <input
+          ref={file}
+          type="file"
+          accept={ACCEPT}
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void importOnto({ objectId: o.id, face: ALL_FACES }, [f]);
+            e.target.value = '';
+          }}
+        />
+      </div>
+    </section>
+  );
+}
 
 const pos = (key: string, label: string, help?: string): NumberParam => ({ key, label, group: 'Position', type: 'number', default: 0, min: -200, max: 200, step: 0.05, help });
 
@@ -35,6 +90,9 @@ export function ObjectProperties() {
     if (!g) groups.push((g = { name: def.group, defs: [] }));
     g.defs.push(def);
   }
+  // Size first; everything else is under More options.
+  const size = groups.find((g) => g.name === 'Size');
+  const others = groups.filter((g) => g !== size);
 
   return (
     <div className="obj-props">
@@ -50,38 +108,50 @@ export function ObjectProperties() {
       </p>
       {offStage.has(o.id) && <p className="panel-msg panel-msg--warning">This object is partly off the stage.</p>}
 
-      <section className="group">
-        <h3 className="group__title">Position</h3>
-        <div className="field-pair">
-          <Field def={pos('x', 'X', 'Left/right from the stage centre.')} value={o.x} units={units} onChange={(v) => setProps(o.id, { x: v as number }, `x:${o.id}`)} />
-          <Field def={pos('z', 'Z', 'Upstage (−) / downstage (+) from the stage centre.')} value={o.z} units={units} onChange={(v) => setProps(o.id, { z: v as number }, `z:${o.id}`)} />
-        </div>
-        <Field
-          def={{ ...pos('elevation', placementOf(type, o.params) === 'hanging' ? 'Height above floor (bottom)' : 'Height above floor'), min: 0, max: 50 }}
-          value={effectiveElevation(o, type)}
-          units={units}
-          onChange={(v) => setElevation(o.id, v as number)}
-        />
-        <Field
-          def={{ key: 'rotation', label: 'Rotation (°)', group: '', type: 'number', unit: 'none', default: 0, min: -180, max: 180, step: 15 }}
-          value={o.rotation}
-          units={units}
-          onChange={(v) => setRotation(o.id, v as number)}
-        />
-      </section>
-
-      {groups.map((g) => (
-        <section key={g.name} className="group">
-          <h3 className="group__title">{g.name}</h3>
-          {g.defs.map((def) => (
+      {size && (
+        <section className="group">
+          <h3 className="group__title">Size</h3>
+          {size.defs.map((def) => (
             <Field key={def.key} def={def} value={o.params[def.key]} units={units} onChange={(v) => setParams(o.id, { [def.key]: v as ParamValue }, `param:${o.id}:${def.key}`)} />
           ))}
         </section>
-      ))}
+      )}
+      <QuickLook o={o} />
 
-      {type.Panel && <type.Panel o={o} />}
-      <FacesSection o={o} />
-      <ArrayTool />
+      <MoreOptions id="set-object">
+        <section className="group">
+          <h3 className="group__title">Position</h3>
+          <div className="field-pair">
+            <Field def={pos('x', 'X', 'Left/right from the stage centre.')} value={o.x} units={units} onChange={(v) => setProps(o.id, { x: v as number }, `x:${o.id}`)} />
+            <Field def={pos('z', 'Z', 'Upstage (−) / downstage (+) from the stage centre.')} value={o.z} units={units} onChange={(v) => setProps(o.id, { z: v as number }, `z:${o.id}`)} />
+          </div>
+          <Field
+            def={{ ...pos('elevation', placementOf(type, o.params) === 'hanging' ? 'Height above floor (bottom)' : 'Height above floor'), min: 0, max: 50 }}
+            value={effectiveElevation(o, type)}
+            units={units}
+            onChange={(v) => setElevation(o.id, v as number)}
+          />
+          <Field
+            def={{ key: 'rotation', label: 'Rotation (°)', group: '', type: 'number', unit: 'none', default: 0, min: -180, max: 180, step: 15 }}
+            value={o.rotation}
+            units={units}
+            onChange={(v) => setRotation(o.id, v as number)}
+          />
+        </section>
+
+        {others.map((g) => (
+          <section key={g.name} className="group">
+            <h3 className="group__title">{g.name}</h3>
+            {g.defs.map((def) => (
+              <Field key={def.key} def={def} value={o.params[def.key]} units={units} onChange={(v) => setParams(o.id, { [def.key]: v as ParamValue }, `param:${o.id}:${def.key}`)} />
+            ))}
+          </section>
+        ))}
+
+        {type.Panel && <type.Panel o={o} />}
+        <FacesSection o={o} />
+        <ArrayTool />
+      </MoreOptions>
 
       <div className="btn-row">
         <button className="btn" onClick={() => duplicateObjects([o.id])} title="Duplicate (⌘D)">

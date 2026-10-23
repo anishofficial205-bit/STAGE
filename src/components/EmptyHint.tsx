@@ -20,7 +20,7 @@ export function EmptyHint() {
           <button className="btn btn--link" onClick={() => useProjectStore.getState().setMode('set')}>
             Set mode
           </button>{' '}
-          (key 3) to add scenery and props.
+          (key 2) to add scenery and props.
         </div>
         <button className="empty-hint__close" onClick={() => setDismissed(templateId)} aria-label="Dismiss">
           ×

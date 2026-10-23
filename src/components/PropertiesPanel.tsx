@@ -11,6 +11,27 @@ import { LightsProperties } from './lights/LightsPanels';
 import { BlockingProperties } from './blocking/BlockingPanels';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
+import { MoreOptions } from './MoreOptions';
+import { formatLength } from '../units';
+import type { Units } from '../units';
+
+const formatSize = (w: number, d: number, units: Units) => `${formatLength(w, units)} × ${formatLength(d, units)}`;
+
+/** A tiny plan of the stage at a preset's proportions. */
+function PresetPlan({ w, d }: { w: number; d: number }) {
+  const ok = Number.isFinite(w) && Number.isFinite(d) && w > 0 && d > 0;
+  const k = ok ? Math.min(64 / w, 26 / d) : 1;
+  const W = ok ? w * k : 50;
+  const D = ok ? d * k : 24;
+  return (
+    <svg className="preset-card__plan" viewBox="0 0 80 56" aria-hidden>
+      <rect x={40 - W / 2} y={6} width={W} height={D} rx={1.5} />
+      {[0, 1, 2].map((i) => (
+        <path key={i} d={`M ${40 - W / 2 - 4 + i * 2} ${D + 12 + i * 5} Q 40 ${D + 16 + i * 5} ${40 + W / 2 + 4 - i * 2} ${D + 12 + i * 5}`} />
+      ))}
+    </svg>
+  );
+}
 import { Plain } from '../glossary/Plain';
 
 /**
@@ -27,9 +48,13 @@ function TemplateProperties() {
   const data = useActiveData();
   const template = getTemplate(templateId)!;
 
+  // Width, depth and height first; everything else under More options.
+  const mainKeys = template.dimensions ? [template.dimensions.width, template.dimensions.depth, template.dimensions.height].filter(Boolean) : [];
+  const main = mainKeys.map((k) => template.params.find((d) => d.key === k)).filter((d): d is ParamDef => !!d && (!d.visible || d.visible(params)));
   const groups: { name: string; defs: ParamDef[] }[] = [];
   for (const def of template.params) {
     if (def.visible && !def.visible(params)) continue;
+    if (mainKeys.includes(def.key)) continue;
     let g = groups.find((x) => x.name === def.group);
     if (!g) groups.push((g = { name: def.group, defs: [] }));
     g.defs.push(def);
@@ -49,13 +74,18 @@ function TemplateProperties() {
       </div>
       {template.presets && template.presets.length > 0 && (
         <section className="presets">
-          <h3 className="group__title">Size presets</h3>
-          <div className="chips">
+          <h3 className="group__title">Start from a size</h3>
+          <div className="preset-cards">
             {template.presets.map((preset, i) => {
               const active = Object.entries(preset.params).every(([k, v]) => params[k] === v);
+              const dims = template.dimensions;
+              const w = dims?.width ? Number(preset.params[dims.width] ?? params[dims.width]) : NaN;
+              const d = dims?.depth ? Number(preset.params[dims.depth] ?? params[dims.depth]) : NaN;
               return (
-                <button key={preset.name} className={`chip ${active ? 'is-active' : ''}`} onClick={() => applyPreset(i)} title={preset.description}>
-                  {preset.name}
+                <button key={preset.name} className={`preset-card ${active ? 'is-active' : ''}`} onClick={() => applyPreset(i)} title={preset.description}>
+                  <PresetPlan w={w} d={d} />
+                  <span className="preset-card__name">{preset.name}</span>
+                  {Number.isFinite(w) && Number.isFinite(d) && <span className="preset-card__dims">{formatSize(w, d, units)}</span>}
                 </button>
               );
             })}
@@ -68,14 +98,25 @@ function TemplateProperties() {
         </p>
       ))}
       {Extra && <Extra />}
-      {groups.map((g) => (
-        <section key={g.name} className="group">
-          <h3 className="group__title">{g.name}</h3>
-          {g.defs.map((def) => (
+      {main.length > 0 && (
+        <section className="group">
+          <h3 className="group__title">Stage size</h3>
+          {main.map((def) => (
             <Field key={def.key} def={def} value={params[def.key]} units={units} onChange={(v) => setParam(def.key, v as ParamValue)} />
           ))}
+          <p className="hint">Tip: drag the round handles on the stage edges to resize it.</p>
         </section>
-      ))}
+      )}
+      <MoreOptions id={`stage:${template.id}`}>
+        {groups.map((g) => (
+          <section key={g.name} className="group">
+            <h3 className="group__title">{g.name}</h3>
+            {g.defs.map((def) => (
+              <Field key={def.key} def={def} value={params[def.key]} units={units} onChange={(v) => setParam(def.key, v as ParamValue)} />
+            ))}
+          </section>
+        ))}
+      </MoreOptions>
     </>
   );
 }

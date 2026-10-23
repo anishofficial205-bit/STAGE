@@ -172,11 +172,12 @@ export function BlockingLeft() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+  const performerCount = useActiveBlocking().performers.length;
   return (
     <>
       <Scenes />
       <Cast />
-      <Groups />
+      {performerCount >= 2 && <Groups />}
       <Entrances />
     </>
   );
@@ -336,11 +337,14 @@ function SceneProps() {
         <h2 className="panel-title">{scene.name}</h2>
       </div>
       <p className="sidebar__empty">Add performers, then select one and draw their paths. Press Space to play the scene.</p>
-      <label className="field">
-        <span className="field__label">Notes (on the blocking sheet)</span>
-        <textarea className="field__input scene-notes" rows={4} value={scene.notes} onChange={(e) => blockingActions.setNotes(e.target.value)} />
-      </label>
-      <ChecksSection />
+      <ChecksSection
+        more={
+          <label className="field">
+            <span className="field__label">Notes (on the blocking sheet)</span>
+            <textarea className="field__input scene-notes" rows={4} value={scene.notes} onChange={(e) => blockingActions.setNotes(e.target.value)} />
+          </label>
+        }
+      />
     </div>
   );
 }

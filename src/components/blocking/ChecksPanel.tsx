@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type * as THREE from 'three';
 import { Field } from '../fields';
 import { useActiveBlocking, useProjectStore } from '../../store/useProjectStore';
@@ -9,6 +9,7 @@ import { viewportBridge } from '../../objects/ui';
 import { download } from '../../graphics/specSheet';
 import { exportName } from '../../export/exports';
 import { Plain } from '../../glossary/Plain';
+import { MoreOptions } from '../MoreOptions';
 
 const ICON: Record<BlockingWarning['kind'], string> = { wings: '👁', hidden: '▦', collision: '⚠', upstaged: '↺' };
 const fmt = (t: number) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
@@ -30,7 +31,7 @@ export async function runBlockingChecks() {
 }
 
 /** Checks list (click a warning to jump there) and blocking-sheet exports. */
-export function ChecksSection() {
+export function ChecksSection({ more }: { more?: ReactNode }) {
   const b = useActiveBlocking();
   const warnings = useBlockingUI((s) => s.warnings);
   const checking = useBlockingUI((s) => s.checking);
@@ -53,15 +54,6 @@ export function ChecksSection() {
     <>
       <section className="group">
         <h3 className="group__title">Checks</h3>
-        <Field def={{ key: 'hs', label: 'Flag when hidden from more than (%) of seats', group: '', type: 'number', unit: 'none', default: 20, min: 5, max: 90, step: 5 }} value={b.checks.hiddenShare} units={units} onChange={(v) => setChecks({ hiddenShare: v as number })} />
-        <label className="field field--inline">
-          <span className="field__label">
-            Flag: <Plain text="Upstaging" />
-          </span>
-          <button type="button" role="switch" aria-checked={b.checks.upstaged} className={`switch ${b.checks.upstaged ? 'is-on' : ''}`} onClick={() => setChecks({ upstaged: !b.checks.upstaged })}>
-            <span className="switch__knob" />
-          </button>
-        </label>
         <button className="btn" onClick={() => void runBlockingChecks()} disabled={checking !== null || !b.performers.length}>
           {checking !== null ? `Checking… ${Math.round(checking * 100)}%` : 'Run checks'}
         </button>
@@ -94,25 +86,42 @@ export function ChecksSection() {
           </ul>
         )}
       </section>
-      <section className="group">
-        <h3 className="group__title">Blocking sheets</h3>
-        <button className="btn" disabled={busy || !b.performers.length} onClick={() => void exportPdf()}>
-          {busy ? 'Making PDF…' : 'Export blocking sheets (PDF)'}
-        </button>
-        <div className="look-save" style={{ marginTop: 8 }}>
-          <select className="field__select" value={who} onChange={(e) => setWho(e.target.value)} aria-label="Performer">
-            <option value="">One performer’s track…</option>
-            {b.performers.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-          <button className="btn btn--small" disabled={!who || busy} onClick={() => void exportPdf(who)}>
-            PDF
-          </button>
-        </div>
-      </section>
+      <MoreOptions id="blocking">
+        {more}
+        <section className="group">
+          <h3 className="group__title">Check settings</h3>
+          <Field def={{ key: 'hs', label: 'Flag when hidden from more than (%) of seats', group: '', type: 'number', unit: 'none', default: 20, min: 5, max: 90, step: 5 }} value={b.checks.hiddenShare} units={units} onChange={(v) => setChecks({ hiddenShare: v as number })} />
+          <label className="field field--inline">
+            <span className="field__label">
+              Flag: <Plain text="Upstaging" />
+            </span>
+            <button type="button" role="switch" aria-checked={b.checks.upstaged} className={`switch ${b.checks.upstaged ? 'is-on' : ''}`} onClick={() => setChecks({ upstaged: !b.checks.upstaged })}>
+              <span className="switch__knob" />
+            </button>
+          </label>
+        </section>
+        {b.performers.length > 0 && (
+          <section className="group">
+            <h3 className="group__title">Blocking sheets</h3>
+            <button className="btn" disabled={busy} onClick={() => void exportPdf()}>
+              {busy ? 'Making PDF…' : 'Export blocking sheets (PDF)'}
+            </button>
+            <div className="look-save" style={{ marginTop: 8 }}>
+              <select className="field__select" value={who} onChange={(e) => setWho(e.target.value)} aria-label="Performer">
+                <option value="">One performer’s track…</option>
+                {b.performers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <button className="btn btn--small" disabled={!who || busy} onClick={() => void exportPdf(who)}>
+                PDF
+              </button>
+            </div>
+          </section>
+        )}
+      </MoreOptions>
     </>
   );
 }

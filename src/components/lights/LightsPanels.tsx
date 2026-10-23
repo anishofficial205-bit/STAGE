@@ -12,6 +12,7 @@ import type { ParamDef } from '../../types';
 import { MAX_REAL, MAX_SHADOWS, lightBudget } from './budget';
 import { LooksSection, GroupsSection } from './LooksPanel';
 import { Plain } from '../../glossary/Plain';
+import { MoreOptions } from '../MoreOptions';
 
 export const LIGHT_DRAG_TYPE = 'application/x-stage-light';
 
@@ -99,6 +100,7 @@ export function LightsLeft() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+  const fixtureCount = useActiveLighting().fixtures.length;
   return (
     <>
       <Collapsible id="light-library" title="Add lights" tour="light-library">
@@ -108,7 +110,7 @@ export function LightsLeft() {
         <Positions />
       </Collapsible>
       <LooksSection />
-      <GroupsSection />
+      {fixtureCount >= 2 && <GroupsSection />}
     </>
   );
 }
@@ -363,45 +365,53 @@ function Overview() {
           </button>
         </div>
       )}
-      <section className="group">
-        <h3 className="group__title">Atmosphere</h3>
-        <label className="field field--inline">
-          <span className="field__label">
-            <Plain text="Haze (visible beams)" />
-          </span>
-          <button type="button" role="switch" aria-checked={lighting.haze.on} className={`switch ${lighting.haze.on ? 'is-on' : ''}`} onClick={() => lightActions.setHaze({ on: !lighting.haze.on })}>
-            <span className="switch__knob" />
-          </button>
-        </label>
-        {lighting.haze.on && <Field def={num('density', 'Density (%)', 0, 100, 1)} value={lighting.haze.density} units="m" onChange={(v) => lightActions.setHaze({ density: v as number })} />}
-      </section>
-      <section className="group">
-        <h3 className="group__title">Quality</h3>
-        <div className="segmented segmented--wide2" role="group" aria-label="Lighting quality">
-          <button className={quality === 'draft' ? 'is-active' : ''} onClick={() => useProjectStore.getState().setLightQuality('draft')} title="Fast: no shadows (gobos still project)">
-            Draft
-          </button>
-          <button className={quality === 'presentation' ? 'is-active' : ''} onClick={() => useProjectStore.getState().setLightQuality('presentation')} title={`Shadows from up to ${MAX_SHADOWS} lights; exports always use this`}>
-            Presentation
+      {lighting.fixtures.length > 0 && (
+        <div className="btn-row">
+          <button className="btn" onClick={() => useLightsUI.getState().setPlotOpen(true)} title="A drawing of where every light hangs, for the crew">
+            <Plain text="Light plot" />
           </button>
         </div>
-        <p className="hint">
-          {lighting.fixtures.length} lights · {lit} on · {shadows.size} casting shadows
-        </p>
-        {approx.size > 0 && (
-          <p className="panel-msg panel-msg--info">
-            {lit} lights are on. To keep the view fast, the {MAX_REAL} brightest are real lights; the other {approx.size} are drawn as soft pools of light (and haze beams).
+      )}
+      <MoreOptions id="lights">
+        <section className="group">
+          <h3 className="group__title">Atmosphere</h3>
+          <label className="field field--inline">
+            <span className="field__label">
+              <Plain text="Haze (visible beams)" />
+            </span>
+            <button type="button" role="switch" aria-checked={lighting.haze.on} className={`switch ${lighting.haze.on ? 'is-on' : ''}`} onClick={() => lightActions.setHaze({ on: !lighting.haze.on })}>
+              <span className="switch__knob" />
+            </button>
+          </label>
+          {lighting.haze.on && <Field def={num('density', 'Density (%)', 0, 100, 1)} value={lighting.haze.density} units="m" onChange={(v) => lightActions.setHaze({ density: v as number })} />}
+        </section>
+        <section className="group">
+          <h3 className="group__title">Quality</h3>
+          <div className="segmented segmented--wide2" role="group" aria-label="Lighting quality">
+            <button className={quality === 'draft' ? 'is-active' : ''} onClick={() => useProjectStore.getState().setLightQuality('draft')} title="Fast: no shadows (gobos still project)">
+              Draft
+            </button>
+            <button className={quality === 'presentation' ? 'is-active' : ''} onClick={() => useProjectStore.getState().setLightQuality('presentation')} title={`Shadows from up to ${MAX_SHADOWS} lights; exports always use this`}>
+              Presentation
+            </button>
+          </div>
+          <p className="hint">
+            {lighting.fixtures.length} lights · {lit} on · {shadows.size} casting shadows
           </p>
+        </section>
+        {lighting.fixtures.length > 0 && (
+          <div className="btn-row">
+            <button className="btn" onClick={lightActions.renumber} title="Number channels from front of house to the back">
+              <Plain text="Renumber channels" />
+            </button>
+          </div>
         )}
-      </section>
-      <div className="btn-row">
-        <button className="btn" onClick={lightActions.renumber} disabled={!lighting.fixtures.length} title="Number channels from front of house to the back">
-          <Plain text="Renumber channels" />
-        </button>
-        <button className="btn" onClick={() => useLightsUI.getState().setPlotOpen(true)} disabled={!lighting.fixtures.length}>
-          <Plain text="Light plot" />
-        </button>
-      </div>
+      </MoreOptions>
+      {approx.size > 0 && (
+        <p className="panel-msg panel-msg--info">
+          {lit} lights are on. To keep the view fast, the {MAX_REAL} brightest are real lights; the other {approx.size} are drawn as soft pools of light (and haze beams).
+        </p>
+      )}
     </div>
   );
 }
