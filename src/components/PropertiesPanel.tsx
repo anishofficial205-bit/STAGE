@@ -5,7 +5,6 @@ import { LayersPanel } from './objects/LayersPanel';
 import { ObjectProperties } from './objects/ObjectProperties';
 import { SurfacesSection } from './objects/FacesSection';
 import { SightlineWarnings } from './sightlines/SightlineWarnings';
-import { StarterSets } from './StarterSets';
 import { VenueProperties } from './venue/VenuePanels';
 import { LightsProperties } from './lights/LightsPanels';
 import { BlockingProperties } from './blocking/BlockingPanels';
@@ -129,7 +128,6 @@ function SetProperties() {
         <h2 className="panel-title">Set</h2>
       </div>
       <p className="sidebar__empty">Click a piece to edit it, or add pieces from the library on the left.</p>
-      <StarterSets />
       <SurfacesSection />
     </>
   );

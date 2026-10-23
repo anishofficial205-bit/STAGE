@@ -39,6 +39,7 @@ import { addObjectAt, currentStage } from '../objects/actions';
 import { floorHeightAt } from '../helpers/stageInfo';
 import * as THREE from 'three';
 import { StageResizeHandles } from './StageResizeHandles';
+import { PlacementGhost } from './objects/PlacementGhost';
 
 
 /** Builds a soft studio environment once, used only by reflective materials (metal, glass, mirror). */
@@ -211,6 +212,7 @@ export function Viewport() {
       </OtherLayer>
       <StageSurfacesLayer />
       <StageResizeHandles />
+      <PlacementGhost />
       <SeatLayer />
       <Capturer />
       <Reflections />

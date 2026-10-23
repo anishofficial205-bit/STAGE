@@ -15,6 +15,7 @@ import { place, rotateXZ, type Placed } from './geometry';
 import { snapMove } from './snapping';
 import { useObjectUI } from './ui';
 import { placementOf, resizeRule, type SetObject } from './types';
+import { freeSpot, recordUse } from './placing';
 
 /** Grid step for objects: 0.25 m, or 6 in when working in feet. */
 export const gridStep = () => (useProjectStore.getState().units === 'ft' ? 0.5 * M_PER_FT : 0.25);
@@ -149,6 +150,16 @@ export function addObjectAt(typeId: string, world?: Pt) {
       MERGE_WITH_PREVIOUS,
     );
     return;
+  }
+  recordUse(typeId);
+  // Floor pieces never land on another piece or a performer: nudge to the nearest free spot.
+  if (placementOf(type, obj.params) === 'floor') {
+    const me = placedAll().find((p) => p.obj.id === id);
+    if (me) {
+      const others = placedAll().filter((p) => p.obj.id !== id);
+      const [x, z] = freeSpot([me.wx, me.wz], me.size.width, me.size.depth, obj.rotation, others, gridStep());
+      if (Math.abs(x - me.wx) > 1e-6 || Math.abs(z - me.wz) > 1e-6) s.updateObjects((list) => list.map((o) => (o.id === id ? { ...o, x: o.x + x - me.wx, z: o.z + z - me.wz } : o)), MERGE_WITH_PREVIOUS);
+    }
   }
   // Hanging pieces attach to rigging straight away when there is some nearby.
   if (placementOf(type, obj.params) !== 'floor') moveSelection(id, [info.centre[0] + obj.x, info.centre[1] + obj.z], { [id]: { x: obj.x, z: obj.z } }, { snap: true, key: MERGE_WITH_PREVIOUS });

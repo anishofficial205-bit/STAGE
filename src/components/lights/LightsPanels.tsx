@@ -320,8 +320,8 @@ function PositionProps({ p }: { p: HangPosition }) {
         <Plain text={p.kind === 'boom' ? 'Boom' : p.kind === 'foh' ? 'Front-of-house truss' : 'Electric (lighting batten)'} /> · {count} light{count === 1 ? '' : 's'} on it
       </p>
       <div className="field-pair">
-        <Field def={len('x', 'X', -100, 100)} value={p.x} units={units} onChange={(v) => lightActions.patchPosition(p.id, { x: v as number })} />
-        <Field def={len('z', 'Z', -100, 100)} value={p.z} units={units} onChange={(v) => lightActions.patchPosition(p.id, { z: v as number })} />
+        <Field def={len('x', 'Left ↔ Right', -100, 100)} value={p.x} units={units} onChange={(v) => lightActions.patchPosition(p.id, { x: v as number })} />
+        <Field def={len('z', 'Front ↔ Back', -100, 100)} value={p.z} units={units} onChange={(v) => lightActions.patchPosition(p.id, { z: v as number })} />
       </div>
       {p.kind !== 'boom' && <Field def={len('y', 'Height', 1, 40)} value={p.y} units={units} onChange={(v) => lightActions.patchPosition(p.id, { y: v as number })} />}
       <Field def={len('length', p.kind === 'boom' ? 'Height of the pole' : 'Length', 0.5, 60)} value={p.length} units={units} onChange={(v) => lightActions.patchPosition(p.id, { length: v as number })} />

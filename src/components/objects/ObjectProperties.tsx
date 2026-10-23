@@ -10,6 +10,7 @@ import { ArrayTool, MultiProperties } from './ArrangeTools';
 import { FacesSection } from './FacesSection';
 import { Plain } from '../../glossary/Plain';
 import { MoreOptions } from '../MoreOptions';
+import { Collapsible } from '../Collapsible';
 import { useRef } from 'react';
 import { ALL_FACES } from '../../objects/faceMaterial';
 import { ACCEPT, importOnto } from '../../graphics/library';
@@ -117,27 +118,27 @@ export function ObjectProperties() {
         </section>
       )}
       <QuickLook o={o} />
+      <Collapsible id="exact-position" title="Exact position" defaultOpen={false}>
+        <p className="hint">The easiest way to move a piece is to drag it on the stage.</p>
+        <div className="field-pair">
+          <Field def={pos('x', 'Left ↔ Right', 'From the stage centre: negative is to the left, positive to the right (as the audience sees it).')} value={o.x} units={units} onChange={(v) => setProps(o.id, { x: v as number }, `x:${o.id}`)} />
+          <Field def={pos('z', 'Front ↔ Back', 'From the stage centre: positive is toward the audience (front), negative toward the back.')} value={o.z} units={units} onChange={(v) => setProps(o.id, { z: v as number }, `z:${o.id}`)} />
+        </div>
+        <Field
+          def={{ ...pos('elevation', placementOf(type, o.params) === 'hanging' ? 'Raise / lower (bottom edge)' : 'Raise / lower'), min: 0, max: 50 }}
+          value={effectiveElevation(o, type)}
+          units={units}
+          onChange={(v) => setElevation(o.id, v as number)}
+        />
+        <Field
+          def={{ key: 'rotation', label: 'Turn (°)', group: '', type: 'number', unit: 'none', default: 0, min: -180, max: 180, step: 15 }}
+          value={o.rotation}
+          units={units}
+          onChange={(v) => setRotation(o.id, v as number)}
+        />
+      </Collapsible>
 
       <MoreOptions id="set-object">
-        <section className="group">
-          <h3 className="group__title">Position</h3>
-          <div className="field-pair">
-            <Field def={pos('x', 'X', 'Left/right from the stage centre.')} value={o.x} units={units} onChange={(v) => setProps(o.id, { x: v as number }, `x:${o.id}`)} />
-            <Field def={pos('z', 'Z', 'Upstage (−) / downstage (+) from the stage centre.')} value={o.z} units={units} onChange={(v) => setProps(o.id, { z: v as number }, `z:${o.id}`)} />
-          </div>
-          <Field
-            def={{ ...pos('elevation', placementOf(type, o.params) === 'hanging' ? 'Height above floor (bottom)' : 'Height above floor'), min: 0, max: 50 }}
-            value={effectiveElevation(o, type)}
-            units={units}
-            onChange={(v) => setElevation(o.id, v as number)}
-          />
-          <Field
-            def={{ key: 'rotation', label: 'Rotation (°)', group: '', type: 'number', unit: 'none', default: 0, min: -180, max: 180, step: 15 }}
-            value={o.rotation}
-            units={units}
-            onChange={(v) => setRotation(o.id, v as number)}
-          />
-        </section>
 
         {others.map((g) => (
           <section key={g.name} className="group">
