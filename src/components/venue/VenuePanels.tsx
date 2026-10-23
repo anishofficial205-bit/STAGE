@@ -391,7 +391,16 @@ export function VenueProperties() {
       <div className="panel-head">
         <h2 className="panel-title">Venue</h2>
       </div>
-      <p className="sidebar__empty">Draw the building around the stage on the plan: walls, rooms, doors and furniture. The stage and seating show in grey.</p>
+      {walls.length === 0 ? (
+        <div className="empty-state">
+          <p>Draw the walls of the building around your stage.</p>
+          <button className="btn btn--primary btn--big" onClick={() => useVenueUI.getState().setTool('wall')}>
+            Draw walls
+          </button>
+        </div>
+      ) : (
+        <p className="sidebar__empty">Draw the building around the stage on the plan: walls, rooms, doors and furniture. The stage and seating show in grey.</p>
+      )}
       <p className="hint">
         {walls.length} wall{walls.length === 1 ? '' : 's'}
         {walls.length ? ` · ${formatLength(total, units)} in total` : ''}

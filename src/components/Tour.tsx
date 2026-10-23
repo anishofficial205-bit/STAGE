@@ -3,13 +3,17 @@ import { useProjectStore } from '../store/useProjectStore';
 import type { Mode } from '../modes';
 
 /**
- * Tooltip tours. The first-run tour points at the mode bar, stage picker,
- * properties panel and views (replay it from the "?" menu); each of the newer
- * modes (Venue, Lights, Blocking) has a short tour the first time it opens.
+ * Tooltip tours, only when asked for from Help: "Take a tour" (the mode bar,
+ * stage picker, panel and views) and "Tour of this mode" for Venue, Lights and
+ * Blocking. Nothing opens by itself — first-time help comes from one-off tips
+ * (see Tips). When a tour ends you're back in the mode you started from.
  */
 export const TOUR_EVENT = 'stage-builder:tour';
+/** Tour of the current mode (Venue, Lights or Blocking). */
+export const MODE_TOUR_EVENT = 'stage-builder:mode-tour';
 const DONE_KEY = 'stage-builder:tour-done';
 const modeKey = (m: Mode) => `stage-builder:tour-${m}`;
+export const hasModeTour = (m: Mode) => !!MODE_TOURS[m];
 
 interface Step {
   target: string;
@@ -45,13 +49,6 @@ const MODE_TOURS: Partial<Record<Mode, Step[]>> = {
 
 const TIP_W = 290;
 
-const seen = (k: string) => {
-  try {
-    return !!localStorage.getItem(k);
-  } catch {
-    return true;
-  }
-};
 const markSeen = (k: string) => {
   try {
     localStorage.setItem(k, '1');
@@ -62,31 +59,38 @@ const markSeen = (k: string) => {
 
 export function Tour() {
   const mode = useProjectStore((s) => s.mode);
-  const [tour, setTour] = useState<{ steps: Step[]; key: string; step: number } | null>(() => (seen(DONE_KEY) ? null : { steps: FIRST_RUN, key: DONE_KEY, step: 0 }));
+  const [tour, setTour] = useState<{ steps: Step[]; key: string; step: number; returnTo: Mode } | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
 
   const close = useCallback(() => {
-    if (tour) markSeen(tour.key);
+    if (tour) {
+      markSeen(tour.key);
+      // Back to where you were when the tour started.
+      if (useProjectStore.getState().mode !== tour.returnTo) useProjectStore.getState().setMode(tour.returnTo);
+    }
     setTour(null);
   }, [tour]);
 
   useEffect(() => {
     const replay = () => {
+      const returnTo = useProjectStore.getState().mode;
       useProjectStore.getState().setMode('stage');
-      setTour({ steps: FIRST_RUN, key: DONE_KEY, step: 0 });
+      setTour({ steps: FIRST_RUN, key: DONE_KEY, step: 0, returnTo });
+    };
+    const modeTour = () => {
+      const m = useProjectStore.getState().mode;
+      const steps = MODE_TOURS[m];
+      if (steps) setTour({ steps, key: modeKey(m), step: 0, returnTo: m });
     };
     window.addEventListener(TOUR_EVENT, replay);
-    return () => window.removeEventListener(TOUR_EVENT, replay);
+    window.addEventListener(MODE_TOUR_EVENT, modeTour);
+    return () => {
+      window.removeEventListener(TOUR_EVENT, replay);
+      window.removeEventListener(MODE_TOUR_EVENT, modeTour);
+    };
   }, []);
 
-  // The first time a newer mode opens (and no other tour is showing), introduce it.
-  useEffect(() => {
-    const steps = MODE_TOURS[mode];
-    if (!steps || seen(modeKey(mode)) || !seen(DONE_KEY)) return;
-    const t = setTimeout(() => setTour((cur) => cur ?? { steps, key: modeKey(mode), step: 0 }), 400);
-    return () => clearTimeout(t);
-  }, [mode]);
-  // Leaving the mode a tour is about ends that tour.
+  // Leaving the mode a mode tour is about ends that tour.
   useEffect(() => {
     if (tour && tour.key !== DONE_KEY && tour.key !== modeKey(mode)) setTour(null);
   }, [mode, tour]);

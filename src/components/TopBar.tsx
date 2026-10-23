@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../store/useProjectStore';
-import { TOUR_EVENT } from './Tour';
+import { MODE_TOUR_EVENT, TOUR_EVENT, hasModeTour } from './Tour';
+import { resetTips, showTip } from './Tips';
 import { exportZip, importZip } from '../graphics/library';
 import { PrintCheckDialog } from './graphics/PrintCheck';
 import { ExportDialog } from './export/ExportDialog';
@@ -43,6 +44,10 @@ export function TopBar() {
     useObjectUI.getState().setMenu(null);
     setMenu(menu === m ? null : m);
   };
+  // The first time the Export menu opens, a word about what crews get.
+  useEffect(() => {
+    if (menu === 'file') showTip('export', { selector: '.topbar__share' });
+  }, [menu]);
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -161,7 +166,15 @@ export function TopBar() {
                 Keyboard shortcuts <kbd>?</kbd>
               </button>
               <button role="menuitem" onClick={() => { close(); window.dispatchEvent(new Event(TOUR_EVENT)); }}>
-                Quick tour
+                Take a tour
+              </button>
+              {hasModeTour(s.mode) && (
+                <button role="menuitem" onClick={() => { close(); window.dispatchEvent(new Event(MODE_TOUR_EVENT)); }}>
+                  Tour of this mode
+                </button>
+              )}
+              <button role="menuitem" onClick={() => { close(); resetTips(); flash('Tips will show again'); }} title="Show the one-time tips again">
+                Reset tips
               </button>
             </span>
           )}

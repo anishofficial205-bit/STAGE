@@ -32,6 +32,7 @@ function PresetPlan({ w, d }: { w: number; d: number }) {
   );
 }
 import { Plain } from '../glossary/Plain';
+import { usePlacing } from '../objects/placing';
 
 /**
  * Generated entirely from the active template's params schema — templates never
@@ -122,12 +123,22 @@ function TemplateProperties() {
 
 /** Set mode with nothing selected: starter sets and the stage's own surfaces. */
 function SetProperties() {
+  const empty = useActiveObjects().length === 0;
   return (
     <>
       <div className="panel-head">
         <h2 className="panel-title">Set</h2>
       </div>
-      <p className="sidebar__empty">Click a piece to edit it, or add pieces from the library on the left.</p>
+      {empty ? (
+        <div className="empty-state">
+          <p>Add your first piece of scenery, then click on the stage to place it.</p>
+          <button className="btn btn--primary btn--big" onClick={() => usePlacing.getState().start('flat')}>
+            + Add a wall panel
+          </button>
+        </div>
+      ) : (
+        <p className="sidebar__empty">Click a piece to edit it, or add pieces from the library on the left.</p>
+      )}
       <SurfacesSection />
     </>
   );

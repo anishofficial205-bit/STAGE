@@ -408,7 +408,16 @@ function Overview() {
       <div className="panel-head">
         <h2 className="panel-title">Lights</h2>
       </div>
-      <p className="sidebar__empty">{lighting.fixtures.length ? 'Pick a mood, or click a light to change its colour and brightness.' : 'Pick a mood to light your stage.'}</p>
+      {lighting.fixtures.length ? (
+        <p className="sidebar__empty">Pick a mood, or click a light to change its colour and brightness.</p>
+      ) : (
+        <div className="empty-state">
+          <p>Pick a mood to light your stage.</p>
+          <button className="btn btn--primary btn--big" onClick={() => (applyMood('warm'), setLastMood('Warm evening'))}>
+            Light the stage
+          </button>
+        </div>
+      )}
       <div className="mood-cards">
         {MOODS.map((m) => {
           const current = lighting.looks.some((k) => k.name === m.name) && lastMood === m.name;

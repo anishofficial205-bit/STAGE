@@ -16,6 +16,7 @@ import { LabelDeclutter } from './components/LabelDeclutter';
 import { StartScreen } from './components/StartScreen';
 import { ViewCube } from './components/ViewCube';
 import { CrossModeToast } from './components/CrossModeToast';
+import { Tips } from './components/Tips';
 import { useEffect } from 'react';
 import { startRecentSync } from './projects/library';
 import { LightPlot } from './components/lights/LightPlot';
@@ -60,6 +61,7 @@ export default function App() {
       {!venue && <ViewCube />}
       <LabelDeclutter />
       <CrossModeToast />
+      <Tips />
       <UndoToast />
       <Shortcuts />
       <PdfPagePicker />
