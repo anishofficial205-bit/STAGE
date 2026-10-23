@@ -1,14 +1,12 @@
 import { useEffect } from 'react';
 import { useProjectStore } from '../store/useProjectStore';
-import { MODES, type Mode, type OtherLayers } from '../modes';
+import { MODES, type Mode } from '../modes';
 import { useBlackBoxUI } from '../templates/blackBox/blocks';
 import { useObjectUI } from '../objects/ui';
 import { useShell } from './shell';
 import { recordWithPicture } from '../projects/library';
 import { useLightsUI } from '../lighting/ui';
 
-const LAYER_LABEL: Record<OtherLayers, string> = { show: 'Other layers: shown', dim: 'Other layers: dimmed', hide: 'Other layers: hidden' };
-const NEXT: Record<OtherLayers, OtherLayers> = { show: 'dim', dim: 'hide', hide: 'show' };
 
 const ICONS: Record<Mode, string> = {
   venue: 'M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6',
@@ -28,9 +26,7 @@ export function ModeIcon({ mode, size = 18 }: { mode: Mode; size?: number }) {
 /** The floating rail on the left: the four steps (keys 1–4), then Backstage & venue under Advanced (5), and the layer and panel toggles. */
 export function ModeBar() {
   const mode = useProjectStore((s) => s.mode);
-  const otherLayers = useProjectStore((s) => s.otherLayers);
   const setMode = useProjectStore((s) => s.setMode);
-  const setOtherLayers = useProjectStore((s) => s.setOtherLayers);
   const panels = useShell((s) => s.panels);
   const togglePanels = useShell((s) => s.togglePanels);
 
@@ -117,18 +113,6 @@ export function ModeBar() {
           </button>
         ))}
         <span className="rail__rule" />
-        <button
-          className={`rail__tool is-${otherLayers}`}
-          onClick={() => setOtherLayers(NEXT[otherLayers])}
-          title="Things from other modes stay in view but can’t be picked. Click to show, dim or hide them."
-          aria-label={LAYER_LABEL[otherLayers]}
-        >
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden>
-            <path d="m12 3 9 5-9 5-9-5 9-5Z" />
-            <path d="m3 13 9 5 9-5" opacity={otherLayers === 'hide' ? 0.25 : 1} />
-          </svg>
-          {otherLayers === 'show' ? 'Other modes' : otherLayers === 'dim' ? 'Others dim' : 'Others off'}
-        </button>
         <button className={`rail__tool ${panels ? '' : 'is-on'}`} onClick={togglePanels} title={panels ? 'Hide panels to see the full stage (F)' : 'Show the panels again (F)'} aria-pressed={!panels}>
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <rect x="3" y="4" width="18" height="16" rx="3" />

@@ -1,7 +1,11 @@
 import { getTemplate } from '../templates/registry';
 import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } from '../store/useProjectStore';
-import { Collapsible } from './Collapsible';
-import { LayersPanel } from './objects/LayersPanel';
+import { Outliner } from './layers/Outliner';
+import { DOMAIN_MODE, editIn, modeLabel, useForeign, type Pick } from './layers/selection';
+import { can, isHidden, isLocked, remove, toggleHidden, toggleLocked } from './layers/ops';
+import { getObjectType } from '../objects/registry';
+import { FIXTURES } from '../lighting/types';
+import { useRef, useState } from 'react';
 import { ObjectProperties } from './objects/ObjectProperties';
 import { SurfacesSection } from './objects/FacesSection';
 import { SightlineWarnings } from './sightlines/SightlineWarnings';
@@ -31,7 +35,7 @@ function PresetPlan({ w, d }: { w: number; d: number }) {
     </svg>
   );
 }
-import { lookup } from '../glossary/terms';
+import { lookup, plainText } from '../glossary/terms';
 import { usePlacing } from '../objects/placing';
 import { useShell } from './shell';
 import { ExampleProjects, MyTemplates } from './StagePicker';
@@ -158,49 +162,170 @@ function SetProperties() {
   );
 }
 
-/**
- * Right-hand side, by mode. Set with the stage selected: the stage's settings. Set: the layers list,
- * then properties of the selection (or starter sets and stage surfaces when nothing is selected).
- */
-export function PropertiesPanel() {
+/** The selection's properties, by mode (each mode's own panels). */
+function ModeProperties() {
   const mode = useProjectStore((s) => s.mode);
   const hasSelection = useProjectStore((s) => s.selectedIds.length > 0);
   const stageSelected = useProjectStore((s) => s.stageSelected);
-  const count = useActiveObjects().length;
+  const foreign = useForeign((s) => s.sel);
+  if (foreign) return <ForeignProperties sel={foreign} />;
   if (mode === 'set' && stageSelected)
     return (
-      <aside className="sidebar sidebar--right" data-tour="panel">
-        <div className="props stage-props">
-          <TemplateProperties />
-        </div>
-      </aside>
+      <div className="props stage-props">
+        <TemplateProperties />
+      </div>
     );
-  if (mode === 'venue')
-    return (
-      <aside className="sidebar sidebar--right" data-tour="panel">
-        <VenueProperties />
-      </aside>
-    );
-  if (mode === 'lights')
-    return (
-      <aside className="sidebar sidebar--right" data-tour="panel">
-        <LightsProperties />
-      </aside>
-    );
-  if (mode === 'blocking')
-    return (
-      <aside className="sidebar sidebar--right" data-tour="panel">
-        <BlockingProperties />
-      </aside>
-    );
-  if (mode !== 'set') return <aside className="sidebar sidebar--right" data-tour="panel" />;
+  if (mode === 'venue') return <VenueProperties />;
+  if (mode === 'lights') return <LightsProperties />;
+  if (mode === 'blocking') return <BlockingProperties />;
   return (
-    <aside className="sidebar sidebar--right" data-tour="panel">
-      <Collapsible id="layers" title={`Layers${count ? ` (${count})` : ''}`}>
-        <LayersPanel />
-      </Collapsible>
+    <>
       <SightlineWarnings />
       <div className="props">{hasSelection ? <ObjectProperties /> : <SetProperties />}</div>
+    </>
+  );
+}
+
+const SPLIT_KEY = 'stage-builder:layers-split';
+const readSplit = () => {
+  try {
+    const v = Number(localStorage.getItem(SPLIT_KEY));
+    return v >= 0.15 && v <= 0.85 ? v : 0.38;
+  } catch {
+    return 0.38;
+  }
+};
+
+/**
+ * The right-hand panel, in every mode: Layers on top, the selection's properties
+ * below, with a divider you can drag between them.
+ */
+export function PropertiesPanel() {
+  const [split, setSplit] = useState(readSplit);
+  const ref = useRef<HTMLElement>(null);
+  const onDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    const box = ref.current!.getBoundingClientRect();
+    const move = (ev: PointerEvent) => setSplit(Math.min(0.85, Math.max(0.15, (ev.clientY - box.top) / box.height)));
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      setSplit((v) => {
+        try {
+          localStorage.setItem(SPLIT_KEY, String(v));
+        } catch {
+          /* not remembered */
+        }
+        return v;
+      });
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <aside className="sidebar sidebar--right sidebar--split" data-tour="panel" ref={ref}>
+      <div className="split__top" style={{ flexBasis: `${split * 100}%` }}>
+        <Outliner />
+      </div>
+      <div
+        className="split__divider"
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label="Drag to resize Layers and Properties"
+        tabIndex={0}
+        onPointerDown={onDown}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowUp') setSplit((v) => Math.max(0.15, v - 0.05));
+          if (e.key === 'ArrowDown') setSplit((v) => Math.min(0.85, v + 0.05));
+        }}
+      />
+      <div className="split__bottom">
+        <ModeProperties />
+      </div>
     </aside>
   );
+}
+
+/** Something from another mode, picked in Layers: a short view with "Edit in [mode]". */
+function ForeignProperties({ sel }: { sel: Pick }) {
+  const s = useProjectStore();
+  const target = DOMAIN_MODE[sel.domain];
+  const items = sel.ids.map((id) => ({ domain: sel.domain, kind: sel.kind, id }));
+  const first = items[0];
+  const name = describe(s, sel);
+  const caps = can(first);
+  return (
+    <div className="props foreign-props">
+      <div className="panel-head">
+        <h2 className="panel-title">{name.title}</h2>
+      </div>
+      <p className="hint">
+        {name.type} · from {modeLabel(target)}
+      </p>
+      <div className="foreign-props__actions">
+        <button className="btn btn--primary" onClick={() => editIn(sel)}>
+          Edit in {modeLabel(target)}
+        </button>
+        {sel.domain === 'stage' ? (
+          <button className="btn" onClick={() => useShell.getState().setNewProject(true, true)}>
+            Change stage type…
+          </button>
+        ) : (
+          <>
+            {items.length === 1 && caps.hide && (
+              <button className="btn" onClick={() => toggleHidden(first)}>
+                {isHidden(first) ? 'Show' : 'Hide'}
+              </button>
+            )}
+            {items.length === 1 && caps.lock && (
+              <button className="btn" onClick={() => toggleLocked(first)}>
+                {isLocked(first) ? 'Unlock' : 'Lock'}
+              </button>
+            )}
+            <button
+              className="btn btn--danger"
+              onClick={() => {
+                remove(items);
+                useForeign.getState().set(null);
+              }}
+            >
+              Delete
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Name and type of a picked item, in plain words. */
+function describe(s: ReturnType<typeof useProjectStore.getState>, sel: Pick): { title: string; type: string } {
+  const n = sel.ids.length;
+  if (sel.domain === 'stage') return { title: `Stage — ${getTemplate(s.templateId)?.name ?? ''}`, type: 'Stage' };
+  if (sel.domain === 'set') {
+    const list = s.objectsByTemplate[s.templateId] ?? [];
+    const o = list.find((x) => x.id === sel.ids[0]);
+    return n > 1 ? { title: `${n} set pieces`, type: 'Set pieces' } : { title: o?.name ?? 'Set piece', type: plainText(getObjectType(o?.type ?? '')?.name ?? 'Set piece') };
+  }
+  if (sel.domain === 'lights') {
+    const l = s.lightingByTemplate[s.templateId];
+    if (sel.kind === 'position') return { title: plainText(l?.positions.find((p) => p.id === sel.ids[0])?.name ?? 'Light bar'), type: 'Hanging position' };
+    const f = l?.fixtures.find((x) => x.id === sel.ids[0]);
+    return n > 1 ? { title: `${n} lights`, type: 'Lights' } : { title: f?.name ?? 'Light', type: f ? FIXTURES[f.type].label : 'Light' };
+  }
+  if (sel.domain === 'performers') {
+    const p = s.blockingByTemplate[s.templateId]?.performers.find((x) => x.id === sel.ids[0]);
+    return n > 1 ? { title: `${n} performers`, type: 'Performers' } : { title: p?.name ?? 'Performer', type: 'Performer' };
+  }
+  const v = s.venue;
+  const kind = sel.kind;
+  const id = sel.ids[0];
+  if (kind === 'room') {
+    const r = v.rooms.find((x) => x.id === id);
+    return { title: r?.name ?? 'Room', type: 'Room' };
+  }
+  if (kind === 'route') return { title: v.routes.find((x) => x.id === id)?.name ?? 'Route', type: 'Route' };
+  if (kind === 'door') return { title: v.doors.find((x) => x.id === id)?.entrance ?? 'Door', type: 'Door' };
+  if (kind === 'furniture') return { title: 'Furniture', type: 'Furniture' };
+  return { title: kind, type: kind };
 }

@@ -55,6 +55,10 @@ export interface Fixture {
   /** Gobo pattern id (profiles). */
   gobo?: string;
   castShadow: boolean;
+  /** Hidden from the layers list: not drawn and gives no light. */
+  hidden?: boolean;
+  /** Can't be dragged in the view. */
+  locked?: boolean;
   /** What it's for, on the hookup list (e.g. "DSL special"). */
   purpose?: string;
 }

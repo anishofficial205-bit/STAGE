@@ -17,7 +17,7 @@ import { MOODS, SIMPLE_LIGHTS, applyMood, useLightPlacing } from '../../lighting
 
 export const LIGHT_DRAG_TYPE = 'application/x-stage-light';
 
-const ICONS: Record<FixtureType, string> = { profile: '◢', fresnel: '◉', par: '⬤', follow: '➹', cyc: '▬', moving: '◍', uplight: '▲', practical: '♨', house: '☼' };
+export const ICONS: Record<FixtureType, string> = { profile: '◢', fresnel: '◉', par: '⬤', follow: '➹', cyc: '▬', moving: '◍', uplight: '▲', practical: '♨', house: '☼' };
 
 /** One fixture tile. Click: choose it, then click on stage where you want light (lights that stand on the floor are placed straight away). Drag: place it by hand. */
 function LightTile({ t, name }: { t: FixtureType; name?: string }) {
@@ -69,8 +69,6 @@ function Library() {
 }
 
 function Positions() {
-  const positions = useActiveLighting().positions;
-  const selected = useLightsUI((s) => (s.selected?.kind === 'position' ? s.selected.ids : []));
   return (
     <>
       <div className="btn-row">
@@ -84,15 +82,6 @@ function Positions() {
           + <Plain text="Boom" />
         </button>
       </div>
-      <ul className="venue-list">
-        {positions.map((p) => (
-          <li key={p.id}>
-            <button className={`btn btn--ghost ${selected.includes(p.id) ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().select({ kind: 'position', ids: [p.id] })}>
-              <Plain text={p.name} />
-            </button>
-          </li>
-        ))}
-      </ul>
       <p className="hint">Lights snap to the light bars, the frame over the audience, side poles, lighting frames from the set and the stage’s own rigging — or the floor.</p>
     </>
   );

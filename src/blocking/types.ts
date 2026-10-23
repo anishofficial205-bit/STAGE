@@ -16,6 +16,8 @@ export interface Performer {
   height: number;
   posture: Posture;
   hidden?: boolean;
+  /** Can't be dragged in the view. */
+  locked?: boolean;
 }
 
 export interface CastGroup {

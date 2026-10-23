@@ -167,7 +167,7 @@ function FixtureView({ f, real, shadow, approx, selected, active, haze, presenta
   const drag = useDrag({
     onDown: (e) => {
       useLightsUI.getState().select({ kind: 'fixture', ids: [f.id] }, e.shiftKey);
-      if (e.shiftKey) return false;
+      if (e.shiftKey || f.locked) return false;
       dragState.current = { key: `fx-move:${f.id}:${Date.now()}`, lines: lines() };
       return true;
     },
@@ -348,7 +348,9 @@ export function useEffectiveLighting() {
 }
 
 export function LightsLayer() {
-  const lighting = useEffectiveLighting();
+  const all = useEffectiveLighting();
+  // Lights hidden in the layers list are not drawn and give no light.
+  const lighting = useMemo(() => (all.fixtures.some((f) => f.hidden) ? { ...all, fixtures: all.fixtures.filter((f) => !f.hidden) } : all), [all]);
   const active = useProjectStore((s) => s.mode === 'lights');
   const quality = useProjectStore((s) => s.lightQuality);
   const exporting = useExportState((s) => s.exporting);

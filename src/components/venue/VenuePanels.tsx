@@ -385,7 +385,6 @@ export function VenueProperties() {
     }
   }
   const total = walls.reduce((t, w) => t + wallLength(w), 0);
-  const entrances = doors.filter((d) => d.entrance);
   return (
     <div className="props">
       <div className="panel-head">
@@ -411,62 +410,7 @@ export function VenueProperties() {
           <span className="switch__knob" />
         </button>
       </label>
-      {rooms.length > 0 && (
-        <section className="group">
-          <h3 className="group__title">Rooms</h3>
-          <ul className="venue-list">
-            {rooms.map((r) => (
-              <li key={r.id}>
-                <button className="btn btn--ghost" onClick={() => useVenueUI.getState().select({ kind: 'room', id: r.id })}>
-                  <span className="venue-list__swatch" style={{ background: ROOM_TYPES[r.type]?.color }} />
-                  {r.name}
-                  <span className="hint">{formatArea(polygonArea(roomOutline(walls, r).polygon), units)}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      <section className="group">
-        <h3 className="group__title">Routes</h3>
-        {venue.routes.length ? (
-          <ul className="venue-list">
-            {venue.routes.map((r) => {
-              const res = solveRoute(venue, r);
-              return (
-                <li key={r.id} className="route-row">
-                  <button className="route-row__eye" onClick={() => venueActions.patchRoute(r.id, { visible: !r.visible })} title={r.visible ? 'Hide on the plan' : 'Show on the plan'} aria-label={r.visible ? `Hide ${r.name}` : `Show ${r.name}`}>
-                    {r.visible ? '👁' : '–'}
-                  </button>
-                  <button className="btn btn--ghost" onClick={() => useVenueUI.getState().select({ kind: 'route', id: r.id })}>
-                    {res.audience.length > 0 && <span title="Passes through an audience area">⚠</span>}
-                    {r.name}
-                    <span className="hint">{res.path ? formatTime(res.length / WALK) : 'no way'}</span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="hint">Use the Route tool to time a walk, e.g. green room to SL entrance.</p>
-        )}
-      </section>
-      <section className="group">
-        <h3 className="group__title">Stage entrances</h3>
-        {entrances.length ? (
-          <ul className="venue-list">
-            {entrances.map((d) => (
-              <li key={d.id}>
-                <button className="btn btn--ghost" onClick={() => useVenueUI.getState().select({ kind: 'door', id: d.id })}>
-                  ★ {d.entrance}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="hint">Select a door and turn on “Leads onto the stage” to name it (e.g. SL entrance).</p>
-        )}
-      </section>
+      <p className="hint">Rooms, doors, furniture and routes are listed in Layers. Use the Route tool to time a walk, e.g. green room to SL entrance; mark a door “Leads onto the stage” to name it as an entrance.</p>
     </div>
   );
 }

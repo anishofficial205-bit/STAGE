@@ -116,6 +116,9 @@ function PerformerView({ p, pose, y, selected, active, flagged, sole, warned }: 
       }
       const sel = ui.selected?.kind === 'performer' && ui.selected.ids.includes(p.id) ? ui.selected.ids : [p.id];
       ui.select({ kind: 'performer', ids: sel });
+      const st = useProjectStore.getState();
+      const locked = new Set((st.blockingByTemplate[st.templateId]?.performers ?? []).filter((x) => x.locked).map((x) => x.id));
+      if (sel.some((id) => locked.has(id))) return false;
       if (!e.ray.intersectPlane(plane, hit)) return false;
       // Dragging sets where they start the scene (shown at the start).
       ui.setTime(0);

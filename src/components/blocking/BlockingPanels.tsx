@@ -49,28 +49,15 @@ function Scenes() {
   );
 }
 
+/** Adding performers (they're listed, renamed, hidden and deleted in Layers). */
 function Cast() {
-  const b = useActiveBlocking();
-  const selected = useBlockingUI((s) => (s.selected?.kind === 'performer' ? s.selected.ids : []));
+  const count = useActiveBlocking().performers.length;
   return (
-    <Collapsible id="bk-cast" title={`Cast (${b.performers.length})`} tour="cast">
-      <ul className="cast-list">
-        {b.performers.map((p) => (
-          <li key={p.id} className={selected.includes(p.id) ? 'is-selected' : ''}>
-            <input type="color" className="cast-list__color" value={p.color} onChange={(e) => blockingActions.patchPerformers([p.id], { color: e.target.value })} aria-label={`${p.name} colour`} />
-            <input className="cast-list__name" value={p.name} onChange={(e) => blockingActions.patchPerformers([p.id], { name: e.target.value })} onFocus={() => useBlockingUI.getState().select({ kind: 'performer', ids: [p.id] })} aria-label="Performer name" />
-            <button onClick={() => blockingActions.patchPerformers([p.id], { hidden: !p.hidden })} title={p.hidden ? 'Show' : 'Hide'} aria-label={p.hidden ? `Show ${p.name}` : `Hide ${p.name}`}>
-              {p.hidden ? '–' : '👁'}
-            </button>
-            <button onClick={() => blockingActions.removePerformers([p.id])} title="Delete" aria-label={`Delete ${p.name}`}>
-              ×
-            </button>
-          </li>
-        ))}
-      </ul>
+    <Collapsible id="bk-cast" title={`Cast (${count})`} tour="cast">
       <button className="btn btn--small" onClick={blockingActions.addPerformer}>
         + Add performer
       </button>
+      <p className="hint">Performers are listed in Layers on the right; click one to change its colour, height and posture.</p>
     </Collapsible>
   );
 }
@@ -95,18 +82,6 @@ function Groups() {
           Group {selected.length || ''}
         </button>
       </div>
-      {b.groups.map((g) => (
-        <div key={g.id} className="group-card">
-          <div className="group-card__head">
-            <button className="btn btn--ghost" onClick={() => useBlockingUI.getState().select({ kind: 'performer', ids: g.ids })}>
-              {g.name} <span className="hint">· {g.ids.length}</span>
-            </button>
-            <button className="look-row__x" onClick={() => blockingActions.removeGroup(g.id)} title="Delete group (the performers stay)">
-              ×
-            </button>
-          </div>
-        </div>
-      ))}
       {selected.length > 1 && (
         <>
           <p className="hint">Formation for the {selected.length} selected:</p>

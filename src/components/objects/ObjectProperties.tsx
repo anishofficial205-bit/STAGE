@@ -5,7 +5,7 @@ import { placementOf } from '../../objects/types';
 import { effectiveElevation } from '../../objects/geometry';
 import { setElevation, setParams, setProps, setRotation } from '../../objects/actions';
 import type { NumberParam, ParamDef, ParamValue } from '../../types';
-import { useOffStageIds } from './LayersPanel';
+import { useOffStageIds } from '../../objects/offStage';
 import { ArrayTool, MultiProperties } from './ArrangeTools';
 import { FacesSection } from './FacesSection';
 import { Plain } from '../../glossary/Plain';
