@@ -103,7 +103,7 @@ function useDrag(o: { onDown?: (e: ThreeEvent<PointerEvent>) => boolean; onMove:
   };
 }
 
-function PerformerView({ p, pose, y, selected, active, flagged }: { p: Performer; pose: Pose; y: number; selected: boolean; active: boolean; flagged: boolean }) {
+function PerformerView({ p, pose, y, selected, active, flagged, sole, warned }: { p: Performer; pose: Pose; y: number; selected: boolean; active: boolean; flagged: boolean; sole: boolean; warned: boolean }) {
   const exporting = useExportState((s) => s.exporting);
   const drag0 = useRef<{ at: THREE.Vector3; key: string; orig: Record<string, Pt> } | null>(null);
   const plane = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 1, 0), -y), [y]);
@@ -148,6 +148,9 @@ function PerformerView({ p, pose, y, selected, active, flagged }: { p: Performer
       }
     : hover;
   const showName = useShowLabel('performer', { selected, hoverKey: `perf:${p.id}` });
+  const tool = useBlockingUI((s) => s.tool);
+  const playing = useBlockingUI((s) => s.playing);
+  const tagY = p.height * (p.posture === 'lying' ? 0.25 : p.posture === 'sitting' ? 0.8 : 1) + 0.28;
   const hot = useHovered(`perf:${p.id}`);
   const off = !pose.onStage;
   const scale = p.height / 1.7;
@@ -165,6 +168,29 @@ function PerformerView({ p, pose, y, selected, active, flagged }: { p: Performer
         <meshBasicMaterial color={flagged ? WARN : selected ? ACCENT : p.color} transparent opacity={off ? 0.5 : 0.95} />
       </mesh>
       {selected && active && !exporting && <FacingArrow p={p} facing={pose.facing} />}
+      {!exporting && active && sole && !tool && !playing && (
+        <Html position={[0.55, tagY - 0.35, 0]} zIndexRange={[25, 0]}>
+          <span className="perf-bar">
+            <button
+              className="btn btn--small"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                useBlockingUI.getState().setTool('path');
+              }}
+            >
+              ✎ Draw path
+            </button>
+          </span>
+        </Html>
+      )}
+      {!exporting && warned && !flagged && (
+        <Html position={[-0.45, tagY + 0.05, 0]} center zIndexRange={[16, 0]} style={{ pointerEvents: 'none' }}>
+          <span className="warn-dot" title="This performer has a warning in this scene">
+            !
+          </span>
+        </Html>
+      )}
       {!exporting && (showName || flagged) && (
         <Html position={[0, p.height * (p.posture === 'lying' ? 0.25 : p.posture === 'sitting' ? 0.8 : 1) + 0.28, 0]} center zIndexRange={[14, 0]} style={{ pointerEvents: 'none' }}>
           <span className={`perf-tag ${off ? 'is-off' : ''} ${flagged ? 'is-flagged' : ''}`} style={{ ['--perf' as string]: p.color }} data-lp={labelPriority('performer', selected || flagged, hot)}>
@@ -501,6 +527,7 @@ export function BlockingLayer() {
   const highlight = useBlockingUI((s) => s.highlight);
   const warnings = useBlockingUI((s) => s.warnings);
   // Performers with a problem right now (during playback), or the one picked from the list.
+  const warnedIds = useMemo(() => new Set((warnings ?? []).flatMap((w) => w.performerIds)), [warnings]);
   const flaggedNow = useMemo(() => new Set(highlight ? highlight.performerIds : (warnings ?? []).filter((w) => time >= w.time - 0.01 && time <= w.until + 0.5).flatMap((w) => w.performerIds)), [highlight, warnings, time]);
   const floorAt = useFloorAt();
   const poses = useMemo(() => new Map([...tracks.entries()].map(([id, { start, tracks: ts }]) => [id, poseAt(start, ts, map, time)])), [tracks, map, time]);
@@ -539,7 +566,7 @@ export function BlockingLayer() {
         .filter((p) => !p.hidden)
         .map((p) => {
           const pose = poses.get(p.id)!;
-          return <PerformerView key={p.id} p={p} pose={pose} y={floorAt(pose.x, pose.z)} selected={selPerf.includes(p.id)} active={active} flagged={flaggedNow.has(p.id)} />;
+          return <PerformerView key={p.id} p={p} pose={pose} y={floorAt(pose.x, pose.z)} selected={selPerf.includes(p.id)} active={active} flagged={flaggedNow.has(p.id)} sole={selPerf.length === 1 && selPerf[0] === p.id} warned={warnedIds.has(p.id)} />;
         })}
       {highlight?.seats?.map((s, i) => (
         <mesh key={i} position={[s.x, s.y + 1.2, s.z]} userData={{ blockingHelper: true }}>

@@ -232,7 +232,7 @@ function PerformerProps({ ids }: { ids: string[] }) {
                 <option value="">On stage</option>
                 {entrances.map((en) => (
                   <option key={en.id} value={en.id}>
-                    Off stage, at <Plain text={en.name} />
+                    Off stage, at {plainText(en.name)}
                   </option>
                 ))}
               </select>
@@ -314,7 +314,7 @@ function PathProps({ path }: { path: Path }) {
           <option value="">On stage</option>
           {entrances.map((en) => (
             <option key={en.id} value={en.id}>
-              Exits at <Plain text={en.name} />
+              Exits at {plainText(en.name)}
             </option>
           ))}
         </select>
@@ -336,7 +336,16 @@ function SceneProps() {
       <div className="panel-head">
         <h2 className="panel-title">{scene.name}</h2>
       </div>
-      <p className="sidebar__empty">Add performers, then select one and draw their paths. Press Space to play the scene.</p>
+      {b.performers.length === 0 ? (
+        <div className="empty-state">
+          <p>Add the people on stage, then plan where they move.</p>
+          <button className="btn btn--primary btn--big" onClick={() => blockingActions.addPerformer()}>
+            + Add a performer
+          </button>
+        </div>
+      ) : (
+        <p className="sidebar__empty">Select a performer and draw their path. Press Space to play the scene.</p>
+      )}
       <ChecksSection
         more={
           <label className="field">

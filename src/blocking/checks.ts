@@ -64,7 +64,14 @@ export async function runChecks(scene3d: THREE.Scene, onProgress: (p: number) =>
   const floors = raised.length ? raised : info.floors;
   const onFloor = (x: number, z: number) => floors.some((f) => pointInPolygon([x, z], f.outline));
   const floorY = (x: number, z: number) => Math.max(0, ...floors.filter((f) => pointInPolygon([x, z], f.outline)).map((f) => f.height));
-  const seats = sampleSeats(t.seats?.(params, data) ?? [], 60);
+  const allSeats = t.seats?.(params, data) ?? [];
+  const seats = sampleSeats(allSeats, 60);
+  /** Sample seats scaled up to the whole house, rounded to something readable. */
+  const howMany = (n: number) => {
+    const est = (n / Math.max(1, seats.length)) * allSeats.length;
+    return est >= 20 ? Math.round(est / 10) * 10 : Math.max(1, Math.round(est));
+  };
+  const clock = (t: number) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
   const meshes = collectOccluders(scene3d).filter((m) => !isOurs(m));
   const scene = b.scenes.find((x) => x.id === b.sceneId) ?? b.scenes[0];
   const ents = new Map(computeEntrances(s, b).map((e) => [e.id, e]));
@@ -107,7 +114,7 @@ export async function runChecks(scene3d: THREE.Scene, onProgress: (p: number) =>
           const where = pose.entrance ? ents.get(pose.entrance)?.name : 'off stage';
           const key = `wings:${p.id}`;
           seen.add(key);
-          hit(key, { kind: 'wings', time, performerIds: [p.id], text: `${p.name} can be seen ${pose.onStage ? 'walking off' : `waiting at ${where ? plainText(where) : 'the side'}`} from ${see.length} of ${seats.length} sample seats`, seats: see }, time);
+          hit(key, { kind: 'wings', time, performerIds: [p.id], text: `${p.name} can be seen ${pose.onStage ? 'walking off' : `waiting in the wings${where && where !== 'off stage' ? ` (${plainText(where)})` : ''}`} by about ${howMany(see.length)} seats`, seats: see }, time);
         }
       } else if (seats.length) {
         // Hidden by the set?
@@ -144,7 +151,7 @@ export async function runChecks(scene3d: THREE.Scene, onProgress: (p: number) =>
         if (Math.hypot(pa.x - pc.x, pa.z - pc.z) < 0.5) {
           const key = `collision:${perf[a].id}:${perf[c].id}`;
           seen.add(key);
-          hit(key, { kind: 'collision', time, performerIds: [perf[a].id, perf[c].id], text: `${perf[a].name} and ${perf[c].name} come within 0.5 m` }, time);
+          hit(key, { kind: 'collision', time, performerIds: [perf[a].id, perf[c].id], text: `${perf[a].name} and ${perf[c].name} bump into each other at ${clock(time)}` }, time);
         }
       }
     close(seen);

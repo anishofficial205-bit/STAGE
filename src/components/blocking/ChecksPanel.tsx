@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type * as THREE from 'three';
 import { Field } from '../fields';
 import { useActiveBlocking, useProjectStore } from '../../store/useProjectStore';
@@ -53,12 +53,11 @@ export function ChecksSection({ more }: { more?: ReactNode }) {
   return (
     <>
       <section className="group">
-        <h3 className="group__title">Checks</h3>
-        <button className="btn" onClick={() => void runBlockingChecks()} disabled={checking !== null || !b.performers.length}>
-          {checking !== null ? `Checking… ${Math.round(checking * 100)}%` : 'Run checks'}
-        </button>
-        {stale && <p className="hint">The blocking has changed since the last check.</p>}
-        {warnings && !warnings.length && <p className="panel-msg panel-msg--info">No problems found in this scene.</p>}
+        <h3 className="group__title">
+          Checks {checking !== null && <span className="hint">· checking… {Math.round(checking * 100)}%</span>}
+        </h3>
+        {!b.performers.length && <p className="hint">Checks run by themselves once there are performers on stage.</p>}
+        {warnings && !warnings.length && !stale && <p className="panel-msg panel-msg--info">Looks good — nobody is hidden, seen in the wings or bumping into anyone.</p>}
         {warnings && warnings.length > 0 && (
           <ul className="warning-list">
             {warnings.map((w) => (
@@ -78,7 +77,7 @@ export function ChecksSection({ more }: { more?: ReactNode }) {
                     {w.until > w.time ? `–${fmt(w.until)}` : ''}
                   </span>
                   <span>
-                    {ICON[w.kind]} {w.text}
+                    <span className="warning__icon">{ICON[w.kind]}</span> {w.text}
                   </span>
                 </button>
               </li>
@@ -126,14 +125,22 @@ export function ChecksSection({ more }: { more?: ReactNode }) {
   );
 }
 
-/** While playing, run the checks once if there are no results yet. */
+/** Checks run by themselves: a moment after each change to the blocking, and when playback starts with stale results. */
 export function useAutoCheck() {
+  const b = useActiveBlocking();
   const playing = useBlockingUI((s) => s.playing);
-  const ran = useRef(false);
+  const busy = useBlockingUI((s) => s.checking !== null);
+  const key = checksKey(b);
+  const performers = b.performers.length;
+  // After each change (and again if something changed while a check was running).
   useEffect(() => {
-    if (playing && !useBlockingUI.getState().warnings && !ran.current) {
-      ran.current = true;
-      void runBlockingChecks();
-    }
-  }, [playing]);
+    if (!performers || busy || key === lastKey) return;
+    const timer = window.setTimeout(() => {
+      if (useBlockingUI.getState().checking === null) void runBlockingChecks();
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [key, performers, busy]);
+  useEffect(() => {
+    if (playing && performers && key !== lastKey && useBlockingUI.getState().checking === null) void runBlockingChecks();
+  }, [playing, performers, key]);
 }
