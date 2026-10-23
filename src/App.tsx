@@ -13,6 +13,9 @@ import { NextStep } from './components/NextStep';
 import { useShell, useTaskDrawers } from './components/shell';
 import { DrawerTabs } from './components/DrawerTabs';
 import { LabelDeclutter } from './components/LabelDeclutter';
+import { StartScreen } from './components/StartScreen';
+import { useEffect } from 'react';
+import { startRecentSync } from './projects/library';
 import { LightPlot } from './components/lights/LightPlot';
 import { PlanView } from './components/venue/PlanView';
 import { VenueViewBar } from './components/venue/VenuePanels';
@@ -29,6 +32,7 @@ export default function App() {
   const panels = useShell((s) => s.panels);
   const drawers = useShell((s) => s.drawers);
   useTaskDrawers();
+  useEffect(() => startRecentSync(), []);
   const show = venue ? layout : '3d';
   return (
     <div className={`app ${panels ? '' : 'is-clean'} ${drawers.left ? 'has-left' : ''} ${drawers.right ? 'has-right' : ''}`}>
@@ -58,6 +62,7 @@ export default function App() {
       <LightPlot />
       <Tour />
       <ThumbnailRenderer />
+      <StartScreen />
     </div>
   );
 }

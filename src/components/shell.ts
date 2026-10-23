@@ -4,6 +4,7 @@ import { useProjectStore } from '../store/useProjectStore';
 import { useLightsUI } from '../lighting/ui';
 import { useBlockingUI } from '../blocking/ui';
 import { useVenueUI } from '../venue/ui';
+import { hadSavedProject } from '../store/useProjectStore';
 
 const KEY = 'stage-builder:panels';
 /** Below this width the side panels become drawers over the stage. */
@@ -30,6 +31,9 @@ interface Shell {
   setDrawer: (d: Drawer, open: boolean) => void;
   /** Open the drawer for the current task and close the other. */
   focusDrawer: (d: Drawer) => void;
+  /** The start screen ("What are you making?") is showing. */
+  home: boolean;
+  setHome: (home: boolean) => void;
 }
 
 /** Focus layout: the side panels float over the full-screen stage and can be tucked away. */
@@ -53,6 +57,8 @@ export const useShell = create<Shell>((set) => ({
       return { drawers };
     }),
   focusDrawer: (d) => set({ drawers: { left: d === 'left', right: d === 'right' } }),
+  home: !hadSavedProject,
+  setHome: (home) => set({ home }),
 }));
 
 /**

@@ -78,7 +78,8 @@ function buildVenue() {
   useVenueUI.getState().select(null);
 }
 
-function buildLights() {
+/** A small rig (front wash, specials, cyc, PARs, house lights) and three looks, ending on `finalLook`. */
+export function buildLights(finalLook = 'Warm evening') {
   lightActions.ensureReady();
   const s = useProjectStore.getState();
   const l = s.lightingByTemplate[s.templateId]!;
@@ -94,8 +95,8 @@ function buildLights() {
   fx.filter((f) => f.type === 'fresnel').forEach((f, i) => lightActions.focus([f.id], [c[0] + (i - 1.5) * 2.5, f.target[1], c[1] + 1]));
   fx.filter((f) => f.type === 'profile').forEach((f, i) => lightActions.patch([f.id], { target: [c[0] + (i ? 2 : -2), f.target[1], c[1]], gobo: i ? undefined : 'leaves', purpose: i ? 'DSL special' : 'Garden breakup' }));
   void l;
-  // Three looks, ending on "Warm evening".
-  for (const name of ['Full stage wash', 'Cold night', 'Warm evening']) {
+  // Three looks, ending on the one asked for.
+  for (const name of [...['Full stage wash', 'Cold night', 'Warm evening'].filter((n) => n !== finalLook), finalLook]) {
     const p = PRESET_LOOKS.find((x) => x.name === name)!;
     fadeTo(p.make(useProjectStore.getState().lightingByTemplate[s.templateId]!.fixtures), 0);
     lookActions.save(name);

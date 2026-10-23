@@ -1072,3 +1072,42 @@ input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color:
 .rail__rule { height: 1px; width: 40px; margin: 4px auto; background: rgba(255, 255, 255, 0.08); }
 .menu__list > button:disabled { opacity: 0.4; cursor: default; }
 .menu__list > button:disabled:hover { background: none; }
+
+/* Start screen */
+.start { position: fixed; inset: 0; z-index: 70; overflow-y: auto; background: radial-gradient(60% 50% at 80% 0%, #3a1d10 0%, rgba(0, 0, 0, 0) 70%), radial-gradient(50% 50% at 0% 100%, #2a140c 0%, rgba(0, 0, 0, 0) 70%), var(--bg); }
+.start__inner { max-width: 1180px; margin: 0 auto; padding: 28px 32px 60px; }
+.start__head { display: flex; align-items: center; gap: 12px; margin-bottom: 48px; }
+.start__head .rail__logo { margin: 0; border: 0; cursor: default; }
+.start__brand { font-size: 17px; font-weight: 500; }
+.start__back { margin-left: auto; border-radius: 999px; padding: 9px 16px; }
+.start__title { font-size: 44px; font-weight: 400; letter-spacing: -0.02em; margin: 0 0 8px; }
+.start__lead { color: var(--muted); font-size: 16px; margin: 0 0 28px; }
+.start__cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 18px; }
+.start__card { display: flex; flex-direction: column; gap: 4px; text-align: left; padding: 10px 10px 16px; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: transform 0.15s, border-color 0.15s, background 0.15s; }
+.start__card:hover { transform: translateY(-2px); border-color: rgba(255, 179, 122, 0.4); background: rgba(255, 255, 255, 0.07); }
+.start__card.is-scratch .start__pic img { opacity: 0.7; }
+.start__pic { display: block; aspect-ratio: 16 / 10; border-radius: 14px; overflow: hidden; background: #241a15; margin-bottom: 10px; }
+.start__pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.start__card-title { font-size: 19px; font-weight: 500; padding: 0 6px; }
+.start__card-blurb { font-size: 13.5px; color: var(--muted); padding: 0 6px; line-height: 1.4; }
+.start__row { display: flex; align-items: center; gap: 12px; margin: 48px 0 14px; }
+.start__h2 { font-size: 20px; font-weight: 500; margin: 0 auto 0 0; }
+.start__empty { color: var(--muted); }
+.start__recent { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
+.start__project { position: relative; }
+.start__project-open { width: 100%; display: flex; flex-direction: column; gap: 2px; text-align: left; border: 1px solid var(--border); background: var(--surface); border-radius: 16px; padding: 8px 8px 12px; cursor: pointer; }
+.start__project-open:hover { border-color: rgba(255, 255, 255, 0.25); }
+.start__pic--small { margin-bottom: 6px; border-radius: 10px; }
+.start__nopic { display: block; width: 100%; height: 100%; background: linear-gradient(135deg, #2a1f19, #3a2b23); }
+.start__project-name { font-weight: 500; padding: 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.start__project-meta { font-size: 12px; color: var(--muted); padding: 0 4px; }
+.start__project-x { position: absolute; top: 12px; right: 12px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.6); color: #fff; cursor: pointer; opacity: 0; }
+.start__project:hover .start__project-x { opacity: 1; }
+.start__units { max-width: 640px; margin: 80px auto 0; text-align: center; }
+.start__unit-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 32px; }
+.start__unit { display: flex; flex-direction: column; gap: 6px; padding: 34px 20px; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; }
+.start__unit b { font-size: 26px; font-weight: 500; }
+.start__unit span { color: var(--muted); font-size: 15px; }
+.start__unit:hover, .start__unit:focus-visible { border-color: rgba(255, 179, 122, 0.5); background: rgba(255, 255, 255, 0.07); outline: none; }
+button.rail__logo { border: 0; padding: 0; cursor: pointer; }
+button.rail__logo:hover { filter: brightness(1.12); }

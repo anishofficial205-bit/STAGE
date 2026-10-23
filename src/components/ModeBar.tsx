@@ -4,6 +4,7 @@ import { MODES, type Mode, type OtherLayers } from '../modes';
 import { useBlackBoxUI } from '../templates/blackBox/blocks';
 import { useObjectUI } from '../objects/ui';
 import { useShell } from './shell';
+import { recordWithPicture } from '../projects/library';
 import { useLightsUI } from '../lighting/ui';
 
 const LAYER_LABEL: Record<OtherLayers, string> = { show: 'Other layers: shown', dim: 'Other layers: dimmed', hide: 'Other layers: hidden' };
@@ -70,9 +71,17 @@ export function ModeBar() {
 
   return (
     <nav className="rail" aria-label="Mode">
-      <span className="rail__logo" aria-hidden>
+      <button
+        className="rail__logo"
+        onClick={() => {
+          void recordWithPicture();
+          useShell.getState().setHome(true);
+        }}
+        title="Home: start something new or open a recent project"
+        aria-label="Home"
+      >
         <span />
-      </span>
+      </button>
       <div className="rail__modes" role="tablist" aria-label="Mode" data-tour="modes">
         {MODES.filter((m) => !m.advanced).map((m) => (
           <button

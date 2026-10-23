@@ -29,6 +29,8 @@ export const MERGE_WITH_PREVIOUS = '@merge';
 export interface ProjectFile {
   app: 'stage-builder';
   version: number;
+  /** Identifies the project in this browser's recent-projects list. */
+  projectId: string;
   projectName: string;
   units: Units;
   showLabels: boolean;
@@ -144,11 +146,42 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   loadFile: (data: unknown) => void;
 }
 
-function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
+export const newProjectId = () => `p${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+
+const UNITS_KEY = 'stage-builder:units-default';
+/** The units chosen on first launch ("Do you measure in feet or metres?"), or null if not asked yet. */
+export function savedDefaultUnits(): Units | null {
+  try {
+    const v = localStorage.getItem(UNITS_KEY);
+    return v === 'ft' || v === 'm' ? v : null;
+  } catch {
+    return null;
+  }
+}
+export function setDefaultUnits(u: Units) {
+  try {
+    localStorage.setItem(UNITS_KEY, u);
+  } catch {
+    /* not remembered */
+  }
+}
+const defaultUnits = (): Units => savedDefaultUnits() ?? 'm';
+
+/** Was a project saved in this browser before this page load? (First launch shows the start screen.) */
+export const hadSavedProject = (() => {
+  try {
+    return !!localStorage.getItem('stage-builder:project');
+  } catch {
+    return false;
+  }
+})();
+
+export function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
   const paramsByTemplate = Object.fromEntries(templates.map((t) => [t.id, defaultParams(t)]));
   return {
+    projectId: newProjectId(),
     projectName: 'Untitled stage',
-    units: 'm',
+    units: defaultUnits(),
     showLabels: true,
     templateId: templates[0].id,
     paramsByTemplate,
@@ -233,6 +266,7 @@ function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
     templates.map((t) => [t.id, applyConstraints(t, { ...base.paramsByTemplate[t.id], ...saved[t.id] })]),
   );
   return {
+    projectId: typeof d.projectId === 'string' && d.projectId ? d.projectId : base.projectId,
     projectName: typeof d.projectName === 'string' ? d.projectName : base.projectName,
     units: d.units === 'ft' ? 'ft' : 'm',
     showLabels: typeof d.showLabels === 'boolean' ? d.showLabels : true,
@@ -644,8 +678,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     setViewportAspect: (viewportAspect) => set({ viewportAspect }),
 
     toFile: () => {
-      const { projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, lightingByTemplate, blockingByTemplate, lightQuality, mode, otherLayers } = get();
-      return { app: 'stage-builder', version: FILE_VERSION, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, lightingByTemplate, blockingByTemplate, lightQuality, mode, otherLayers };
+      const { projectId, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, lightingByTemplate, blockingByTemplate, lightQuality, mode, otherLayers } = get();
+      return { app: 'stage-builder', version: FILE_VERSION, projectId, projectName, units, showLabels, templateId, paramsByTemplate, dataByTemplate, objectsByTemplate, surfaceStylesByTemplate, graphics, savedViewsByTemplate, venue, lightingByTemplate, blockingByTemplate, lightQuality, mode, otherLayers };
     },
 
     save: () => {

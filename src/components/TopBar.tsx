@@ -16,6 +16,8 @@ import { blockingPdf } from '../blocking/sheets';
 import { download } from '../graphics/specSheet';
 import { exportName } from '../export/exports';
 import { ProgressTracker } from './ProgressTracker';
+import { useShell } from './shell';
+import { recordWithPicture } from '../projects/library';
 import { useActiveBlocking, useActiveLighting } from '../store/useProjectStore';
 
 export function TopBar() {
@@ -190,6 +192,9 @@ export function TopBar() {
           </button>
           {menu === 'file' && (
             <span className="menu__list" role="menu">
+              <button role="menuitem" onClick={() => { close(); void recordWithPicture(); useShell.getState().setHome(true); }}>
+                New project…
+              </button>
               <button role="menuitem" onClick={() => { close(); setRender(true); }} title="Export images, all views, a presentation sheet or a turntable video">
                 Render images and video…
               </button>
