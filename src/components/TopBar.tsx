@@ -7,10 +7,16 @@ import { PrintCheckDialog } from './graphics/PrintCheck';
 import { ExportDialog } from './export/ExportDialog';
 import { SaveStatus } from './Autosave';
 import { SHORTCUTS_EVENT } from './ShortcutsSheet';
-import { MODES } from '../modes';
 import { useDismiss } from './useDismiss';
 import { useObjectUI } from '../objects/ui';
 import { useLabelPrefs } from '../helpers/labels';
+import { OPEN_EXPORT_EVENT } from './NextStep';
+import { useLightsUI } from '../lighting/ui';
+import { blockingPdf } from '../blocking/sheets';
+import { download } from '../graphics/specSheet';
+import { exportName } from '../export/exports';
+import { ProgressTracker } from './ProgressTracker';
+import { useActiveBlocking, useActiveLighting } from '../store/useProjectStore';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -20,12 +26,18 @@ export function TopBar() {
   const [printCheck, setPrintCheck] = useState(false);
   const [render, setRender] = useState(false);
   const [menu, setMenu] = useState<'view' | 'help' | 'file' | null>(null);
-  const mode = MODES.find((m) => m.id === s.mode);
   const allDims = useLabelPrefs((l) => l.allDimensions);
   const toggleAllDims = useLabelPrefs((l) => l.toggleAllDimensions);
   const menus = useRef<HTMLDivElement>(null);
   const close = useCallback(() => setMenu(null), []);
   useDismiss(menu !== null, close, menus);
+  const lightCount = useActiveLighting().fixtures.length;
+  const performerCount = useActiveBlocking().performers.length;
+  useEffect(() => {
+    const open = () => setMenu('file');
+    window.addEventListener(OPEN_EXPORT_EVENT, open);
+    return () => window.removeEventListener(OPEN_EXPORT_EVENT, open);
+  }, []);
   const toggle = (m: 'view' | 'help' | 'file') => {
     useObjectUI.getState().setMenu(null);
     setMenu(menu === m ? null : m);
@@ -63,6 +75,11 @@ export function TopBar() {
     flash('Exported');
   };
 
+  const exportSheets = async () => {
+    flash('Preparing blocking sheets…');
+    download(await blockingPdf(), exportName('blocking.pdf'));
+  };
+
   /** Import a .zip export (with images) or an older .json export. */
   const importFile = async (file: File) => {
     try {
@@ -85,7 +102,7 @@ export function TopBar() {
           spellCheck={false}
         />
         <span className="topbar__mode">
-          {mode?.label}
+          <ProgressTracker />
           <SaveStatus />
         </span>
       </div>
@@ -178,6 +195,12 @@ export function TopBar() {
               </button>
               <button role="menuitem" onClick={() => { close(); setPrintCheck(true); }} title="Check graphics resolution and export the spec sheet">
                 Print check…
+              </button>
+              <button role="menuitem" disabled={!lightCount} onClick={() => { close(); useLightsUI.getState().setPlotOpen(true); }} title={lightCount ? 'The light plot with a hookup list, for the crew' : 'Add some lights first'}>
+                Lighting plan…
+              </button>
+              <button role="menuitem" disabled={!performerCount} onClick={() => { close(); void exportSheets(); }} title={performerCount ? 'One page per scene, for the stage manager and cast' : 'Add performers in Blocking first'}>
+                Blocking sheets (PDF)
               </button>
               <button role="menuitem" onClick={() => { close(); void exportZipFile(); }} title="Download the project and its images as a .zip">
                 Download project (.zip)

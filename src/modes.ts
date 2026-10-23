@@ -11,16 +11,22 @@ export interface ModeDef {
   label: string;
   /** Not built yet: shown greyed out with a "coming soon" tooltip. */
   soon?: boolean;
+  /** Kept apart from the main steps, at the bottom of the rail under "Advanced". */
+  advanced?: boolean;
   description: string;
 }
 
+/** In working order; keys 1–5 follow this order (Venue, the optional extra, is 5). */
 export const MODES: ModeDef[] = [
-  { id: 'venue', label: 'Venue', description: 'Plan the building around the stage: walls, rooms and doors' },
   { id: 'stage', label: 'Stage', description: 'Pick a stage type and set its dimensions' },
   { id: 'set', label: 'Set', description: 'Build the set: objects, graphics and materials' },
   { id: 'lights', label: 'Lights', description: 'Place, aim and colour stage lights' },
   { id: 'blocking', label: 'Blocking', description: 'Plan where performers stand, enter and move' },
+  { id: 'venue', label: 'Venue', advanced: true, description: 'Backstage & venue: plan the building around the stage — walls, rooms and doors' },
 ];
+
+/** The main path through a project. */
+export const STEPS = MODES.filter((m) => !m.advanced);
 
 export const isMode = (v: unknown): v is Mode => MODES.some((m) => m.id === v);
 export const modeEnabled = (m: Mode) => !MODES.find((d) => d.id === m)?.soon;

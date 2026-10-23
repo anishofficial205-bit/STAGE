@@ -25,7 +25,7 @@ export function ModeIcon({ mode, size = 18 }: { mode: Mode; size?: number }) {
   );
 }
 
-/** The floating rail on the left: one button per mode (keys 1–5), plus layer and panel toggles. */
+/** The floating rail on the left: the four steps (keys 1–4), then Backstage & venue under Advanced (5), and the layer and panel toggles. */
 export function ModeBar() {
   const mode = useProjectStore((s) => s.mode);
   const otherLayers = useProjectStore((s) => s.otherLayers);
@@ -74,7 +74,7 @@ export function ModeBar() {
         <span />
       </span>
       <div className="rail__modes" role="tablist" aria-label="Mode" data-tour="modes">
-        {MODES.map((m, i) => (
+        {MODES.filter((m) => !m.advanced).map((m) => (
           <button
             key={m.id}
             role="tab"
@@ -82,7 +82,7 @@ export function ModeBar() {
             aria-disabled={m.soon || undefined}
             className={`rail__mode ${mode === m.id ? 'is-active' : ''} ${m.soon ? 'is-soon' : ''}`}
             onClick={() => !m.soon && setMode(m.id)}
-            title={m.soon ? `${m.label} — coming soon` : `${m.description} (${i + 1})`}
+            title={m.soon ? `${m.label} — coming soon` : `${m.description} (${MODES.indexOf(m) + 1})`}
           >
             <span className="rail__icon">
               <ModeIcon mode={m.id} />
@@ -92,6 +92,23 @@ export function ModeBar() {
         ))}
       </div>
       <div className="rail__foot">
+        <span className="rail__caption">Advanced</span>
+        {MODES.filter((m) => m.advanced).map((m) => (
+          <button
+            key={m.id}
+            role="tab"
+            aria-selected={mode === m.id}
+            className={`rail__mode rail__mode--advanced ${mode === m.id ? 'is-active' : ''}`}
+            onClick={() => setMode(m.id)}
+            title={`${m.description} (${MODES.indexOf(m) + 1})`}
+          >
+            <span className="rail__icon">
+              <ModeIcon mode={m.id} />
+            </span>
+            Backstage &amp; venue
+          </button>
+        ))}
+        <span className="rail__rule" />
         <button
           className={`rail__tool is-${otherLayers}`}
           onClick={() => setOtherLayers(NEXT[otherLayers])}

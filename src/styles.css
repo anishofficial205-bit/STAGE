@@ -1052,3 +1052,23 @@ input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color:
 .channel-tag.is-off { opacity: 0.6; }
 .layer__warn { background: var(--warn); color: #2a1a05; }
 .draw-label.is-accent { background: var(--label-bg); border-color: rgba(255, 255, 255, 0.5); color: #fff; }
+
+/* Progress tracker (top bar) */
+.tracker { display: flex; align-items: center; gap: 2px; }
+.tracker__item { display: inline-flex; align-items: center; gap: 2px; }
+.tracker__dot { color: rgba(255, 255, 255, 0.25); font-size: 14px; }
+.tracker__step { display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: var(--muted); font-size: 14px; font-weight: 400; padding: 3px 7px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
+.tracker__step:hover { background: var(--hover); color: var(--text); }
+.tracker__step.is-done { color: #d9c8bc; }
+.tracker__step.is-done svg { color: var(--good); }
+.tracker__step.is-current { color: #fff; font-weight: 500; font-size: 17px; background: var(--selected-bg); }
+.topbar__title { width: auto; }
+.topbar__mode { font-size: 14px; gap: 6px; }
+
+/* Rail: the Advanced group */
+.rail__caption { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #6f6058; text-align: center; }
+.rail__mode--advanced { font-size: 10px; line-height: 1.15; text-align: center; }
+.rail__mode--advanced .rail__icon { width: 36px; height: 36px; }
+.rail__rule { height: 1px; width: 40px; margin: 4px auto; background: rgba(255, 255, 255, 0.08); }
+.menu__list > button:disabled { opacity: 0.4; cursor: default; }
+.menu__list > button:disabled:hover { background: none; }
