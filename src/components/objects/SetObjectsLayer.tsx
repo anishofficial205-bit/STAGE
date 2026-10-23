@@ -37,7 +37,7 @@ export function faceAt(e: { object: THREE.Object3D; face?: THREE.Face | null }):
   return typeof f === 'string' && f !== '*' ? f : null;
 }
 
-const SELECT = '#2f6fde';
+const SELECT = '#f27a35';
 const WARN = '#f08c00';
 const GUIDE = '#ff3d8b';
 const BLOCK = '#e5484d';

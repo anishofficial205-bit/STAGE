@@ -20,7 +20,7 @@ function HoverMarker({ seat }: { seat: SeatInfo }) {
     <group position={[seat.x, seat.y, seat.z]} userData={{ noOcclude: true }}>
       <mesh position-y={0.45} rotation-y={seat.facing} renderOrder={990}>
         <boxGeometry args={[0.6, 0.95, 0.7]} />
-        <meshBasicMaterial color="#2f6fde" transparent opacity={0.35} depthTest={false} />
+        <meshBasicMaterial color="#f27a35" transparent opacity={0.35} depthTest={false} />
       </mesh>
       <Html position={[0, 1.25, 0]} center zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
         <div className="seat-tag">{seat.label}</div>

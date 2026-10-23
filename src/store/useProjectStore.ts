@@ -15,6 +15,7 @@ import { emptyVenue, sanitizeVenue, type Venue } from '../venue/types';
 import { emptyLighting, sanitizeLighting, type Lighting } from '../lighting/types';
 import { emptyBlocking, sanitizeBlocking, type Blocking } from '../blocking/types';
 import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
+import { nextName as nextUnusedName } from '../helpers/names';
 
 const STORAGE_KEY = 'stage-builder:project';
 const FILE_VERSION = 2;
@@ -280,8 +281,7 @@ export { newObjectId };
 
 /** Name like "Flat 3": one more than the highest number already used for that type. */
 function nextName(base: string, objects: SetObject[]) {
-  const used = objects.map((o) => o.name.match(new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} (\\d+)$`))?.[1]).filter(Boolean).map(Number);
-  return `${base} ${used.length ? Math.max(...used) + 1 : 1}`;
+  return nextUnusedName(base, objects.map((o) => o.name));
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => {

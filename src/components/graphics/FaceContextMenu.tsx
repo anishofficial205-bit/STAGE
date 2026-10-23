@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useProjectStore } from '../../store/useProjectStore';
 import { ACCEPT, importOnto, removeFaceGraphic } from '../../graphics/library';
 import { SURFACE, useObjectUI } from '../../objects/ui';
+import { announceMenuOpened } from '../useDismiss';
 
 /** Right-click menu on a face: add/replace or remove its graphic. */
 export function FaceContextMenu() {
@@ -16,6 +17,7 @@ export function FaceContextMenu() {
   });
   useEffect(() => {
     if (!menu) return;
+    announceMenuOpened('face-menu');
     const close = () => useObjectUI.getState().setMenu(null);
     window.addEventListener('pointerdown', close);
     window.addEventListener('keydown', close);

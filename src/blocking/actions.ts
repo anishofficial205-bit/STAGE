@@ -8,6 +8,7 @@ import { computeEntrances, type Entrance } from './entrances';
 import { endStates, sceneTracks, poseAt } from './motion';
 import { PERFORMER_COLORS, blockId, emptyBlocking, type Blocking, type Path, type Performer, type Pt, type Scene, type StartState } from './types';
 import { useBlockingUI } from './ui';
+import { nextName } from '../helpers/names';
 
 export const blocking = () => {
   const s = useProjectStore.getState();
@@ -42,7 +43,7 @@ export const blockingActions = {
     const b = blocking();
     const n = b.performers.length;
     const c = actingCentre();
-    const p: Performer = { id: blockId('a'), name: `Performer ${n + 1}`, color: PERFORMER_COLORS[n % PERFORMER_COLORS.length], height: 1.7, posture: 'standing' };
+    const p: Performer = { id: blockId('a'), name: nextName('Performer', b.performers.map((x) => x.name)), color: PERFORMER_COLORS[n % PERFORMER_COLORS.length], height: 1.7, posture: 'standing' };
     const st: StartState = { x: snap(c[0] + ((n % 5) - 2) * 1.2), z: snap(c[1] + Math.floor(n / 5) * 1.2), facing: 0, onStage: true };
     update((x) => ({ ...x, performers: [...x.performers, p], scenes: x.scenes.map((s) => ({ ...s, start: { ...s.start, [p.id]: st } })) }));
     useBlockingUI.getState().select({ kind: 'performer', ids: [p.id] });
@@ -98,13 +99,13 @@ export const blockingActions = {
     patchScene((s) => ({ ...s, start: { ...s.start, ...Object.fromEntries(on.map((id, i) => [id, { ...(s.start[id] ?? { facing: 0 }), x: snap(spots[i][0]), z: snap(spots[i][1]), facing: 0, onStage: true }])) } }));
   },
 
-  createGroup: (name: string, ids: string[]) => update((b) => ({ ...b, groups: [...b.groups, { id: blockId('g'), name: name.trim() || `Group ${b.groups.length + 1}`, ids }] })),
+  createGroup: (name: string, ids: string[]) => update((b) => ({ ...b, groups: [...b.groups, { id: blockId('g'), name: name.trim() || nextName('Group', b.groups.map((g) => g.name)), ids }] })),
   removeGroup: (id: string) => update((b) => ({ ...b, groups: b.groups.filter((g) => g.id !== id) })),
 
   addEntrance: (at: Pt) => {
     const c = actingCentre();
     const facing = (Math.atan2(c[0] - at[0], c[1] - at[1]) * 180) / Math.PI;
-    const e = { id: blockId('e'), name: `Entrance ${blocking().entrances.length + 1}`, x: at[0], z: at[1], facing };
+    const e = { id: blockId('e'), name: nextName('Entrance', blocking().entrances.map((x) => x.name)), x: at[0], z: at[1], facing };
     update((b) => ({ ...b, entrances: [...b.entrances, e] }));
     useBlockingUI.getState().select({ kind: 'entrance', id: e.id });
   },
@@ -138,7 +139,7 @@ export const blockingActions = {
   addScene: () => {
     const b = blocking();
     const cur = currentScene(b);
-    const scene: Scene = { id: blockId('s'), name: `Scene ${b.scenes.length + 1}`, notes: '', start: endStates(cur, b, entranceMap(b)), paths: [] };
+    const scene: Scene = { id: blockId('s'), name: nextName('Scene', b.scenes.map((x) => x.name)), notes: '', start: endStates(cur, b, entranceMap(b)), paths: [] };
     update((x) => {
       const i = x.scenes.findIndex((s) => s.id === cur.id);
       return { ...x, scenes: [...x.scenes.slice(0, i + 1), scene, ...x.scenes.slice(i + 1)], sceneId: scene.id };

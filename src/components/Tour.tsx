@@ -19,7 +19,7 @@ interface Step {
 }
 
 const FIRST_RUN: Step[] = [
-  { target: 'modes', side: 'bottom', title: 'Work in modes', text: 'Venue, Stage, Set, Lights and Blocking — press 1–5 to switch. Things from other modes stay in view but can’t be picked.' },
+  { target: 'modes', side: 'right', title: 'Work in modes', text: 'Venue, Stage, Set, Lights and Blocking — press 1–5 to switch. Things from other modes stay in view but can’t be picked.' },
   { target: 'picker', side: 'right', title: 'Pick a stage', text: 'Choose the kind of stage closest to your venue. You can switch at any time.' },
   { target: 'panel', side: 'left', title: 'Adjust the dimensions', text: 'Type your venue’s real measurements or drag the sliders — the model updates live. Size presets give you a quick starting point.' },
   { target: 'views', side: 'bottom', title: 'Check the views', text: 'Jump to seats around the venue to see what the audience sees. Drag in the 3D view to look around, scroll to zoom.' },

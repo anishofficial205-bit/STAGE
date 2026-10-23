@@ -8,6 +8,7 @@ import { useProjectStore } from '../store/useProjectStore';
 import { stageCentre } from './hang';
 import { emptyLighting, GELS, lightId, type Fixture, type FixtureState, type Haze, type Lighting, type Look, type Vec3 } from './types';
 import { useLightsUI } from './ui';
+import { nextName } from '../helpers/names';
 
 const lighting = () => {
   const s = useProjectStore.getState();
@@ -118,7 +119,7 @@ export function fadeTo(to: { states: Record<string, Partial<FixtureState>>; haze
 
 export const lookActions = {
   save: (name: string) => {
-    const look: Look = { id: lightId('k'), name: name.trim() || `Look ${lighting().looks.length + 1}`, ...capture(lighting()) };
+    const look: Look = { id: lightId('k'), name: name.trim() || nextName('Look', lighting().looks.map((x) => x.name)), ...capture(lighting()) };
     update((l) => ({ ...l, looks: [...l.looks, look] }));
     return look;
   },
@@ -144,7 +145,7 @@ export const lookActions = {
 };
 
 export const groupActions = {
-  create: (name: string, ids: string[]) => update((l) => ({ ...l, groups: [...l.groups, { id: lightId('g'), name: name.trim() || `Group ${l.groups.length + 1}`, ids }] })),
+  create: (name: string, ids: string[]) => update((l) => ({ ...l, groups: [...l.groups, { id: lightId('g'), name: name.trim() || nextName('Group', l.groups.map((g) => g.name)), ids }] })),
   rename: (id: string, name: string) => update((l) => ({ ...l, groups: l.groups.map((g) => (g.id === id ? { ...g, name } : g)) }), `group-name:${id}`),
   setMembers: (id: string, ids: string[]) => update((l) => ({ ...l, groups: l.groups.map((g) => (g.id === id ? { ...g, ids } : g)) })),
   remove: (id: string) => update((l) => ({ ...l, groups: l.groups.filter((g) => g.id !== id) })),

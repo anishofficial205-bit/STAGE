@@ -8,6 +8,7 @@ import { enclosedArea } from './rooms';
 import { DOOR_PRESETS, ROOM_TYPES, WALL_DEFAULTS, venueId, type Door, type Furniture, type Pt, type Room, type Route, type RouteEnd, type Venue, type Wall } from './types';
 import { endName } from './routes';
 import { useVenueUI } from './ui';
+import { nextName } from '../helpers/names';
 
 /** Plan grid: 0.1 m, or 3 in when working in feet. */
 export const planGrid = () => (useProjectStore.getState().units === 'ft' ? 0.25 * M_PER_FT : 0.1);
@@ -27,8 +28,7 @@ const wallLook = () => {
 /** "Dressing room", then "Dressing room 2", ... */
 function roomName(type: string, rooms: Room[]) {
   const base = ROOM_TYPES[type]?.label ?? 'Room';
-  const n = rooms.filter((r) => r.type === type).length;
-  return n ? `${base} ${n + 1}` : base;
+  return nextName(base, rooms.map((r) => r.name), { bareFirst: true });
 }
 
 export const venueActions = {

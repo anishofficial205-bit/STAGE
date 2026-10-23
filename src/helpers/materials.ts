@@ -8,7 +8,7 @@ export const COLORS = {
   frame: '#9a9ea5', // darker trim, e.g. a proscenium arch
   seat: '#7e8894',
   riser: '#cfd2d6',
-  dimension: '#2f6fde',
+  dimension: '#f27a35',
   dark: '#4a4f57', // pits, tunnels, masking fabric
   truss: '#5d636b',
   overlay: '#e5484d', // warnings drawn in the scene

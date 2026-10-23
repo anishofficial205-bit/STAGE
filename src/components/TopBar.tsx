@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../store/useProjectStore';
 import { useViews } from './useViews';
 import { TOUR_EVENT } from './Tour';
@@ -7,6 +7,9 @@ import { PrintCheckDialog } from './graphics/PrintCheck';
 import { ExportDialog } from './export/ExportDialog';
 import { SaveStatus } from './Autosave';
 import { SHORTCUTS_EVENT } from './ShortcutsSheet';
+import { MODES } from '../modes';
+import { useDismiss } from './useDismiss';
+import { useObjectUI } from '../objects/ui';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -15,7 +18,15 @@ export function TopBar() {
   const [toast, setToast] = useState<string | null>(null);
   const [printCheck, setPrintCheck] = useState(false);
   const [render, setRender] = useState(false);
-  const [help, setHelp] = useState(false);
+  const [menu, setMenu] = useState<'view' | 'help' | 'file' | null>(null);
+  const mode = MODES.find((m) => m.id === s.mode);
+  const menus = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setMenu(null), []);
+  useDismiss(menu !== null, close, menus);
+  const toggle = (m: 'view' | 'help' | 'file') => {
+    useObjectUI.getState().setMenu(null);
+    setMenu(menu === m ? null : m);
+  };
 
   const flash = (msg: string) => {
     setToast(msg);
@@ -62,8 +73,7 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <div className="topbar__left">
-        <span className="brand">Stage Builder</span>
+      <div className="topbar__title">
         <input
           className="project-name"
           value={s.projectName}
@@ -71,19 +81,17 @@ export function TopBar() {
           aria-label="Project name"
           spellCheck={false}
         />
-        <button className="btn btn--icon" onClick={s.undo} disabled={!s.past.length} title="Undo (⌘Z)" aria-label="Undo">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
-        </button>
-        <button className="btn btn--icon" onClick={s.redo} disabled={!s.future.length} title="Redo (⇧⌘Z)" aria-label="Redo">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" /></svg>
-        </button>
+        <span className="topbar__mode">
+          {mode?.label}
+          <SaveStatus />
+        </span>
       </div>
 
-      <nav className="topbar__views" aria-label="Camera views" data-tour="views">
+      <nav className="topbar__views glass" aria-label="Camera views" data-tour="views">
         {views.map((v) =>
           v.id.startsWith('saved-') ? (
             <span key={v.id} className="saved-view">
-              <button className="btn btn--ghost" onClick={() => s.requestView(v)}>
+              <button className="pill" onClick={() => s.requestView(v)}>
                 {v.label}
               </button>
               <button className="saved-view__x" onClick={() => s.deleteView(v.id)} title="Remove this saved view" aria-label={`Remove ${v.label}`}>
@@ -91,57 +99,91 @@ export function TopBar() {
               </button>
             </span>
           ) : (
-            <button key={v.id} className={`btn btn--ghost ${v.id === 'reset' ? 'btn--muted' : ''}`} onClick={() => s.requestView(v)}>
+            <button key={v.id} className={`pill ${v.id === 'reset' ? 'pill--muted' : ''}`} onClick={() => s.requestView(v)}>
               {v.label}
             </button>
           ),
         )}
       </nav>
 
-      <div className="topbar__right">
-        <div className="segmented" role="group" aria-label="Units">
-          <button className={s.units === 'm' ? 'is-active' : ''} onClick={() => s.setUnits('m')}>
-            m
+      <div className="topbar__right" ref={menus}>
+        <span className="glass topbar__group">
+          <button className="round" onClick={s.undo} disabled={!s.past.length} title="Undo (⌘Z)" aria-label="Undo">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
           </button>
-          <button className={s.units === 'ft' ? 'is-active' : ''} onClick={() => s.setUnits('ft')}>
-            ft
+          <button className="round" onClick={s.redo} disabled={!s.future.length} title="Redo (⇧⌘Z)" aria-label="Redo">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" /></svg>
           </button>
-        </div>
-        <button className={`btn ${s.showLabels ? 'is-active' : ''}`} onClick={s.toggleLabels} title="Show or hide dimension labels">
-          Labels
-        </button>
-        <button className={`btn ${s.snapping ? 'is-active' : ''}`} onClick={s.toggleSnapping} title="Snap objects to the grid, stage edges and each other (hold ⌘/Ctrl while dragging to place freely)">
-          Snap
-        </button>
-        <span className="help-menu">
-          <button className="btn btn--icon" onClick={() => setHelp(!help)} title="Help" aria-label="Help" aria-expanded={help}>
+        </span>
+        <span className="menu">
+          <button className="round glass" onClick={() => toggle('view')} title="Units, labels and snapping" aria-label="View settings" aria-expanded={menu === 'view'}>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
+          </button>
+          {menu === 'view' && (
+            <span className="menu__list menu__list--settings" role="menu">
+              <span className="menu__row">
+                Units
+                <span className="segmented" role="group" aria-label="Units">
+                  <button className={s.units === 'm' ? 'is-active' : ''} onClick={() => s.setUnits('m')}>
+                    m
+                  </button>
+                  <button className={s.units === 'ft' ? 'is-active' : ''} onClick={() => s.setUnits('ft')}>
+                    ft
+                  </button>
+                </span>
+              </span>
+              <span className="menu__row" title="Show or hide dimension labels">
+                Dimension labels
+                <button className={`switch ${s.showLabels ? 'is-on' : ''}`} role="switch" aria-checked={s.showLabels} onClick={s.toggleLabels} aria-label="Dimension labels">
+                  <span className="switch__knob" />
+                </button>
+              </span>
+              <span className="menu__row" title="Snap objects to the grid, stage edges and each other (hold ⌘/Ctrl while dragging to place freely)">
+                Snapping
+                <button className={`switch ${s.snapping ? 'is-on' : ''}`} role="switch" aria-checked={s.snapping} onClick={s.toggleSnapping} aria-label="Snapping">
+                  <span className="switch__knob" />
+                </button>
+              </span>
+            </span>
+          )}
+        </span>
+        <span className="menu">
+          <button className="round glass" onClick={() => toggle('help')} title="Help" aria-label="Help" aria-expanded={menu === 'help'}>
             ?
           </button>
-          {help && (
-            <span className="help-menu__list" role="menu" onMouseLeave={() => setHelp(false)}>
-              <button role="menuitem" onClick={() => { setHelp(false); window.dispatchEvent(new Event(SHORTCUTS_EVENT)); }}>
+          {menu === 'help' && (
+            <span className="menu__list" role="menu">
+              <button role="menuitem" onClick={() => { close(); window.dispatchEvent(new Event(SHORTCUTS_EVENT)); }}>
                 Keyboard shortcuts <kbd>?</kbd>
               </button>
-              <button role="menuitem" onClick={() => { setHelp(false); window.dispatchEvent(new Event(TOUR_EVENT)); }}>
+              <button role="menuitem" onClick={() => { close(); window.dispatchEvent(new Event(TOUR_EVENT)); }}>
                 Quick tour
               </button>
             </span>
           )}
         </span>
-        <span className="divider" />
-        <SaveStatus />
-        <button className="btn" onClick={() => setRender(true)} title="Export images, all views, a presentation sheet or a turntable video">
-          Render
-        </button>
-        <button className="btn" onClick={() => setPrintCheck(true)} title="Check graphics resolution and export the spec sheet">
-          Print check
-        </button>
-        <button className="btn" onClick={() => void exportZipFile()} title="Download the project and its images as a .zip">
-          Export
-        </button>
-        <button className="btn" onClick={() => fileInput.current?.click()}>
-          Import
-        </button>
+        <span className="menu">
+          <button className="btn btn--primary topbar__share" onClick={() => toggle('file')} aria-expanded={menu === 'file'}>
+            Export
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
+          </button>
+          {menu === 'file' && (
+            <span className="menu__list" role="menu">
+              <button role="menuitem" onClick={() => { close(); setRender(true); }} title="Export images, all views, a presentation sheet or a turntable video">
+                Render images and video…
+              </button>
+              <button role="menuitem" onClick={() => { close(); setPrintCheck(true); }} title="Check graphics resolution and export the spec sheet">
+                Print check…
+              </button>
+              <button role="menuitem" onClick={() => { close(); void exportZipFile(); }} title="Download the project and its images as a .zip">
+                Download project (.zip)
+              </button>
+              <button role="menuitem" onClick={() => { close(); fileInput.current?.click(); }}>
+                Open a project file…
+              </button>
+            </span>
+          )}
+        </span>
         <input
           ref={fileInput}
           type="file"

@@ -13,6 +13,7 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
       ['⌘S / Ctrl+S', 'Save now (your work also saves automatically)'],
       ['1 – 5', 'Switch mode: Venue, Stage, Set, Lights, Blocking'],
       ['⌘Z / ⇧⌘Z', 'Undo / redo works in every mode'],
+      ['F', 'Focus mode: hide the panels to see the full stage (Shift+F in Venue)'],
       ['?', 'Show this sheet'],
       ['Esc', 'Deselect, or leave a seat'],
     ],

@@ -16,7 +16,7 @@ import { roomOutline } from '../../venue/rooms';
 import { getFurniture } from '../../venue/furniture';
 
 const CUTAWAY = 1;
-const ACCENT = '#2f6fde';
+const ACCENT = '#f27a35';
 /** Door leaves are drawn open by this much so the opening reads. */
 const AJAR = (70 * Math.PI) / 180;
 

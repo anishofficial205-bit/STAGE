@@ -9,6 +9,7 @@ import { findFreeSpot, footprint, newId, roomOf, ROW_DEPTH, SEAT_WIDTH, useBlack
 import { gridSize } from '../blackBox/actions';
 import { edgeMiddle, outwardNormal, shapeId, signedArea, type CustomData, type DrawnShape } from './shapes';
 import { useCustomUI } from './ui';
+import { nextName } from '../../helpers/names';
 
 /** Drawing grid: 0.25 m, or 6 in when working in feet. */
 export const drawGrid = () => (useProjectStore.getState().units === 'ft' ? 0.5 * M_PER_FT : 0.25);
@@ -52,8 +53,7 @@ export const customActions = {
     const { draft } = useCustomUI.getState();
     if (draft.length < 3 || Math.abs(signedArea(draft)) < 0.05) return false;
     const id = shapeId();
-    const n = data().shapes.length + 1;
-    const shape: DrawnShape = { id, name: `Stage ${n}`, points: draft.map(([x, z]) => ({ x, z })), bulges: draft.map(() => 0), height: 0.6, edge: 'straight', material: 'black', radius: 0 };
+        const shape: DrawnShape = { id, name: nextName('Stage', data().shapes.map((x) => x.name)), points: draft.map(([x, z]) => ({ x, z })), bulges: draft.map(() => 0), height: 0.6, edge: 'straight', material: 'black', radius: 0 };
     update((d) => ({ ...d, shapes: [...d.shapes, shape] }));
     useCustomUI.getState().setTool(null);
     useCustomUI.getState().selectShape(id);

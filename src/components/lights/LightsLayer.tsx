@@ -20,7 +20,7 @@ import { FixtureModel, PracticalModel } from './models';
 import { beamCone, hazeMaterial, poolTexture } from './haze';
 import { lightBudget } from './budget';
 
-const ACCENT = '#2f6fde';
+const ACCENT = '#f27a35';
 /** Light output at 100% (decay 0, so brightness doesn't depend on throw distance). */
 const K_SPOT = 4;
 const K_POINT = 2.5;

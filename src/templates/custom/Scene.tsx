@@ -17,7 +17,7 @@ import { MATERIAL_COLORS, edgeLength, edgeMiddle, offsetOutline, outline, type C
 import { customActions, snapPoint } from './actions';
 import { useCustomUI } from './ui';
 
-const ACCENT = '#2f6fde';
+const ACCENT = '#f27a35';
 const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const hit = new THREE.Vector3();
 

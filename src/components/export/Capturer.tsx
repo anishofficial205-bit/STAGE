@@ -27,7 +27,7 @@ function drawLabels(ctx: CanvasRenderingContext2D, camera: THREE.Camera, w: numb
     const a = toScreen(l.a);
     const b = toScreen(l.b);
     if (a.behind || b.behind) continue;
-    ctx.strokeStyle = '#2f6fde';
+    ctx.strokeStyle = '#f27a35';
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
@@ -44,7 +44,7 @@ function drawLabels(ctx: CanvasRenderingContext2D, camera: THREE.Camera, w: numb
     ctx.roundRect(mx - tw / 2 - 6 * scale, my - 11 * scale, tw + 12 * scale, 22 * scale, 4 * scale);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = '#1f4fa8';
+    ctx.fillStyle = '#c2551c';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, mx, my + 0.5);

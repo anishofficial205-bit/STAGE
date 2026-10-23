@@ -7,6 +7,7 @@ import { getTemplate } from '../templates/registry';
 import { defaultPositions, HANG_DROP, positionLine, stageCentre } from './hang';
 import { FIXTURES, emptyLighting, lightId, type Fixture, type FixtureType, type HangPosition, type Lighting, type Vec3 } from './types';
 import { useLightsUI } from './ui';
+import { nextName } from '../helpers/names';
 
 const lighting = () => {
   const s = useProjectStore.getState();
@@ -71,7 +72,7 @@ export const lightActions = {
     const f: Fixture = {
       id: lightId('l'),
       type,
-      name: `${spec.label.split(' /')[0]} ${l.fixtures.filter((x) => x.type === type).length + 1}`,
+      name: nextName(spec.label.split(' /')[0], l.fixtures.map((x) => x.name)),
       channel: nextChannel(l),
       pos,
       mount: at?.mount ?? spot.mount,
