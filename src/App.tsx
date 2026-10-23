@@ -14,6 +14,7 @@ import { useShell, useTaskDrawers } from './components/shell';
 import { DrawerTabs } from './components/DrawerTabs';
 import { LabelDeclutter } from './components/LabelDeclutter';
 import { StartScreen } from './components/StartScreen';
+import { NewProjectDialog } from './components/NewProjectDialog';
 import { ViewCube } from './components/ViewCube';
 import { CrossModeToast } from './components/CrossModeToast';
 import { Tips } from './components/Tips';
@@ -70,6 +71,7 @@ export default function App() {
       <Tour />
       <ThumbnailRenderer />
       <StartScreen />
+      <NewProjectDialog />
     </div>
   );
 }
