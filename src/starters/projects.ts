@@ -147,7 +147,7 @@ export function loadExampleProject(templateId: string) {
   if (!ex || !t) return;
   const store = useProjectStore.getState();
   store.batch(`Opened the “${ex.title}” example`, () => {
-    store.loadFile({ app: 'stage-builder', version: 2, projectName: ex.title, units: store.units, showLabels: true, templateId, mode: 'stage' });
+    store.loadFile({ app: 'stage-builder', version: 2, projectName: ex.title, units: store.units, showLabels: true, templateId, mode: 'set' });
     if (templateId === 'custom') buildCustomStage();
     const set = STARTER_SETS[templateId]?.[0];
     if (set) useProjectStore.getState().loadStarterSet(set);

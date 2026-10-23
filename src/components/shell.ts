@@ -35,7 +35,9 @@ interface Shell {
   setHome: (home: boolean) => void;
   /** The New project dialog is open. */
   newProject: boolean;
-  setNewProject: (open: boolean) => void;
+  /** The new-project dialog reused to change the open project's stage. */
+  changingStage: boolean;
+  setNewProject: (open: boolean, changingStage?: boolean) => void;
 }
 
 /** Focus layout: the side panels float over the full-screen stage and can be tucked away. */
@@ -63,7 +65,8 @@ export const useShell = create<Shell>((set) => ({
   home: true,
   setHome: (home) => set({ home }),
   newProject: false,
-  setNewProject: (newProject) => set({ newProject }),
+  changingStage: false,
+  setNewProject: (newProject, changingStage = false) => set({ newProject, changingStage }),
 }));
 
 /**

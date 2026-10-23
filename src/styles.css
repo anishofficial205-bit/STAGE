@@ -1261,3 +1261,7 @@ button.rail__logo:hover { filter: brightness(1.12); }
 .np__actions { margin-top: auto; padding-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
 @media (max-width: 1000px) { .np { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; width: 96vw; height: 94vh; } .np__cats { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: 10px; } .np__title { display: none; } .np__details { border-left: 0; border-top: 1px solid var(--border); max-height: 45vh; } }
 .np__actions { position: sticky; bottom: -20px; margin: auto -20px -20px; padding: 14px 20px 20px; background: linear-gradient(0deg, var(--panel) 75%, rgba(36, 26, 21, 0)); }
+
+/* Stage as an object (Prompt 49) */
+.stage-props__actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 2px 0 12px; }
+.layer--stage { cursor: pointer; font-weight: 600; border-bottom: 1px solid var(--border); margin-bottom: 4px; }

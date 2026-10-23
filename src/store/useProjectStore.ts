@@ -88,6 +88,11 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
 
   // Selection and editing preferences (not part of undo history)
   selectedIds: string[];
+  /** The stage itself is selected (Set mode): its settings show in properties. Not saved. */
+  stageSelected: boolean;
+  selectStage: (on: boolean) => void;
+  /** Change the stage type and size, keeping set pieces, lights, performers and the venue (one undo step). */
+  changeStage: (templateId: string, params: Params) => void;
   snapping: boolean;
   select: (ids: string[], additive?: boolean) => void;
   toggleSnapping: () => void;
@@ -194,7 +199,7 @@ export function freshProject(): Omit<ProjectFile, 'app' | 'version'> {
     lightingByTemplate: {},
     blockingByTemplate: {},
     lightQuality: 'draft',
-    mode: 'stage',
+    mode: 'set',
     otherLayers: 'show',
   };
 }
@@ -360,6 +365,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     future: [],
     lastAction: null,
     selectedIds: [],
+    stageSelected: false,
     snapping: true,
 
     undo: () => {
@@ -391,7 +397,31 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         for (const id of ids) next = next.includes(id) ? next.filter((x) => x !== id) : [...next, id];
       }
       next = next.filter((id) => existing.has(id));
+      if (next.length && get().stageSelected) set({ stageSelected: false });
       if (next.length !== current.length || next.some((id, i) => id !== current[i])) set({ selectedIds: next });
+    },
+    selectStage: (on) => {
+      if (on && get().mode !== 'set') return;
+      set(on ? { stageSelected: true, selectedIds: [] } : { stageSelected: false });
+    },
+    changeStage: (id, params) => {
+      const s = get();
+      const to = getTemplate(id)!;
+      const from = s.templateId;
+      commit();
+      const p = applyConstraints(to, { ...defaultParams(to), ...params });
+      const move = <T,>(m: Record<string, T>) => (id === from ? m : { ...m, [id]: m[from] }) as Record<string, T>;
+      set({
+        templateId: id,
+        paramsByTemplate: { ...s.paramsByTemplate, [id]: p },
+        dataByTemplate: to.data && id !== from ? { ...s.dataByTemplate, [id]: s.dataByTemplate[id] !== undefined ? to.data.sanitize(s.dataByTemplate[id], p) : to.data.initial(p) } : s.dataByTemplate,
+        objectsByTemplate: move(s.objectsByTemplate),
+        lightingByTemplate: move(s.lightingByTemplate),
+        blockingByTemplate: move(s.blockingByTemplate),
+        selectedIds: [],
+        ...announce(`Changed the stage to ${to.name}`),
+        dirty: true,
+      });
     },
     toggleSnapping: () => set((s) => ({ snapping: !s.snapping })),
 
@@ -400,7 +430,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     toggleLabels: () => set((s) => ({ showLabels: !s.showLabels, dirty: true })),
     setMode: (mode) => {
       if (!modeEnabled(mode) || mode === get().mode) return;
-      set({ mode, dirty: true, ...(mode === 'set' ? {} : { selectedIds: [] }) });
+      set({ mode, dirty: true, ...(mode === 'set' ? {} : { selectedIds: [], stageSelected: false }) });
     },
     setOtherLayers: (otherLayers) => set({ otherLayers, dirty: true }),
     setVenue: (update, key) => {

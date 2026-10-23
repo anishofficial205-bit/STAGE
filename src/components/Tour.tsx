@@ -23,9 +23,8 @@ interface Step {
 }
 
 const FIRST_RUN: Step[] = [
-  { target: 'modes', side: 'right', title: 'Work in modes', text: 'Stage, Set, Lights and Blocking — press 1–4 to switch (5 opens the venue, under Advanced). Things from other modes stay in view but can’t be picked.' },
-  { target: 'picker', side: 'right', title: 'Pick a stage', text: 'Choose the kind of stage closest to your venue. You can switch at any time.' },
-  { target: 'panel', side: 'left', title: 'Adjust the dimensions', text: 'Type your venue’s real measurements or drag the sliders — the model updates live. Size presets give you a quick starting point.' },
+  { target: 'modes', side: 'right', title: 'Work in modes', text: 'Set, Lights and Blocking — press 1–3 to switch (4 opens the venue, under Advanced). Things from other modes stay in view but can’t be picked.' },
+  { target: 'panel', side: 'left', title: 'The stage is an object too', text: 'Click the stage floor (or “Stage” in the layers) to change its size or type. Size presets give you a quick starting point.' },
   { target: 'views', side: 'bottom', title: 'Check the views', text: 'Jump to seats around the venue to see what the audience sees. Drag in the 3D view to look around, scroll to zoom.' },
 ];
 
@@ -74,7 +73,7 @@ export function Tour() {
   useEffect(() => {
     const replay = () => {
       const returnTo = useProjectStore.getState().mode;
-      useProjectStore.getState().setMode('stage');
+      useProjectStore.getState().setMode('set');
       setTour({ steps: FIRST_RUN, key: DONE_KEY, step: 0, returnTo });
     };
     const modeTour = () => {

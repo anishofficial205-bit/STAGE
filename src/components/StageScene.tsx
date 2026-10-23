@@ -1,5 +1,6 @@
 import { Component, createContext, useContext, useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
+import * as THREE from 'three';
 import { Sky, Stars } from '@react-three/drei';
 import { FloorGrid } from '../helpers/FloorGrid';
 import { DEFAULT_ENVIRONMENT } from '../helpers/environment';
@@ -110,8 +111,31 @@ export function StageScene({ template, params, data }: { template: StageTemplate
       <fog attach="fog" args={[env.fog, 140, 500]} />
       <Lights bounds={bounds} env={env} />
       <FloorGrid env={env} />
-      <SceneBoundary resetKey={sceneKey}>{template.build(params, data)}</SceneBoundary>
+      <SceneBoundary resetKey={sceneKey}>
+        <StageClickTarget>{template.build(params, data)}</StageClickTarget>
+      </SceneBoundary>
     </>
+  );
+}
+
+const within = (o: THREE.Object3D | null, root: THREE.Object3D): boolean => !!o && (o === root || within(o.parent, root));
+
+/** In Set mode a click on the stage itself (not a piece in front of it, not a drag) selects the stage. */
+function StageClickTarget({ children }: { children: ReactNode }) {
+  const { thumbnail } = useContext(SceneModeContext);
+  const set = useProjectStore((s) => s.mode === 'set');
+  if (thumbnail || !set) return <>{children}</>;
+  return (
+    <group
+      onClick={(e: ThreeEvent<MouseEvent>) => {
+        if (e.delta > 4 || e.button !== 0) return;
+        if (!within(e.intersections[0]?.object ?? null, e.eventObject)) return;
+        e.stopPropagation();
+        useProjectStore.getState().selectStage(true);
+      }}
+    >
+      {children}
+    </group>
   );
 }
 

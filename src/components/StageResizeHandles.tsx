@@ -122,7 +122,7 @@ function Handle({ t, which, dimKey }: { t: StageTemplate; which: 'width' | 'dept
 
 /** Stage mode: round handles on the stage edges; drag to change its width and depth. */
 export function StageResizeHandles() {
-  const active = useProjectStore((s) => s.mode === 'stage');
+  const active = useProjectStore((s) => s.mode === 'set' && s.stageSelected);
   const templateId = useProjectStore((s) => s.templateId);
   const t = getTemplate(templateId);
   if (!active || !t?.dimensions) return null;

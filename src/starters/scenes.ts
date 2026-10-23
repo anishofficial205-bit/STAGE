@@ -165,7 +165,7 @@ export function loadStarterScene(id: string) {
     store.loadFile({ ...base, app: 'stage-builder', version: 2, projectId: newProjectId(), projectName: name, units: scene.units ?? base.units, templateId: scene.templateId, mode: 'stage' });
     scene.build();
     useProjectStore.getState().select([]);
-    useProjectStore.getState().setMode('stage');
+    useProjectStore.getState().setMode('set');
   });
   useProjectStore.getState().save();
 }

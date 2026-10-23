@@ -29,7 +29,7 @@ function useDrag(block: Block) {
   const drag = useRef<{ dx: number; dz: number } | null>(null);
   const hit = new THREE.Vector3();
   // Seating blocks belong to the Stage mode; elsewhere they're shown but can't be picked.
-  const active = useProjectStore((s) => s.mode === 'stage');
+  const active = useProjectStore((s) => s.mode === 'set' && s.stageSelected);
   if (!active) return {};
 
   return {

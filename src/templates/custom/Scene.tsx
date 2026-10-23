@@ -30,7 +30,7 @@ function extrude(pts: Pt[], height: number, y0 = 0) {
   return g;
 }
 
-const useActive = () => useProjectStore((s) => s.mode === 'stage');
+const useActive = () => useProjectStore((s) => s.mode === 'set' && s.stageSelected);
 
 function Label({ at, text, accent }: { at: [number, number, number]; text: string; accent?: boolean }) {
   const exporting = useExportState((s) => s.exporting);

@@ -3,11 +3,10 @@ import type { Mode } from '../modes';
 import { ModeIcon } from './ModeBar';
 
 const NEXT: Record<Mode, { to: Mode | 'export'; ask: string; go: string }> = {
-  stage: { to: 'set', ask: 'Stage ready?', go: 'Dress the set' },
   set: { to: 'lights', ask: 'Set looking good?', go: 'Light it next' },
   lights: { to: 'blocking', ask: 'Happy with the light?', go: 'Block the actors' },
   blocking: { to: 'export', ask: 'Done?', go: 'Export your plans' },
-  venue: { to: 'stage', ask: 'Building done?', go: 'Back to the stage' },
+  venue: { to: 'set', ask: 'Building done?', go: 'Back to the set' },
 };
 
 /** Ask the top bar to open its Export menu. */

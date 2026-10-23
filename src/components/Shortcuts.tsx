@@ -26,6 +26,10 @@ export function Shortcuts() {
         else s.undo();
         return;
       }
+      if (!typing && e.key === 'Escape' && s.stageSelected) {
+        s.selectStage(false);
+        return;
+      }
       if (typing || !s.selectedIds.length) return;
 
       if (mod && key === 'g') {

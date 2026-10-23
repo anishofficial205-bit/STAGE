@@ -9,12 +9,10 @@ import { useActiveBlocking, useActiveLighting, useActiveObjects, useProjectStore
 export function ProgressTracker() {
   const mode = useProjectStore((s) => s.mode);
   const setMode = useProjectStore((s) => s.setMode);
-  const hasTemplate = useProjectStore((s) => !!s.templateId);
   const objects = useActiveObjects().length;
   const lighting = useActiveLighting();
   const performers = useActiveBlocking().performers.length;
   const done: Record<Mode, boolean> = {
-    stage: hasTemplate,
     set: objects > 0,
     lights: lighting.fixtures.length > 0 || lighting.looks.length > 0,
     blocking: performers > 0,

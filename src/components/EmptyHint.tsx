@@ -10,10 +10,9 @@ export function EmptyHint() {
   const seatView = useSightlines((s) => s.seatView);
   const mode = useProjectStore((s) => s.mode);
   const [dismissed, setDismissed] = useState<string | null>(null);
-  if (!empty || seatView || dismissed === templateId || (mode !== 'set' && mode !== 'stage')) return null;
+  if (!empty || seatView || dismissed === templateId || mode !== 'set') return null;
   const first = STARTER_SETS[templateId]?.[0];
-  if (mode === 'stage')
-    return (
+  return (
       <div className="empty-hint" role="note">
         <div>
           <strong>Your stage is empty.</strong> When the size is right, switch to{' '}

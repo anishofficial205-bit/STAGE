@@ -102,16 +102,20 @@ export function createProject(templateId: string, params: Params, name: string) 
     units: store.units,
     templateId,
     paramsByTemplate: { ...base.paramsByTemplate, [templateId]: { ...base.paramsByTemplate[templateId], ...params } },
-    mode: templateId === 'custom' ? 'stage' : 'set',
+    mode: 'set',
   });
   useProjectStore.getState().save();
   // Build your own: the empty floor with the drawing tool ready.
-  if (templateId === 'custom') useCustomUI.getState().setTool('draw');
+  if (templateId === 'custom') {
+    useProjectStore.getState().selectStage(true);
+    useCustomUI.getState().setTool('draw');
+  }
   window.setTimeout(() => void recordWithPicture(), 2500);
 }
 
 export function NewProjectDialog() {
   const open = useShell((s) => s.newProject);
+  const changing = useShell((s) => s.changingStage);
   const setOpen = useShell((s) => s.setNewProject);
   const images = useThumbnails((s) => s.images);
   const units = useProjectStore((s) => s.units);
@@ -136,7 +140,8 @@ export function NewProjectDialog() {
   useEffect(() => {
     if (!open) return;
     setName('Untitled stage');
-    const first = cards[0] ?? all[0];
+    const cur = useProjectStore.getState().templateId;
+    const first = (changing && all.find((c) => c.key === cur)) || cards[0] || all[0];
     setSel(first);
     setParams(first.params);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -158,8 +163,14 @@ export function NewProjectDialog() {
   };
   const create = (c: Card = sel, p: Params = params) => {
     write(RECENT_KEY, [c.key, ...read<string[]>(RECENT_KEY, []).filter((k) => k !== c.key)].slice(0, 8));
-    createProject(c.templateId, p, name);
     setOpen(false);
+    if (changing) {
+      const store = useProjectStore.getState();
+      store.changeStage(c.templateId, p);
+      store.selectStage(true);
+      return;
+    }
+    createProject(c.templateId, p, name);
     useShell.getState().setHome(false);
   };
   const chooseCat = (c: Category) => {
@@ -177,9 +188,9 @@ export function NewProjectDialog() {
 
   return (
     <div className="modal-backdrop np__backdrop" onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}>
-      <div className="np" role="dialog" aria-modal="true" aria-label="New project">
+      <div className="np" role="dialog" aria-modal="true" aria-label={changing ? 'Change stage type' : 'New project'}>
         <nav className="np__cats" aria-label="Categories">
-          <h2 className="np__title">New project</h2>
+          <h2 className="np__title">{changing ? 'Change stage' : 'New project'}</h2>
           {CATEGORIES.map((c) => (
             <button key={c.id} className={`np__cat ${cat === c.id ? 'is-active' : ''}`} onClick={() => chooseCat(c.id)} aria-pressed={cat === c.id}>
               {c.label}
@@ -218,10 +229,14 @@ export function NewProjectDialog() {
             <b>{sel.title}</b>
             <span className="hint">{size ? `${formatLength(size.w, units)} × ${formatLength(size.d, units)}` : t.description}</span>
           </div>
-          <label className="field">
-            <span className="field__label">Project name</span>
-            <input className="field__input" value={name} onChange={(e) => setName(e.target.value)} onFocus={(e) => e.target.select()} />
-          </label>
+          {changing ? (
+            <p className="panel-msg panel-msg--warning">Set pieces, lights and performers stay where they are. Some may end up off the new stage.</p>
+          ) : (
+            <label className="field">
+              <span className="field__label">Project name</span>
+              <input className="field__input" value={name} onChange={(e) => setName(e.target.value)} onFocus={(e) => e.target.select()} />
+            </label>
+          )}
           {main.map((d) => (
             <Field key={d.key} def={d} value={params[d.key]} units={units} onChange={(v) => setParam(d.key, v as ParamValue)} />
           ))}
@@ -254,7 +269,7 @@ export function NewProjectDialog() {
               Cancel
             </button>
             <button className="btn btn--primary btn--big" onClick={() => create()}>
-              Create
+              {changing ? 'Change stage' : 'Create'}
             </button>
           </div>
         </aside>

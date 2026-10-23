@@ -187,6 +187,7 @@ export function Viewport() {
       events={(store) => ({ ...defaultEvents(store), filter: (hits) => handlesFirst(hits) })}
       onPointerMissed={() => {
         useProjectStore.getState().select([]);
+        useProjectStore.getState().selectStage(false);
         if (!useLightsUI.getState().focusMode) useLightsUI.getState().select(null);
         if (!useBlockingUI.getState().tool) useBlockingUI.getState().select(null);
       }}

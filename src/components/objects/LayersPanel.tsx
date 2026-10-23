@@ -47,6 +47,24 @@ const Folder = () => (
   </svg>
 );
 
+/** The stage itself, always first: selecting it shows its settings. */
+function StageRow() {
+  const template = getTemplate(useProjectStore((s) => s.templateId));
+  const selected = useProjectStore((s) => s.stageSelected);
+  return (
+    <li>
+      <div className={`layer layer--stage ${selected ? 'is-selected' : ''}`} style={{ paddingLeft: 6 }} role="option" aria-selected={selected} onClick={() => useProjectStore.getState().selectStage(true)}>
+        <span className="layer__icon" aria-hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
+            <path d="M3 15l9-5 9 5-9 5z" />
+          </svg>
+        </span>
+        <span className="layer__name">Stage — {template?.name ?? 'Stage'}</span>
+      </div>
+    </li>
+  );
+}
+
 /**
  * Figma-style layers: a tree of objects and groups (folders). Click to select
  * (a group selects everything in it), Shift-click to add, double-click to
@@ -172,10 +190,11 @@ export function LayersPanel() {
     );
   };
 
-  if (!objects.length) return <p className="hint layers__empty">No objects yet. Add some from the library on the left.</p>;
   return (
     <ul className="layers" role="listbox" aria-multiselectable>
+      <StageRow />
       {childrenOf(undefined).map((o) => row(o, 0))}
+      {!objects.length && <li className="hint layers__empty">No objects yet. Add some from the library on the left.</li>}
     </ul>
   );
 }

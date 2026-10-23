@@ -64,7 +64,7 @@ export const useHovered = (key?: string) => useHoverLabel((s) => !!key && s.key 
 export const labelPriority = (kind: LabelKind, selected = false, hovered = false) => LABEL_PRIORITY[kind] + (selected ? 20 : 0) + (hovered ? 100 : 0);
 
 const OWN_MODE: Record<LabelKind, string> = {
-  'stage-dim': 'stage',
+  'stage-dim': 'set',
   'object-dim': 'set',
   light: 'lights',
   performer: 'blocking',
@@ -74,10 +74,13 @@ const OWN_MODE: Record<LabelKind, string> = {
 };
 
 /** Labels that show in their mode without needing a selection. */
-const ALWAYS_IN_MODE = new Set<LabelKind>(['stage-dim', 'performer', 'entrance', 'room']);
+const ALWAYS_IN_MODE = new Set<LabelKind>(['performer', 'entrance', 'room']);
 
 export function useShowLabel(kind: LabelKind, { selected = false, hoverKey }: { selected?: boolean; hoverKey?: string } = {}) {
   const mode = useProjectStore((s) => s.mode);
+  // The stage's measurements show while the stage itself is selected.
+  const stageSelected = useProjectStore((s) => s.stageSelected);
+  if (kind === 'stage-dim') selected = selected || stageSelected;
   const all = useLabelPrefs((s) => s.allDimensions);
   const hovered = useHoverLabel((s) => !!hoverKey && s.key === hoverKey);
   if (hovered) return true;

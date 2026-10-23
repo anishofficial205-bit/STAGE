@@ -13,7 +13,7 @@ import type { Vec3 } from '../types';
 export type TipId = 'stage' | 'object' | 'light' | 'graphic' | 'path' | 'export';
 
 const TEXT: Record<TipId, string> = {
-  stage: 'Drag the edges to resize your stage.',
+  stage: 'Change size here, or drag its edges.',
   object: 'Drag to move it · Use the handles to resize.',
   light: 'Drag the target to aim it.',
   graphic: 'Drag inside to reposition · Choose Fit or Fill.',
@@ -83,8 +83,8 @@ function useTriggers() {
     () =>
       useProjectStore.subscribe((s, p) => {
         const t = s.templateId;
-        // A stage chosen (switching type, or opening a starter).
-        if (t !== p.templateId && s.mode === 'stage') window.setTimeout(() => showTip('stage', { selector: '.sidebar--right .group' }), 600);
+        // The stage selected for the first time.
+        if (s.stageSelected && !p.stageSelected) window.setTimeout(() => showTip('stage', { selector: '.sidebar--right .stage-props .group' }), 500);
         // First set piece placed.
         const objs = s.objectsByTemplate[t] ?? [];
         const prevObjs = p.objectsByTemplate[t] ?? [];

@@ -190,6 +190,9 @@ export function TopBar() {
               <button role="menuitem" onClick={() => { close(); void recordWithPicture(); useShell.getState().setHome(true); }}>
                 New project…
               </button>
+              <button role="menuitem" onClick={() => { close(); const st = useProjectStore.getState(); st.setMode('set'); st.selectStage(true); }} title="Change the stage's size or type">
+                Stage settings
+              </button>
               <button role="menuitem" onClick={() => { close(); setRender(true); }} title="Export images, all views, a presentation sheet or a turntable video">
                 Render images and video…
               </button>

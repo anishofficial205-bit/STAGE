@@ -12,7 +12,6 @@ const NEXT: Record<OtherLayers, OtherLayers> = { show: 'dim', dim: 'hide', hide:
 
 const ICONS: Record<Mode, string> = {
   venue: 'M3 21h18M5 21V8l7-5 7 5v13M9 21v-6h6v6',
-  stage: 'M3 6h18M5 6v12M19 6v12M3 18h18M8 6c0 4 2 6 4 6s4-2 4-6',
   set: 'M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3zM6 18v2M18 18v2',
   lights: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z',
   blocking: 'M12 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM9 21l1.5-7L8 12l1-4h6l1 4-2.5 2L15 21',
@@ -37,7 +36,7 @@ export function ModeBar() {
 
   // Leaving a mode drops whatever was picked in it.
   useEffect(() => {
-    if (mode !== 'stage') useBlackBoxUI.getState().select(null);
+    if (mode !== 'set') useBlackBoxUI.getState().select(null);
     if (mode !== 'set') {
       const ui = useObjectUI.getState();
       ui.setSelectedFace(null);

@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { getTemplate, templates } from '../templates/registry';
+import { templates } from '../templates/registry';
 import { useProjectStore } from '../store/useProjectStore';
-import type { StageTemplate } from '../types';
-import { useThumbnails } from './Thumbnails';
 import { Modal } from './Modal';
 import { Collapsible } from './Collapsible';
 import { ObjectLibrary } from './objects/ObjectLibrary';
@@ -11,7 +9,7 @@ import { VenueLeft } from './venue/VenuePanels';
 import { EXAMPLES, loadExampleProject } from '../starters/projects';
 
 /** Complete example projects (one per stage type) that use every mode. */
-function ExampleProjects() {
+export function ExampleProjects() {
   const [confirm, setConfirm] = useState<string | null>(null);
   return (
     <Collapsible id="examples" title="Example projects" defaultOpen={false}>
@@ -51,10 +49,9 @@ function ExampleProjects() {
 import { LightsLeft } from './lights/LightsPanels';
 import { BlockingLeft } from './blocking/BlockingPanels';
 import { deleteMyTemplate, refreshMyTemplates, useMyTemplates, applySavedTemplate, type SavedTemplate } from '../templates/custom/myTemplates';
-import { Plain } from '../glossary/Plain';
 
 /** Custom stages saved from Build Your Own, usable in any project. */
-function MyTemplates() {
+export function MyTemplates() {
   const list = useMyTemplates((s) => s.list);
   const [confirm, setConfirm] = useState<SavedTemplate | null>(null);
   useEffect(() => {
@@ -104,47 +101,7 @@ function MyTemplates() {
   );
 }
 
-const DIM_NAMES = { width: 'width', depth: 'depth', height: 'height' } as const;
-
-/** Which of stage width/depth/height both templates understand. */
-function sharedDimensions(a: StageTemplate, b: StageTemplate) {
-  return (Object.keys(DIM_NAMES) as (keyof typeof DIM_NAMES)[]).filter((d) => a.dimensions?.[d] && b.dimensions?.[d]);
-}
-
-function SwitchDialog({ to, onClose }: { to: StageTemplate; onClose: () => void }) {
-  const from = getTemplate(useProjectStore.getState().templateId)!;
-  const switchTemplate = useProjectStore((s) => s.switchTemplate);
-  const shared = sharedDimensions(from, to);
-  const go = (mode: 'fresh' | 'similar') => {
-    switchTemplate(to.id, mode);
-    onClose();
-  };
-  return (
-    <Modal title={`Switch to ${to.name}?`} onClose={onClose}>
-      <p className="modal__text">
-        {shared.length > 0
-          ? `Start fresh with ${to.name}’s default sizes, or keep similar dimensions — the stage ${shared.join(', ')} — from your ${from.name}?`
-          : `Start fresh with ${to.name}’s default sizes, or keep the settings it had last time? (${from.name} and ${to.name} don’t share stage dimensions.)`}
-      </p>
-      <div className="modal__actions">
-        <button className="btn" onClick={onClose}>
-          Cancel
-        </button>
-        <button className="btn" onClick={() => go('fresh')}>
-          Start fresh
-        </button>
-        <button className="btn btn--primary" onClick={() => go('similar')} autoFocus>
-          {shared.length > 0 ? 'Keep similar dimensions' : 'Keep last settings'}
-        </button>
-      </div>
-    </Modal>
-  );
-}
-
 export function StagePicker() {
-  const templateId = useProjectStore((s) => s.templateId);
-  const images = useThumbnails((s) => s.images);
-  const [pending, setPending] = useState<StageTemplate | null>(null);
   const mode = useProjectStore((s) => s.mode);
   if (mode === 'set')
     return (
@@ -175,33 +132,5 @@ export function StagePicker() {
         <BlockingLeft />
       </aside>
     );
-  if (mode !== 'stage') return <aside className="sidebar sidebar--left" />;
-  return (
-    <aside className="sidebar sidebar--left">
-      <div data-tour="picker">
-      <Collapsible id="picker" title="Stage type">
-      <ul className="picker">
-        {templates.map((t) => (
-          <li key={t.id}>
-            <button
-              className={`card ${t.id === templateId ? 'is-active' : ''}`}
-              onClick={() => t.id !== templateId && setPending(t)}
-              aria-pressed={t.id === templateId}
-            >
-              <span className="card__thumb">{images[t.id] ? <img src={images[t.id]} alt="" /> : <span className="card__loading" />}</span>
-              <span className="card__name">
-                <Plain text={t.name} />
-              </span>
-              <span className="card__desc">{t.description}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-      </Collapsible>
-      </div>
-      <MyTemplates />
-      <ExampleProjects />
-      {pending && <SwitchDialog to={pending} onClose={() => setPending(null)} />}
-    </aside>
-  );
+  return <aside className="sidebar sidebar--left" />;
 }

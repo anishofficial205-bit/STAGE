@@ -31,8 +31,10 @@ function PresetPlan({ w, d }: { w: number; d: number }) {
     </svg>
   );
 }
-import { Plain } from '../glossary/Plain';
+import { lookup } from '../glossary/terms';
 import { usePlacing } from '../objects/placing';
+import { useShell } from './shell';
+import { ExampleProjects, MyTemplates } from './StagePicker';
 
 /**
  * Generated entirely from the active template's params schema — templates never
@@ -47,6 +49,7 @@ function TemplateProperties() {
   const params = useActiveParams();
   const data = useActiveData();
   const template = getTemplate(templateId)!;
+  const selectStage = useProjectStore((s) => s.selectStage);
 
   // Width, depth and height first; everything else under More options.
   const mainKeys = template.dimensions ? [template.dimensions.width, template.dimensions.depth, template.dimensions.height].filter(Boolean) : [];
@@ -66,8 +69,17 @@ function TemplateProperties() {
     <>
       <div className="panel-head">
         <h2 className="panel-title">
-          <Plain text={template.name} />
+          Stage — {template.name}
         </h2>
+        <button className="btn btn--small" onClick={() => selectStage(false)} title="Stop editing the stage">
+          Done
+        </button>
+      </div>
+      {lookup(template.name) && lookup(template.name)!.plain !== template.name && <p className="hint">{lookup(template.name)!.plain}</p>}
+      <div className="stage-props__actions">
+        <button className="btn btn--small" onClick={() => useShell.getState().setNewProject(true, true)}>
+          Change stage type…
+        </button>
         <button className="btn btn--link" onClick={resetToDefaults} title="Put every setting of this stage back to its default">
           Reset to defaults
         </button>
@@ -117,6 +129,8 @@ function TemplateProperties() {
           </section>
         ))}
       </MoreOptions>
+      <MyTemplates />
+      <ExampleProjects />
     </>
   );
 }
@@ -145,17 +159,18 @@ function SetProperties() {
 }
 
 /**
- * Right-hand side, by mode. Stage: the template's dimensions. Set: the layers list,
+ * Right-hand side, by mode. Set with the stage selected: the stage's settings. Set: the layers list,
  * then properties of the selection (or starter sets and stage surfaces when nothing is selected).
  */
 export function PropertiesPanel() {
   const mode = useProjectStore((s) => s.mode);
   const hasSelection = useProjectStore((s) => s.selectedIds.length > 0);
+  const stageSelected = useProjectStore((s) => s.stageSelected);
   const count = useActiveObjects().length;
-  if (mode === 'stage')
+  if (mode === 'set' && stageSelected)
     return (
       <aside className="sidebar sidebar--right" data-tour="panel">
-        <div className="props">
+        <div className="props stage-props">
           <TemplateProperties />
         </div>
       </aside>

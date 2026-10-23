@@ -3,7 +3,7 @@
  * layer of things in the 3D view; things from other modes stay visible (or dim,
  * or hidden) but can't be picked.
  */
-export type Mode = 'venue' | 'stage' | 'set' | 'lights' | 'blocking';
+export type Mode = 'venue' | 'set' | 'lights' | 'blocking';
 export type OtherLayers = 'show' | 'dim' | 'hide';
 
 export interface ModeDef {
@@ -16,9 +16,8 @@ export interface ModeDef {
   description: string;
 }
 
-/** In working order; keys 1–5 follow this order (Venue, the optional extra, is 5). */
+/** In working order; keys 1–4 follow this order (Venue, the optional extra, is 4). The stage itself is chosen when a project is made and edited as an object in Set. */
 export const MODES: ModeDef[] = [
-  { id: 'stage', label: 'Stage', description: 'Pick a stage type and set its dimensions' },
   { id: 'set', label: 'Set', description: 'Build the set: objects, graphics and materials' },
   { id: 'lights', label: 'Lights', description: 'Place, aim and colour stage lights' },
   { id: 'blocking', label: 'Blocking', description: 'Plan where performers stand, enter and move' },
