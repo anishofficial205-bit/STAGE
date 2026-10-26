@@ -92,7 +92,7 @@ function useTriggers() {
   useEffect(() => {
     const later = (f: () => void, ms: number) => window.setTimeout(f, ms);
     const onShell = (s: ReturnType<typeof useShell.getState>, p?: ReturnType<typeof useShell.getState>) => {
-      if (s.home && !s.newProject && (!p || !p.home || p.newProject)) later(() => document.querySelector('.home__new') && showTip('new-project', { selector: '.home__new' }), 900);
+      if (s.home && !s.newProject && (!p || !p.home || p.newProject)) later(() => document.querySelector('.hm-new') && showTip('new-project', { selector: '.hm-new' }), 900);
       if (s.newProject && !s.changingStage && (!p || !p.newProject)) {
         if (useTips.getState().tip?.id === 'new-project') useTips.getState().dismiss();
         later(() => showTip('presets', { selector: '.np__card.is-active' }), 600);

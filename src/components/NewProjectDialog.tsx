@@ -141,7 +141,9 @@ export function NewProjectDialog() {
     if (!open) return;
     setName('Untitled stage');
     const cur = useProjectStore.getState().templateId;
-    const first = (changing && all.find((c) => c.key === cur)) || cards[0] || all[0];
+    const pick = useShell.getState().newProjectPick;
+    if (pick && cat !== 'all') setCat('all');
+    const first = (pick && all.find((c) => c.key === pick)) || (changing && all.find((c) => c.key === cur)) || cards[0] || all[0];
     setSel(first);
     setParams(first.params);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps

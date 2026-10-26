@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useShell } from './shell';
 import { STARTER_SCENES, loadStarterScene } from '../starters/scenes';
 import { deleteProject, duplicateProject, recordCurrentProject, recordWithPicture, refreshRecent, renameProject, useRecentProjects, type ProjectRecord } from '../projects/library';
@@ -68,7 +68,7 @@ function ProjectPicture({ p }: { p: ProjectRecord }) {
   );
 }
 
-function ProjectCard({ p, current, onOpen }: { p: ProjectRecord; current: boolean; onOpen: () => void }) {
+function ProjectCard({ p, onOpen, badge }: { p: ProjectRecord; onOpen: () => void; badge?: string }) {
   const [menu, setMenu] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -81,14 +81,14 @@ function ProjectCard({ p, current, onOpen }: { p: ProjectRecord; current: boolea
     else setName(p.name);
   };
   return (
-    <div className={`home__project ${current ? 'is-continue' : ''}`} ref={ref}>
-      <button className="home__project-open" onClick={onOpen} title={`Open “${p.name}”`}>
-        <span className="home__pic">
+    <div className="hm-card" ref={ref}>
+      <button className="hm-card__open" onClick={onOpen} title={`Open “${p.name}”`}>
+        <span className="hm-card__pic">
           <ProjectPicture p={p} />
+          {badge && <span className="hm-card__badge">{badge}</span>}
         </span>
-        {current && <span className="home__continue">Continue where you left off</span>}
       </button>
-      <div className="home__project-meta">
+      <div className="hm-card__meta">
         {renaming ? (
           <input
             className="field__input"
@@ -104,17 +104,17 @@ function ProjectCard({ p, current, onOpen }: { p: ProjectRecord; current: boolea
             aria-label="Project name"
           />
         ) : (
-          <span className="home__project-name">{p.name}</span>
+          <b className="hm-card__name">{p.name}</b>
         )}
-        <span className="home__project-when">
-          {stageOf(p).name} · {ago(p.savedAt)}
-        </span>
+        <small>
+          {stageOf(p).name} · {ago(p.savedAt).replace(/^edited /, '')}
+        </small>
       </div>
-      <button className="home__more" onClick={() => setMenu(!menu)} aria-label={`More for “${p.name}”`} aria-expanded={menu}>
+      <button className="hm-card__more" onClick={() => setMenu(!menu)} aria-label={`More for “${p.name}”`} aria-expanded={menu}>
         ⋯
       </button>
       {menu && (
-        <span className="menu__list home__menu" role="menu">
+        <span className="menu__list hm-card__menu" role="menu">
           <button role="menuitem" onClick={() => (setMenu(false), onOpen())}>
             Open
           </button>
@@ -131,7 +131,7 @@ function ProjectCard({ p, current, onOpen }: { p: ProjectRecord; current: boolea
       )}
       {confirm && (
         <Modal title={`Delete “${p.name}”?`} onClose={() => setConfirm(false)}>
-          <p className="modal__text">It will be removed from this browser. If you might want it later, open it and use Export → Download project first.</p>
+          <p className="modal__text">It will be removed from this browser. If you might want it later, open it and use Share → Download project first.</p>
           <div className="modal__actions">
             <button className="btn" onClick={() => setConfirm(false)} autoFocus>
               Cancel
@@ -146,7 +146,108 @@ function ProjectCard({ p, current, onOpen }: { p: ProjectRecord; current: boolea
   );
 }
 
-/** Home: what to build today — new project, recent projects and templates. */
+/** What a saved project holds, for the “Jump back in” card. */
+function contents(p: ProjectRecord) {
+  const f = p.file as {
+    templateId?: string;
+    objectsByTemplate?: Record<string, { type: string }[]>;
+    lightingByTemplate?: Record<string, { fixtures?: unknown[] }>;
+    blockingByTemplate?: Record<string, { performers?: unknown[] }>;
+  };
+  const t = f?.templateId ?? '';
+  const n = (x: number, one: string, many: string) => `${x} ${x === 1 ? one : many}`;
+  return [
+    n((f?.objectsByTemplate?.[t] ?? []).filter((o) => o.type !== '@group').length, 'set piece', 'set pieces'),
+    n(f?.lightingByTemplate?.[t]?.fixtures?.length ?? 0, 'light', 'lights'),
+    n(f?.blockingByTemplate?.[t]?.performers?.length ?? 0, 'performer', 'performers'),
+  ];
+}
+
+/** Stage types to start from, each drawn as a little plan. */
+const TYPES: { id: string; name: string; sub: string; plan: ReactNode }[] = [
+  {
+    id: 'proscenium',
+    name: 'Framed',
+    sub: 'Proscenium',
+    plan: (
+      <>
+        <path d="M12 8h56v24H12z" className="hm-plan__stage" />
+        <path d="M6 4h68M6 4v28M74 4v28" className="hm-plan__frame" />
+        <path d="M14 42q26 6 52 0M18 50q22 5 44 0" className="hm-plan__seats" />
+      </>
+    ),
+  },
+  {
+    id: 'thrust',
+    name: 'Thrust',
+    sub: 'Audience on 3 sides',
+    plan: (
+      <>
+        <path d="M14 4h52v16H52v20H28V20H14z" className="hm-plan__stage" />
+        <path d="M8 24v20M72 24v20M18 48h44" className="hm-plan__seats" />
+      </>
+    ),
+  },
+  {
+    id: 'in-the-round',
+    name: 'In the round',
+    sub: 'Audience all round',
+    plan: (
+      <>
+        <circle cx="40" cy="27" r="13" className="hm-plan__stage" />
+        <circle cx="40" cy="27" r="22" className="hm-plan__seats" strokeDasharray="4 4" />
+      </>
+    ),
+  },
+  {
+    id: 'end-stage',
+    name: 'End stage',
+    sub: 'Events and talks',
+    plan: (
+      <>
+        <path d="M10 6h60v20H10z" className="hm-plan__stage" />
+        <path d="M14 34h52M14 41h52M14 48h52" className="hm-plan__seats" />
+      </>
+    ),
+  },
+  {
+    id: 'traverse',
+    name: 'Runway',
+    sub: 'Audience both sides',
+    plan: (
+      <>
+        <path d="M32 4h16v46H32z" className="hm-plan__stage" />
+        <path d="M22 10v38M58 10v38M14 10v38M66 10v38" className="hm-plan__seats" />
+      </>
+    ),
+  },
+  {
+    id: 'custom',
+    name: 'Your own shape',
+    sub: 'Draw it',
+    plan: (
+      <>
+        <path d="M14 40l10-28 30 6 12 22z" className="hm-plan__draw" />
+        <path d="M50 30l12-12 4 4-12 12h-4z" className="hm-plan__pen" />
+      </>
+    ),
+  },
+];
+
+type View = 'home' | 'projects' | 'templates';
+
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+};
+
+const Icon = ({ d }: { d: string }) => (
+  <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d={d} />
+  </svg>
+);
+
+/** Home: a sidebar to move around, the last project to jump back into, recent work and new stages. */
 export function Home() {
   const home = useShell((s) => s.home);
   const setHome = useShell((s) => s.setHome);
@@ -154,7 +255,7 @@ export function Home() {
   const [asking, setAsking] = useState(() => savedDefaultUnits() === null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
-  const [all, setAll] = useState(false);
+  const [view, setView] = useState<View>('home');
   const [sort, setSort] = useState<'recent' | 'name'>('recent');
   const file = useRef<HTMLInputElement>(null);
   const currentId = useProjectStore((s) => s.projectId);
@@ -162,7 +263,10 @@ export function Home() {
 
   useEffect(() => {
     if (!home) return;
-    // The open project goes in the list too (so "Continue" can offer it), then refresh.
+    // Coming back always lands on Home itself.
+    setView('home');
+    setQ('');
+    // The open project goes in the list too (so "Jump back in" can offer it), then refresh.
     void recordCurrentProject().then(refreshRecent);
   }, [home]);
 
@@ -204,105 +308,240 @@ export function Home() {
     setDefaultUnits(u);
     useProjectStore.getState().setUnits(u);
   };
+  const newProject = (pick?: string) => useShell.getState().setNewProject(true, false, pick ?? null);
+
+  if (asking)
+    return (
+      <div className="start home" role="dialog" aria-modal="true" aria-label="Home">
+        <div className="start__inner">
+          <UnitsQuestion onDone={() => setAsking(false)} />
+        </div>
+      </div>
+    );
+
+  const last = !query && sort === 'recent' ? projects[0] : undefined;
+  const others = last ? projects.slice(1) : projects;
 
   return (
-    <div className="start home" role="dialog" aria-modal="true" aria-label="Home">
-      <div className="start__inner">
-        <header className="start__head">
-          <span className="rail__logo" aria-hidden>
+    <div className="hm" role="dialog" aria-modal="true" aria-label="Home">
+      <aside className="hm-side">
+        <div className="hm-brand">
+          <span className="hm-logo" aria-hidden>
             <span />
           </span>
-          <span className="start__brand">Stage Builder</span>
-          {!asking && (
-            <span className="home__settings">
-              <span className="hint">Units</span>
-              <span className="segmented" role="group" aria-label="Units">
-                <button className={units === 'm' ? 'is-active' : ''} onClick={() => setUnits('m')}>
-                  Metres
-                </button>
-                <button className={units === 'ft' ? 'is-active' : ''} onClick={() => setUnits('ft')}>
-                  Feet
-                </button>
-              </span>
-            </span>
-          )}
-        </header>
-        {asking ? (
-          <UnitsQuestion onDone={() => setAsking(false)} />
-        ) : (
+          Stage Builder
+        </div>
+        <button className="hm-new" onClick={() => newProject()} data-tip-anchor="new-project">
+          <Icon d="M12 5v14M5 12h14" />
+          New project
+        </button>
+        <nav className="hm-nav" aria-label="Sections">
+          <button className={view === 'home' ? 'is-on' : ''} onClick={() => setView('home')}>
+            <Icon d="M3 11l9-7 9 7v9H3z" />
+            Home
+          </button>
+          <button className={view === 'projects' ? 'is-on' : ''} onClick={() => setView('projects')}>
+            <Icon d="M3 4h7v7H3zM14 4h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" />
+            My projects<span className="hm-nav__n">{recent.length || ''}</span>
+          </button>
+          <button className={view === 'templates' ? 'is-on' : ''} onClick={() => setView('templates')}>
+            <Icon d="M4 5h16v14H4zM4 9h16" />
+            Templates<span className="hm-nav__n">{STARTER_SCENES.length - 1}</span>
+          </button>
+          <button onClick={() => file.current?.click()}>
+            <Icon d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+            Open a file
+          </button>
+        </nav>
+        <input
+          ref={file}
+          type="file"
+          accept=".zip,.json,application/zip,application/json"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void openFile(f);
+            e.target.value = '';
+          }}
+        />
+        <div className="hm-side__foot">
+          <span className="hm-side__label">Measure in</span>
+          <span className="segmented hm-units" role="group" aria-label="Units">
+            <button className={units === 'm' ? 'is-active' : ''} onClick={() => setUnits('m')}>
+              Metres
+            </button>
+            <button className={units === 'ft' ? 'is-active' : ''} onClick={() => setUnits('ft')}>
+              Feet
+            </button>
+          </span>
+        </div>
+      </aside>
+
+      <main className="hm-main">
+        <div className="hm-top">
+          <div>
+            <h1 className="hm-title">{view === 'projects' ? 'My projects' : view === 'templates' ? 'Templates' : greeting()}</h1>
+            <p className="hm-lead">{view === 'projects' ? 'Everything saved in this browser.' : view === 'templates' ? 'Finished examples to start from.' : 'Pick up where you left off, or start something new.'}</p>
+          </div>
+          <label className="hm-search">
+            <Icon d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4" />
+            <input type="search" placeholder="Search projects and templates" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search projects and templates" />
+          </label>
+        </div>
+        {error && <p className="panel-msg panel-msg--warning">{error}</p>}
+
+        {view === 'home' && (
           <>
-            <section className="home__hero">
-              <h1 className="start__title">What will you build today?</h1>
-              <p className="start__lead">Plan stages, sets, lights and blocking in 3D.</p>
-              <label className="home__search">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                  <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3" />
-                </svg>
-                <input type="search" placeholder="Search your projects and templates" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search projects and templates" />
-              </label>
-            </section>
-
-            <div className="start__row">
-              <h2 className="start__h2">Your projects</h2>
-              {all && (
-                <select className="field__select" value={sort} onChange={(e) => setSort(e.target.value as 'recent' | 'name')} aria-label="Sort projects">
-                  <option value="recent">Most recent</option>
-                  <option value="name">Name</option>
-                </select>
-              )}
-              {recent.length > 4 && (
-                <button className="btn btn--link" onClick={() => setAll(!all)}>
-                  {all ? 'Show fewer' : 'See all'}
+            {last ? (
+              <section className="hm-jump">
+                <button className="hm-jump__pic" onClick={() => reopen(last)} aria-label={`Open “${last.name}”`}>
+                  <ProjectPicture p={last} />
                 </button>
-              )}
-              <button className="btn btn--small" onClick={() => file.current?.click()}>
-                Open a file…
-              </button>
-              <input
-                ref={file}
-                type="file"
-                accept=".zip,.json,application/zip,application/json"
-                hidden
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void openFile(f);
-                  e.target.value = '';
-                }}
-              />
-            </div>
-            {error && <p className="panel-msg panel-msg--warning">{error}</p>}
-            <div className={all ? 'home__grid' : 'home__strip'}>
-              <button className="home__new" onClick={() => useShell.getState().setNewProject(true)} data-tip-anchor="new-project">
-                <span className="home__plus" aria-hidden>
-                  +
-                </span>
-                New project
-              </button>
-              {(all ? projects : projects.slice(0, 5)).map((p) => (
-                <ProjectCard key={p.id} p={p} current={p.id === currentId && sort === 'recent' && !query} onOpen={() => reopen(p)} />
-              ))}
-            </div>
-            {query && projects.length === 0 && <p className="start__empty">No projects called “{q}”.</p>}
+                <div className="hm-jump__body">
+                  <span className="hm-eyebrow">Jump back in</span>
+                  <h2 className="hm-jump__name">{last.name}</h2>
+                  <p className="hm-jump__meta">
+                    {stageOf(last).name} · {ago(last.savedAt)}
+                  </p>
+                  <div className="hm-jump__counts">
+                    {contents(last).map((c) => (
+                      <span key={c}>{c}</span>
+                    ))}
+                  </div>
+                  <div className="hm-jump__actions">
+                    <button className="hm-btn hm-btn--pri" onClick={() => reopen(last)}>
+                      Continue
+                    </button>
+                    <button className="hm-btn" onClick={() => void duplicateProject(last.id)}>
+                      Duplicate
+                    </button>
+                  </div>
+                </div>
+              </section>
+            ) : (
+              !query && (
+                <section className="hm-welcome">
+                  <div>
+                    <span className="hm-eyebrow">Welcome</span>
+                    <h2 className="hm-jump__name">Start your first stage</h2>
+                    <p className="hm-jump__meta">Choose a stage type below, or open one of the templates.</p>
+                  </div>
+                  <button className="hm-btn hm-btn--pri" onClick={() => newProject()}>
+                    New project
+                  </button>
+                </section>
+              )
+            )}
 
-            {!all && templates.length > 0 && (
-              <>
-                <h2 className="start__h2 home__h2">Start from a template</h2>
-                <div className="start__cards">
-                  {templates.map((s) => (
-                    <button key={s.id} className="start__card" onClick={() => start(s.id)}>
-                      <span className="start__pic">
-                        <img src={s.image} alt="" loading="lazy" />
-                      </span>
-                      <span className="start__card-title">{s.title}</span>
-                      <span className="start__card-blurb">{s.blurb}</span>
+            {others.length > 0 && (
+              <section className="hm-section">
+                <div className="hm-section__head">
+                  <h2>{query ? 'Projects' : 'Recent'}</h2>
+                  {!query && others.length > 4 && (
+                    <button className="hm-link" onClick={() => setView('projects')}>
+                      See all ›
+                    </button>
+                  )}
+                </div>
+                <div className="hm-grid hm-grid--4">
+                  {(query ? others : others.slice(0, 4)).map((p) => (
+                    <ProjectCard key={p.id} p={p} onOpen={() => reopen(p)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {query && templates.length > 0 && (
+              <section className="hm-section">
+                <div className="hm-section__head">
+                  <h2>Templates</h2>
+                </div>
+                <TemplateGrid list={templates} onPick={start} />
+              </section>
+            )}
+            {query && !projects.length && !templates.length && <p className="hm-empty">Nothing called “{q}”.</p>}
+
+            {!query && (
+              <section className="hm-section">
+                <div className="hm-section__head">
+                  <h2>Start a new stage</h2>
+                </div>
+                <div className="hm-types">
+                  {TYPES.map((t) => (
+                    <button key={t.id} className={`hm-type ${t.id === 'custom' ? 'is-draw' : ''}`} onClick={() => newProject(t.id)}>
+                      <svg viewBox="0 0 80 54" width="80" height="54" className="hm-plan" aria-hidden>
+                        {t.plan}
+                      </svg>
+                      <b>{t.name}</b>
+                      <small>{t.sub}</small>
                     </button>
                   ))}
                 </div>
-              </>
+              </section>
+            )}
+
+            {!query && others.length < 4 && templates.length > 0 && (
+              <section className="hm-section">
+                <div className="hm-section__head">
+                  <h2>Or start from a template</h2>
+                  {templates.length > 3 && (
+                    <button className="hm-link" onClick={() => setView('templates')}>
+                      All {templates.length} ›
+                    </button>
+                  )}
+                </div>
+                <TemplateGrid list={templates.slice(0, 3)} onPick={start} />
+              </section>
             )}
           </>
         )}
-      </div>
+
+        {view === 'projects' && (
+          <section className="hm-section">
+            <div className="hm-section__head">
+              <h2>
+                {projects.length} project{projects.length === 1 ? '' : 's'}
+              </h2>
+              <select className="field__select hm-sort" value={sort} onChange={(e) => setSort(e.target.value as 'recent' | 'name')} aria-label="Sort projects">
+                <option value="recent">Most recent first</option>
+                <option value="name">By name</option>
+              </select>
+            </div>
+            {projects.length ? (
+              <div className="hm-grid hm-grid--4">
+                {projects.map((p) => (
+                  <ProjectCard key={p.id} p={p} onOpen={() => reopen(p)} badge={p.id === currentId ? 'Last opened' : undefined} />
+                ))}
+              </div>
+            ) : (
+              <p className="hm-empty">{query ? `No projects called “${q}”.` : 'No projects yet. Start one with New project.'}</p>
+            )}
+          </section>
+        )}
+
+        {view === 'templates' && (
+          <section className="hm-section">
+            {templates.length ? <TemplateGrid list={templates} onPick={start} /> : <p className="hm-empty">No templates called “{q}”.</p>}
+          </section>
+        )}
+      </main>
+    </div>
+  );
+}
+
+function TemplateGrid({ list, onPick }: { list: typeof STARTER_SCENES; onPick: (id: string) => void }) {
+  return (
+    <div className="hm-grid hm-grid--3">
+      {list.map((s) => (
+        <button key={s.id} className="hm-tpl" onClick={() => onPick(s.id)}>
+          <span className="hm-tpl__pic">
+            <img src={s.image} alt="" loading="lazy" />
+            <span className="hm-tpl__use">Use this</span>
+          </span>
+          <b>{s.title}</b>
+          <small>{s.blurb}</small>
+        </button>
+      ))}
     </div>
   );
 }

@@ -41,7 +41,9 @@ interface Shell {
   newProject: boolean;
   /** The new-project dialog reused to change the open project's stage. */
   changingStage: boolean;
-  setNewProject: (open: boolean, changingStage?: boolean) => void;
+  /** The stage type to start the dialog on (e.g. a stage-type tile on Home). */
+  newProjectPick: string | null;
+  setNewProject: (open: boolean, changingStage?: boolean, pick?: string | null) => void;
 }
 
 const narrow = () => window.innerWidth < NARROW;
@@ -75,5 +77,6 @@ export const useShell = create<Shell>((set) => ({
   setHome: (home) => set({ home }),
   newProject: false,
   changingStage: false,
-  setNewProject: (newProject, changingStage = false) => set({ newProject, changingStage }),
+  newProjectPick: null,
+  setNewProject: (newProject, changingStage = false, newProjectPick = null) => set({ newProject, changingStage, newProjectPick }),
 }));
