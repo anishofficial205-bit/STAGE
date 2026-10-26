@@ -9,7 +9,6 @@ import { SHORTCUTS_EVENT } from './ShortcutsSheet';
 import { useDismiss } from './useDismiss';
 import { useObjectUI } from '../objects/ui';
 import { useLabelPrefs } from '../helpers/labels';
-import { OPEN_EXPORT_EVENT } from './NextStep';
 import { useLightsUI } from '../lighting/ui';
 import { blockingPdf } from '../blocking/sheets';
 import { download } from '../graphics/specSheet';
@@ -34,11 +33,6 @@ export function TopBar() {
   const lightCount = useActiveLighting().fixtures.length;
   const performerCount = useActiveBlocking().performers.length;
   const panels = useShell((x) => x.panels);
-  useEffect(() => {
-    const open = () => setMenu('file');
-    window.addEventListener(OPEN_EXPORT_EVENT, open);
-    return () => window.removeEventListener(OPEN_EXPORT_EVENT, open);
-  }, []);
   const toggle = (m: 'view' | 'help' | 'file') => {
     useObjectUI.getState().setMenu(null);
     setMenu(menu === m ? null : m);

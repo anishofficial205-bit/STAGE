@@ -5,7 +5,7 @@ import { useProjectStore } from '../store/useProjectStore';
 import { M_PER_FT } from '../units';
 import { dist, projectOnWall, samePt } from './geometry';
 import { enclosedArea } from './rooms';
-import { DOOR_PRESETS, ROOM_TYPES, WALL_DEFAULTS, venueId, type Door, type Furniture, type Pt, type Room, type Route, type RouteEnd, type Venue, type Wall } from './types';
+import { DOOR_PRESETS, ROOM_TYPES, WALL_DEFAULTS, emptyVenue, venueId, type Door, type Furniture, type Pt, type Room, type Route, type RouteEnd, type Venue, type Wall } from './types';
 import { endName } from './routes';
 import { useVenueUI } from './ui';
 import { nextName } from '../helpers/names';
@@ -152,6 +152,12 @@ export const venueActions = {
   },
 
   /** Delete whatever is selected. */
+  /** Remove everything drawn in Backstage (one undo step). */
+  clearAll: () => {
+    useVenueUI.getState().select(null);
+    useVenueUI.getState().setTool('select');
+    useProjectStore.getState().batch('Cleared the backstage', () => update(() => emptyVenue()));
+  },
   removeSelected: () => {
     const sel = useVenueUI.getState().selected;
     if (!sel) return;

@@ -14,6 +14,7 @@ import { formatArea } from './format';
 import { HURRY, WALK, endName, formatTime, solveRoute } from '../../venue/routes';
 import { importTrace, patchTrace, removeTrace } from '../../venue/trace';
 import { removePick } from '../layers/ops';
+import { Modal } from '../Modal';
 
 const TOOLS: { id: VenueTool; label: string; key: string; hint: string }[] = [
   { id: 'select', label: 'Select', key: 'V', hint: 'Click anything (here or in 3D) to select it. Drag walls, wall ends, doors and furniture to move them. Drag the background to pan, scroll to zoom.' },
@@ -153,6 +154,44 @@ export function VenueLeft() {
     <>
       <VenueTools />
       <TraceSection />
+      <ClearVenue />
+    </>
+  );
+}
+
+/** Start the backstage again: removes everything drawn here, after asking (and can be undone). */
+export function ClearVenue() {
+  const v = useProjectStore((s) => s.venue);
+  const [asking, setAsking] = useState(false);
+  const count = v.walls.length + v.rooms.length + v.doors.length + v.furniture.length + v.routes.length + (v.trace ? 1 : 0);
+  if (!count) return null;
+  return (
+    <>
+      <button className="btn btn--danger venue-clear" onClick={() => setAsking(true)}>
+        Clear the backstage…
+      </button>
+      {asking && (
+        <Modal title="Clear the backstage?" onClose={() => setAsking(false)}>
+          <p className="modal__text">
+            Removes everything drawn here: {v.walls.length} wall{v.walls.length === 1 ? '' : 's'}, {v.rooms.length} room{v.rooms.length === 1 ? '' : 's'}, {v.doors.length} door{v.doors.length === 1 ? '' : 's'}, {v.furniture.length} piece{v.furniture.length === 1 ? '' : 's'} of furniture and {v.routes.length} route{v.routes.length === 1 ? '' : 's'}
+            {v.trace ? ', and the traced floor plan' : ''}. The stage, set, lights and performers stay. You can undo it.
+          </p>
+          <div className="modal__actions">
+            <button className="btn" onClick={() => setAsking(false)} autoFocus>
+              Cancel
+            </button>
+            <button
+              className="btn btn--danger"
+              onClick={() => {
+                setAsking(false);
+                venueActions.clearAll();
+              }}
+            >
+              Clear it
+            </button>
+          </div>
+        </Modal>
+      )}
     </>
   );
 }
@@ -411,7 +450,8 @@ export function VenueProperties() {
           <span className="switch__knob" />
         </button>
       </label>
-      <p className="hint">Rooms, doors, furniture and routes are listed in Layers. Use the Route tool to time a walk, e.g. green room to SL entrance; mark a door “Leads onto the stage” to name it as an entrance.</p>
+      <p className="hint">Everything you draw is listed in Layers, where you can delete it piece by piece.</p>
+      <ClearVenue />
     </div>
   );
 }

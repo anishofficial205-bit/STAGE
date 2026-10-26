@@ -11,7 +11,6 @@ import { Shortcuts } from './components/Shortcuts';
 import { PdfPagePicker } from './components/graphics/PdfPagePicker';
 import { ShortcutsSheet } from './components/ShortcutsSheet';
 import { ModeBar } from './components/ModeBar';
-import { NextStep } from './components/NextStep';
 import { useShell } from './components/shell';
 import { DrawerTabs } from './components/DrawerTabs';
 import { LabelDeclutter } from './components/LabelDeclutter';
@@ -32,8 +31,9 @@ import { useBlockingKeys } from './components/blocking/BlockingPanels';
 
 /**
  * The 3D stage fills the window and everything else floats over it: the top bar
- * (project, modes, share), the tool strip and its panel on the left, Layers on the
- * right, a quick bar over whatever is picked, and the View menu at the bottom.
+ * (project, the View menu, share), the tool strip and its panel on the left,
+ * Layers and Edit on the right, a quick bar over whatever is picked, and the
+ * modes at the bottom.
  */
 /** Each mode's keyboard shortcuts and setup, active whether or not its panels are open. */
 function ModeEffects() {
@@ -70,10 +70,7 @@ export default function App() {
       <Dock />
       <LayersSide />
       <QuickBar />
-      <div className="stagebar">
-        <CameraBar />
-        <NextStep />
-      </div>
+      <CameraBar />
       <DrawerTabs />
       <LabelDeclutter />
       <CrossModeToast />

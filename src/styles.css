@@ -1374,3 +1374,23 @@ html, body, #root { overflow: hidden; }
 .sl-page__body .field__row { display: block; }
 .sl-page__body .field__number { width: 100%; height: 46px; box-sizing: border-box; }
 .sl-page__body .field__number input { font-size: 17px; }
+
+/* Modes at the bottom, View at the top; Layers and Edit as two boxes */
+.modes { top: auto; bottom: 16px; left: var(--stage-mid); }
+.viewbar { position: absolute; z-index: 9; top: 16px; left: var(--stage-mid); transform: translateX(-50%); height: 56px; border-radius: 18px; }
+.viewbar .menu__list { top: calc(100% + 10px); bottom: auto; left: 50%; right: auto; transform: translateX(-50%); }
+.viewbar__btn { height: 44px; padding: 0 16px; }
+.app.is-clean .viewbar { display: flex; }
+.app--blocking .playbar { bottom: 92px; }
+.path-hint { bottom: 168px; }
+.empty-hint { bottom: 92px; }
+.layers-side { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; border-radius: 0; overflow: visible; }
+.layers-side .split__top, .layers-side .split__bottom { border-radius: 22px; background: var(--glass); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45); }
+.layers-side .split__bottom { padding: 16px 18px 18px; }
+.layers-side .split__divider { flex-basis: 12px; }
+.layers-side .split__divider::after { left: 40%; right: 40%; top: 4px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); }
+.layers-side .split__divider:hover::after, .layers-side .split__divider:focus-visible::after { background: var(--accent); height: 4px; top: 4px; }
+@media (max-width: 860px) {
+  .viewbar { top: 84px; }
+}
+.venue-clear { width: 100%; margin-top: 14px; }
