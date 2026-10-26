@@ -8,20 +8,16 @@ import { useSightlines } from '../sightlines/store';
 import { useStageSeats } from './sightlines/useStageSeats';
 import type { PresetView } from '../types';
 
-/** Seat view and sightlines matter most while building the set and blocking; elsewhere they live in More views. */
-export const seatToolsInMenu = (mode: string) => mode === 'lights' || mode === 'venue';
-
 /** The view the audience gets: the middle of the house if the stage has one, else the first seat view. */
 function audienceView(views: PresetView[]) {
   const presets = views.filter((v) => v.id !== 'top' && v.id !== 'reset' && !v.id.startsWith('saved-'));
   return presets.find((v) => v.id === 'middle') ?? presets.find((v) => !/wing|side|left|right/i.test(v.id)) ?? views.find((v) => v.id === 'reset');
 }
 
-/** Audience view, Top view and Reset, with every other view (and saved seats) under More views. */
+/** One View menu at the bottom of the stage: the main views, every other view and saved seat, Seat view and Sightlines. */
 export function CameraBar() {
   const views = useViews();
   const s = useProjectStore();
-  const mode = useProjectStore((x) => x.mode);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
   const close = useCallback(() => setOpen(false), []);
@@ -36,33 +32,25 @@ export function CameraBar() {
   const go = (v?: PresetView) => v && s.requestView(v);
 
   return (
-    <nav className="topbar__views glass" aria-label="Camera views" data-tour="views">
-      <button className="pill" onClick={() => go(audience)} title={audience ? `From ${plainText(audience.label).toLowerCase()}` : undefined}>
-        Audience view
-      </button>
-      <button className="pill" onClick={() => go(top)}>
-        Top view
-      </button>
-      <button className="pill pill--muted" onClick={() => go(reset)} title="Show the whole stage">
-        Reset
-      </button>
+    <nav className="viewbar glass" aria-label="Camera views" data-tour="views">
       <span className="menu" ref={ref}>
-        <button className="pill pill--more" onClick={() => setOpen(!open)} aria-expanded={open}>
-          More views ▾
+        <button className="viewbar__btn" onClick={() => setOpen(!open)} aria-expanded={open} title="Look at the stage from somewhere else">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" /></svg>
+          View
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="m6 15 6-6 6 6" /></svg>
         </button>
         {open && (
           <span className="menu__list menu__list--views" role="menu">
-            {/* Narrow screens: the three main buttons move in here. */}
-            <button role="menuitem" className="menu__narrow" onClick={() => (go(audience), close())}>
-              Audience view
+            <button role="menuitem" onClick={() => (go(audience), close())} title={audience ? `From ${plainText(audience.label).toLowerCase()}` : undefined}>
+              From the audience
             </button>
-            <button role="menuitem" className="menu__narrow" onClick={() => (go(top), close())}>
-              Top view
+            <button role="menuitem" onClick={() => (go(top), close())}>
+              From above
             </button>
-            <button role="menuitem" className="menu__narrow" onClick={() => (go(reset), close())}>
-              Reset
+            <button role="menuitem" onClick={() => (go(reset), close())}>
+              Fit the whole stage
             </button>
-            <span className="menu__sep menu__narrow" />
+            {others.length > 0 && <span className="menu__sep" />}
             {others.map((v) =>
               v.id.startsWith('saved-') ? (
                 <span key={v.id} className="menu__item-row">
@@ -79,16 +67,11 @@ export function CameraBar() {
                 </button>
               ),
             )}
-            {audience && audience.id !== 'reset' && (
-              <button role="menuitem" onClick={() => (go(audience), close())}>
-                <Plain text={audience.label} />
-              </button>
-            )}
-            {seatToolsInMenu(mode) && seats.length > 0 && (
+            {seats.length > 0 && (
               <>
                 <span className="menu__sep" />
                 <button role="menuitem" onClick={() => (sight.set({ seatView: !sight.seatView, current: sight.seatView ? null : sight.current, blocking: null }), close())}>
-                  {sight.seatView ? '✓ ' : ''}Seat view: see from any seat
+                  {sight.seatView ? '✓ ' : ''}Sit in any seat
                 </button>
                 <button role="menuitem" onClick={() => (sight.set({ sightlinesOn: !sight.sightlinesOn, results: null, progress: sight.sightlinesOn ? null : 0 }), close())}>
                   {sight.sightlinesOn ? '✓ ' : ''}Sightlines: how much each seat sees

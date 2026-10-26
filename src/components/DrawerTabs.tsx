@@ -1,16 +1,12 @@
 import { useShell } from './shell';
 
-/** On narrow screens: the two buttons that open and close the side drawers. */
+/** On narrow screens Layers is a drawer: this button slides it in and out. */
 export function DrawerTabs() {
-  const drawers = useShell((s) => s.drawers);
-  const setDrawer = useShell((s) => s.setDrawer);
+  const open = useShell((s) => s.layers);
   return (
     <div className="drawer-tabs">
-      <button className={`drawer-tab drawer-tab--left ${drawers.left ? 'is-open' : ''}`} onClick={() => setDrawer('left', !drawers.left)} aria-expanded={drawers.left}>
-        {drawers.left ? '‹ Hide tools' : 'Tools ›'}
-      </button>
-      <button className={`drawer-tab drawer-tab--right ${drawers.right ? 'is-open' : ''}`} onClick={() => setDrawer('right', !drawers.right)} aria-expanded={drawers.right}>
-        {drawers.right ? 'Hide details ›' : '‹ Details'}
+      <button className={`drawer-tab drawer-tab--right ${open ? 'is-open' : ''}`} onClick={() => useShell.getState().setLayers(!open)} aria-expanded={open}>
+        {open ? 'Hide layers ›' : '‹ Layers'}
       </button>
     </div>
   );

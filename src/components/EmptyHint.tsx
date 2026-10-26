@@ -16,7 +16,7 @@ export function EmptyHint() {
     <div className="empty-hint" role="note">
       <span className="empty-hint__arrow" aria-hidden>←</span>
       <div>
-        <strong>Your stage is empty.</strong> Drag a piece from <em>Add objects</em> on the left into the view, or click a tile to place it at stage centre.
+        <strong>Your stage is empty.</strong> Open <em>Add</em> on the left and click a piece, then click the stage to place it.
         {first && (
           <>
             {' '}

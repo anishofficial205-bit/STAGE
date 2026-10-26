@@ -4,7 +4,6 @@ import { MODES, type Mode } from '../modes';
 import { useBlackBoxUI } from '../templates/blackBox/blocks';
 import { useObjectUI } from '../objects/ui';
 import { useShell } from './shell';
-import { recordWithPicture } from '../projects/library';
 
 
 const ICONS: Record<Mode, string> = {
@@ -22,12 +21,10 @@ export function ModeIcon({ mode, size = 18 }: { mode: Mode; size?: number }) {
   );
 }
 
-/** The floating rail on the left: the four steps (keys 1–4), then Backstage & venue under Advanced (5), and the layer and panel toggles. */
+/** The mode switcher at the top centre: Set, Lights, Performers (keys 1–3), then Backstage (4). Also holds the mode keys and F for Focus mode. */
 export function ModeBar() {
   const mode = useProjectStore((s) => s.mode);
   const setMode = useProjectStore((s) => s.setMode);
-  const panels = useShell((s) => s.panels);
-  const togglePanels = useShell((s) => s.togglePanels);
 
   // Leaving a mode drops whatever was picked in it.
   useEffect(() => {
@@ -61,62 +58,22 @@ export function ModeBar() {
   }, []);
 
   return (
-    <nav className="rail" aria-label="Mode">
-      <button
-        className="rail__logo"
-        onClick={() => {
-          void recordWithPicture();
-          useShell.getState().setHome(true);
-        }}
-        title="Home: start something new or open a recent project"
-        aria-label="Home"
-      >
-        <span />
-      </button>
-      <div className="rail__modes" role="tablist" aria-label="Mode" data-tour="modes">
-        {MODES.filter((m) => !m.advanced).map((m) => (
+    <nav className="modes" aria-label="Mode" role="tablist" data-tour="modes">
+      {MODES.map((m) => (
+        <span key={m.id} className="modes__item">
+          {m.advanced && <span className="modes__sep" aria-hidden />}
           <button
-            key={m.id}
             role="tab"
             aria-selected={mode === m.id}
-            aria-disabled={m.soon || undefined}
-            className={`rail__mode ${mode === m.id ? 'is-active' : ''} ${m.soon ? 'is-soon' : ''}`}
-            onClick={() => !m.soon && setMode(m.id)}
-            title={m.soon ? `${m.label} — coming soon` : `${m.description} (${MODES.indexOf(m) + 1})`}
-          >
-            <span className="rail__icon">
-              <ModeIcon mode={m.id} />
-            </span>
-            {m.label}
-          </button>
-        ))}
-      </div>
-      <div className="rail__foot">
-        <span className="rail__caption">Advanced</span>
-        {MODES.filter((m) => m.advanced).map((m) => (
-          <button
-            key={m.id}
-            role="tab"
-            aria-selected={mode === m.id}
-            className={`rail__mode rail__mode--advanced ${mode === m.id ? 'is-active' : ''}`}
+            className={`modes__btn ${mode === m.id ? 'is-active' : ''} ${m.advanced ? 'modes__btn--quiet' : ''}`}
             onClick={() => setMode(m.id)}
             title={`${m.description} (${MODES.indexOf(m) + 1})`}
           >
-            <span className="rail__icon">
-              <ModeIcon mode={m.id} />
-            </span>
-            Backstage &amp; venue
+            {!m.advanced && <ModeIcon mode={m.id} />}
+            {m.advanced ? 'Backstage' : m.label}
           </button>
-        ))}
-        <span className="rail__rule" />
-        <button className={`rail__tool ${panels ? '' : 'is-on'}`} onClick={togglePanels} title={panels ? 'Hide panels to see the full stage (F)' : 'Show the panels again (F)'} aria-pressed={!panels}>
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <rect x="3" y="4" width="18" height="16" rx="3" />
-            <path d={panels ? 'M9 4v16M15 4v16' : 'M8 9l-2 3 2 3M16 9l2 3-2 3'} />
-          </svg>
-          Focus mode
-        </button>
-      </div>
+        </span>
+      ))}
     </nav>
   );
 }

@@ -101,36 +101,12 @@ export function MyTemplates() {
   );
 }
 
-export function ToolsPanel() {
+/** What the left panel's Add tab holds in each mode (Pictures is Set's graphics). */
+export function ModeTools({ tab }: { tab: 'add' | 'pictures' }) {
   const mode = useProjectStore((s) => s.mode);
-  if (mode === 'set')
-    return (
-      <aside className="sidebar sidebar--left">
-        <Collapsible id="library" title="Add objects">
-          <ObjectLibrary />
-        </Collapsible>
-        <Collapsible id="graphics" title="Graphics">
-          <GraphicsPanel />
-        </Collapsible>
-      </aside>
-    );
-  if (mode === 'venue')
-    return (
-      <aside className="sidebar sidebar--left">
-        <VenueLeft />
-      </aside>
-    );
-  if (mode === 'lights')
-    return (
-      <aside className="sidebar sidebar--left">
-        <LightsLeft />
-      </aside>
-    );
-  if (mode === 'blocking')
-    return (
-      <aside className="sidebar sidebar--left">
-        <BlockingLeft />
-      </aside>
-    );
-  return <aside className="sidebar sidebar--left" />;
+  if (mode === 'set') return tab === 'pictures' ? <GraphicsPanel /> : <ObjectLibrary />;
+  if (mode === 'venue') return <VenueLeft />;
+  if (mode === 'lights') return <LightsLeft />;
+  if (mode === 'blocking') return <BlockingLeft />;
+  return null;
 }

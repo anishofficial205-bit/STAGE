@@ -20,7 +20,7 @@ export interface ModeDef {
 export const MODES: ModeDef[] = [
   { id: 'set', label: 'Set', description: 'Build the set: objects, graphics and materials' },
   { id: 'lights', label: 'Lights', description: 'Place, aim and colour stage lights' },
-  { id: 'blocking', label: 'Blocking', description: 'Plan where performers stand, enter and move' },
+  { id: 'blocking', label: 'Performers', description: 'Plan where performers stand, enter and move' },
   { id: 'venue', label: 'Venue', advanced: true, description: 'Backstage & venue: plan the building around the stage — walls, rooms and doors' },
 ];
 

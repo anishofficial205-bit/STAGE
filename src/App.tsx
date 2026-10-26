@@ -1,6 +1,8 @@
 import { TopBar } from './components/TopBar';
-import { ToolsPanel } from './components/ToolsPanel';
-import { PropertiesPanel } from './components/PropertiesPanel';
+import { Dock } from './components/Dock';
+import { LayersSide } from './components/PropertiesPanel';
+import { QuickBar } from './components/QuickBar';
+import { CameraBar } from './components/CameraBar';
 import { Viewport } from './components/Viewport';
 import { ThumbnailRenderer } from './components/Thumbnails';
 import { UndoToast } from './components/UndoToast';
@@ -10,12 +12,11 @@ import { PdfPagePicker } from './components/graphics/PdfPagePicker';
 import { ShortcutsSheet } from './components/ShortcutsSheet';
 import { ModeBar } from './components/ModeBar';
 import { NextStep } from './components/NextStep';
-import { useShell, useTaskDrawers } from './components/shell';
+import { useShell, useDockFollowsSelection } from './components/shell';
 import { DrawerTabs } from './components/DrawerTabs';
 import { LabelDeclutter } from './components/LabelDeclutter';
 import { Home } from './components/Home';
 import { NewProjectDialog } from './components/NewProjectDialog';
-import { ViewCube } from './components/ViewCube';
 import { CrossModeToast } from './components/CrossModeToast';
 import { Tips } from './components/Tips';
 import { useEffect } from 'react';
@@ -28,20 +29,22 @@ import { useVenueUI } from './venue/ui';
 import { ItemMenu } from './components/layers/ItemMenu';
 
 /**
- * Focus layout: the 3D stage fills the window and everything else floats over it —
- * the mode rail on the left, the top bar, the mode's tools and the selection panel.
+ * The 3D stage fills the window and everything else floats over it: the top bar
+ * (project, modes, share), the tool strip and its panel on the left, Layers on the
+ * right, a quick bar over whatever is picked, and the View menu at the bottom.
  */
 export default function App() {
   const mode = useProjectStore((s) => s.mode);
   const venue = mode === 'venue';
   const layout = useVenueUI((s) => s.layout);
   const panels = useShell((s) => s.panels);
-  const drawers = useShell((s) => s.drawers);
-  useTaskDrawers();
+  const dock = useShell((s) => s.dock);
+  const layers = useShell((s) => s.layers);
+  useDockFollowsSelection();
   useEffect(() => startRecentSync(), []);
   const show = venue ? layout : '3d';
   return (
-    <div className={`app app--${mode} ${panels ? '' : 'is-clean'} ${drawers.left ? 'has-left' : ''} ${drawers.right ? 'has-right' : ''}`}>
+    <div className={`app app--${mode} ${panels ? '' : 'is-clean'} ${dock ? 'has-dock' : ''} ${layers ? 'has-layers' : ''}`}>
       <main className={`viewport viewport--${show}`}>
         {show !== '3d' && (
           <div className="viewport__plan">
@@ -56,11 +59,14 @@ export default function App() {
       </main>
       <ModeBar />
       <TopBar />
-      <ToolsPanel />
-      <PropertiesPanel />
-      <NextStep />
+      <Dock />
+      <LayersSide />
+      <QuickBar />
+      <div className="stagebar">
+        <CameraBar />
+        <NextStep />
+      </div>
       <DrawerTabs />
-      {!venue && <ViewCube />}
       <LabelDeclutter />
       <CrossModeToast />
       <ItemMenu />

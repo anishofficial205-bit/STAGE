@@ -5,7 +5,6 @@ import { DOMAIN_MODE, editIn, modeLabel, useForeign, type Pick } from './layers/
 import { can, isHidden, isLocked, remove, toggleHidden, toggleLocked } from './layers/ops';
 import { getObjectType } from '../objects/registry';
 import { FIXTURES } from '../lighting/types';
-import { useRef, useState } from 'react';
 import { ObjectProperties } from './objects/ObjectProperties';
 import { SurfacesSection } from './objects/FacesSection';
 import { SightlineWarnings } from './sightlines/SightlineWarnings';
@@ -162,8 +161,8 @@ function SetProperties() {
   );
 }
 
-/** The selection's properties, by mode (each mode's own panels). */
-function ModeProperties() {
+/** The selection's properties, by mode (each mode's own panels): the left panel's Edit tab. */
+export function ModeProperties() {
   const mode = useProjectStore((s) => s.mode);
   const hasSelection = useProjectStore((s) => s.selectedIds.length > 0);
   const stageSelected = useProjectStore((s) => s.stageSelected);
@@ -186,62 +185,11 @@ function ModeProperties() {
   );
 }
 
-const SPLIT_KEY = 'stage-builder:layers-split';
-const readSplit = () => {
-  try {
-    const v = Number(localStorage.getItem(SPLIT_KEY));
-    return v >= 0.15 && v <= 0.85 ? v : 0.38;
-  } catch {
-    return 0.38;
-  }
-};
-
-/**
- * The right-hand panel, in every mode: Layers on top, the selection's properties
- * below, with a divider you can drag between them.
- */
-export function PropertiesPanel() {
-  const [split, setSplit] = useState(readSplit);
-  const ref = useRef<HTMLElement>(null);
-  const onDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    const box = ref.current!.getBoundingClientRect();
-    const move = (ev: PointerEvent) => setSplit(Math.min(0.85, Math.max(0.15, (ev.clientY - box.top) / box.height)));
-    const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      setSplit((v) => {
-        try {
-          localStorage.setItem(SPLIT_KEY, String(v));
-        } catch {
-          /* not remembered */
-        }
-        return v;
-      });
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  };
+/** The right-hand panel, always there (Focus mode aside): the one Layers list. */
+export function LayersSide() {
   return (
-    <aside className="sidebar sidebar--right sidebar--split" data-tour="panel" ref={ref}>
-      <div className="split__top" style={{ flexBasis: `${split * 100}%` }}>
-        <Outliner />
-      </div>
-      <div
-        className="split__divider"
-        role="separator"
-        aria-orientation="horizontal"
-        aria-label="Drag to resize Layers and Properties"
-        tabIndex={0}
-        onPointerDown={onDown}
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowUp') setSplit((v) => Math.max(0.15, v - 0.05));
-          if (e.key === 'ArrowDown') setSplit((v) => Math.min(0.85, v + 0.05));
-        }}
-      />
-      <div className="split__bottom">
-        <ModeProperties />
-      </div>
+    <aside className="layers-side" aria-label="Layers" data-tour="layers">
+      <Outliner />
     </aside>
   );
 }

@@ -17,7 +17,7 @@ import { ACCEPT, importOnto } from '../../graphics/library';
 import type { SetObject } from '../../objects/types';
 import { removePick } from '../layers/ops';
 
-const QUICK_COLOURS: [string, string][] = [
+export const QUICK_COLOURS: [string, string][] = [
   ['White', '#f2efe9'],
   ['Bone', '#e8e1d2'],
   ['Grey', '#8d8f93'],

@@ -4,7 +4,6 @@ import { useSightlines } from '../../sightlines/store';
 import { rowLetter } from '../../helpers/seats';
 import { blockingFor, seatViewOf, stepSeat } from './seatActions';
 import { useStageSeats } from './useStageSeats';
-import { seatToolsInMenu } from '../CameraBar';
 
 const pct = (f: number) => `${Math.round(f * 100)}%`;
 
@@ -13,31 +12,32 @@ export function ViewTools() {
   const { seatView, sightlinesOn, progress, current, set } = useSightlines();
   const { seats } = useStageSeats();
   const mode = useProjectStore((x) => x.mode);
-  if (!seats.length || seatToolsInMenu(mode)) return null;
+  // The toggles live in the View menu; this only explains what's on and lets you turn it off.
+  if (!seats.length || (!seatView && !sightlinesOn) || mode === 'venue') return null;
   return (
     <div className="view-tools">
-      <button
-        className={`btn ${seatView ? 'is-active' : ''}`}
-        onClick={() => set({ seatView: !seatView, current: seatView ? null : current, blocking: null })}
-        title="Hover the seating and click a seat to see from it"
-      >
-        Seat view
-      </button>
-      <button className={`btn ${sightlinesOn ? 'is-active' : ''}`} onClick={() => set({ sightlinesOn: !sightlinesOn, results: null, progress: sightlinesOn ? null : 0 })} title="Shade every seat by how much of the stage it can see">
-        Sightlines
-      </button>
       {sightlinesOn && (
         <span className="legend">
           {progress !== null ? (
-            `Checking ${pct(progress)}…`
+            `Checking sightlines ${pct(progress)}…`
           ) : (
             <>
               <i className="legend__bar" /> clear → blocked
             </>
           )}
+          <button className="btn btn--small" onClick={() => set({ sightlinesOn: false, results: null, progress: null })}>
+            Hide sightlines
+          </button>
         </span>
       )}
-      {seatView && !current && <span className="hint view-tools__hint">Hover the seats, then click one to sit there.</span>}
+      {seatView && !current && (
+        <span className="legend">
+          Hover the seats, then click one to sit there.
+          <button className="btn btn--small" onClick={() => set({ seatView: false, current: null, blocking: null })}>
+            Done
+          </button>
+        </span>
+      )}
     </div>
   );
 }

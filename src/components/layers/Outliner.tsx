@@ -224,7 +224,16 @@ export function Outliner() {
     const keys: string[] = [];
     walk(tree[sel.domain] ?? [], keys);
     if (keys.some((k) => collapsed.has(k))) setCollapsed((c) => new Set([...c].filter((k) => !keys.includes(k))));
-    requestAnimationFrame(() => listRef.current?.querySelector('.layer.is-selected')?.scrollIntoView({ block: 'nearest' }));
+    // Scroll the list itself (scrollIntoView would also move the page when the panel is a hidden drawer).
+    requestAnimationFrame(() => {
+      const tree = listRef.current?.querySelector<HTMLElement>('.outliner__tree');
+      const row = tree?.querySelector('.layer.is-selected');
+      if (!tree || !row) return;
+      const r = row.getBoundingClientRect();
+      const t = tree.getBoundingClientRect();
+      if (r.top < t.top) tree.scrollTop -= t.top - r.top + 8;
+      else if (r.bottom > t.bottom) tree.scrollTop += r.bottom - t.bottom + 8;
+    });
   }, [selKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const query = q.trim().toLowerCase();

@@ -53,9 +53,14 @@ export const useTips = create<{ tip: { id: TipId; anchor: Anchor } | null; dismi
   },
 }));
 
+/** Tips about what you're doing in a mode; they're stale once you've moved on to another mode. */
+const MODE_TIPS: Partial<Record<TipId, string>> = { stage: 'set', object: 'set', graphic: 'set', light: 'lights', path: 'blocking' };
+
 /** Show a tip the first time (does nothing once it has been seen, or while another is showing). */
 export function showTip(id: TipId, anchor: Anchor) {
   if (seen(id) || useTips.getState().tip) return;
+  const m = MODE_TIPS[id];
+  if (m && useProjectStore.getState().mode !== m) return;
   useTips.setState({ tip: { id, anchor } });
 }
 
@@ -105,7 +110,7 @@ function useTriggers() {
       useProjectStore.subscribe((s, p) => {
         const t = s.templateId;
         // The stage selected for the first time.
-        if (s.stageSelected && !p.stageSelected) window.setTimeout(() => showTip('stage', { selector: '.sidebar--right .stage-props .group' }), 500);
+        if (s.stageSelected && !p.stageSelected) window.setTimeout(() => showTip('stage', { selector: '.dock .stage-props .group' }), 500);
         // First set piece placed.
         const objs = s.objectsByTemplate[t] ?? [];
         const prevObjs = p.objectsByTemplate[t] ?? [];
@@ -118,7 +123,7 @@ function useTriggers() {
         }
         // First graphic put on a face.
         const graphics = (list: typeof objs) => list.reduce((n, o) => n + Object.values(o.faces ?? {}).filter((f) => f?.graphic).length, 0);
-        if (t === p.templateId && graphics(objs) > graphics(prevObjs)) window.setTimeout(() => showTip('graphic', { selector: '.sidebar--right .graphic-controls, .sidebar--right .group' }), 400);
+        if (t === p.templateId && graphics(objs) > graphics(prevObjs)) window.setTimeout(() => showTip('graphic', { selector: '.dock .graphic-controls, .dock .group' }), 400);
         // First light added.
         const lights = s.lightingByTemplate[t]?.fixtures ?? [];
         const prevLights = p.lightingByTemplate[t]?.fixtures ?? [];

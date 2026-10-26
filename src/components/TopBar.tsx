@@ -17,7 +17,6 @@ import { exportName } from '../export/exports';
 import { useShell } from './shell';
 import { recordWithPicture } from '../projects/library';
 import { useActiveBlocking, useActiveLighting } from '../store/useProjectStore';
-import { CameraBar } from './CameraBar';
 import { SaveStatus } from './Autosave';
 
 export function TopBar() {
@@ -34,6 +33,7 @@ export function TopBar() {
   useDismiss(menu !== null, close, menus);
   const lightCount = useActiveLighting().fixtures.length;
   const performerCount = useActiveBlocking().performers.length;
+  const panels = useShell((x) => x.panels);
   useEffect(() => {
     const open = () => setMenu('file');
     window.addEventListener(OPEN_EXPORT_EVENT, open);
@@ -98,10 +98,32 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <CameraBar />
+      <div className="glass project-chip">
+        <button
+          className="round"
+          onClick={() => {
+            void recordWithPicture();
+            useShell.getState().setHome(true);
+          }}
+          title="Home: your projects and new ones"
+          aria-label="Back to home"
+        >
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M15 18l-6-6 6-6" /></svg>
+        </button>
+        <input
+          className="project-chip__name"
+          value={s.projectName}
+          onChange={(e) => s.setProjectName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+          aria-label="Project name"
+          spellCheck={false}
+          size={Math.max(6, Math.min(28, s.projectName.length + 1))}
+        />
+        <span className={`project-chip__dot ${s.dirty ? 'is-dirty' : ''}`} title={s.dirty ? 'Saving…' : 'Saved in this browser'} aria-label={s.dirty ? 'Saving' : 'Saved'} />
+        <SaveStatus />
+      </div>
 
       <div className="topbar__right" ref={menus}>
-        <SaveStatus />
         <span className="glass topbar__group">
           <button className="round" onClick={s.undo} disabled={!s.past.length} title="Undo (⌘Z)" aria-label="Undo">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
@@ -111,7 +133,7 @@ export function TopBar() {
           </button>
         </span>
         <span className="menu">
-          <button className="round glass" onClick={() => toggle('view')} title="Units, labels and snapping" aria-label="View settings" aria-expanded={menu === 'view'}>
+          <button className="round glass" onClick={() => toggle('view')} title="Settings: units, labels, snapping, focus mode" aria-label="Settings" aria-expanded={menu === 'view'}>
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
           </button>
           {menu === 'view' && (
@@ -130,6 +152,12 @@ export function TopBar() {
               <span className="menu__row" title="Each mode shows only its own labels. Turn this on to see every dimension in every mode.">
                 All dimension labels
                 <button className={`switch ${allDims ? 'is-on' : ''}`} role="switch" aria-checked={allDims} onClick={toggleAllDims} aria-label="All dimension labels">
+                  <span className="switch__knob" />
+                </button>
+              </span>
+              <span className="menu__row" title="Hide the panels to see the whole stage (F)">
+                Focus mode <kbd>F</kbd>
+                <button className={`switch ${panels ? '' : 'is-on'}`} role="switch" aria-checked={!panels} onClick={() => useShell.getState().togglePanels()} aria-label="Focus mode">
                   <span className="switch__knob" />
                 </button>
               </span>
@@ -168,7 +196,7 @@ export function TopBar() {
         <span className="menu">
           <button className="glass topbar__share" onClick={() => toggle('file')} aria-expanded={menu === 'file'}>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
-            Export
+            Share
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
           </button>
           {menu === 'file' && (

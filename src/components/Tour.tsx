@@ -23,9 +23,10 @@ interface Step {
 }
 
 const FIRST_RUN: Step[] = [
-  { target: 'modes', side: 'right', title: 'Work in modes', text: 'Set, Lights and Blocking — press 1–3 to switch (4 opens the venue, under Advanced). Things from other modes stay in view but can’t be picked.' },
-  { target: 'panel', side: 'left', title: 'The stage is an object too', text: 'Click the stage floor (or “Stage” in the layers) to change its size or type. Size presets give you a quick starting point.' },
-  { target: 'views', side: 'bottom', title: 'Check the views', text: 'Jump to seats around the venue to see what the audience sees. Drag in the 3D view to look around, scroll to zoom.' },
+  { target: 'modes', side: 'bottom', title: 'Work in steps', text: 'Set, Lights and Performers — press 1–3 to switch (4 is Backstage). Things from other steps stay in view but can’t be picked.' },
+  { target: 'library', side: 'right', title: 'Tools on the left', text: 'Add opens the pieces you can put on stage; Edit shows what you picked. Click a tool again, or ‹, to tuck the panel away.' },
+  { target: 'layers', side: 'left', title: 'Everything on stage', text: 'Every piece, light and performer is listed here. Click to pick it, right-click to delete or hide it.' },
+  { target: 'views', side: 'top', title: 'Check the views', text: 'Look from the audience, from above or from any seat. Drag in the 3D view to look around, scroll to zoom.' },
 ];
 
 const MODE_TOURS: Partial<Record<Mode, Step[]>> = {
