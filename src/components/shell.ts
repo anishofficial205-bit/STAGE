@@ -1,10 +1,4 @@
-import { useEffect } from 'react';
 import { create } from 'zustand';
-import { useProjectStore } from '../store/useProjectStore';
-import { useLightsUI } from '../lighting/ui';
-import { useBlockingUI } from '../blocking/ui';
-import { useVenueUI } from '../venue/ui';
-import { useForeign } from './layers/selection';
 
 const KEY = 'stage-builder:panels';
 /** Below this width the side panels become drawers over the stage. */
@@ -19,12 +13,12 @@ function initialPanels() {
 }
 
 /** The left panel's tabs (null: tucked away). */
-export type DockTab = 'add' | 'edit' | 'pictures';
+export type DockTab = 'add' | 'pictures';
 const DOCK_KEY = 'stage-builder:dock';
 function initialDock(): DockTab | null {
   try {
     const v = localStorage.getItem(DOCK_KEY);
-    return v === 'none' ? null : v === 'edit' || v === 'pictures' ? v : 'add';
+    return v === 'none' ? null : v === 'pictures' ? v : 'add';
   } catch {
     return 'add';
   }
@@ -83,67 +77,3 @@ export const useShell = create<Shell>((set) => ({
   changingStage: false,
   setNewProject: (newProject, changingStage = false) => set({ newProject, changingStage }),
 }));
-
-/**
- * The left panel follows what you're doing without getting in the way: picking a
- * piece leaves it alone (the quick bar over the piece has the common actions and
- * More opens Edit), so you can keep adding. The stage and things picked from
- * another mode have no quick bar, so they open Edit — and letting go of them
- * goes back to the tab you were on.
- */
-export function useDockFollowsSelection() {
-  useEffect(() => {
-    /** Is something picked in the current mode? */
-    const anySelected = () => {
-      const m = useProjectStore.getState().mode;
-      if (m === 'lights') return !!useLightsUI.getState().selected;
-      if (m === 'blocking') return !!useBlockingUI.getState().selected;
-      if (m === 'venue') return !!useVenueUI.getState().selected;
-      return useProjectStore.getState().selectedIds.length > 0;
-    };
-    let had = anySelected();
-    // The tab the panel was on before a pick switched it to Edit: letting go goes back there.
-    let back: DockTab | null = null;
-    const toEdit = () => {
-      const sh = useShell.getState();
-      if (!sh.dock || sh.dock === 'edit') return;
-      back = sh.dock;
-      sh.setDock('edit');
-    };
-    const goBack = () => {
-      const sh = useShell.getState();
-      if (back && sh.dock === 'edit') sh.setDock(back);
-      back = null;
-    };
-    const onSelect = () => {
-      const has = anySelected();
-      if (!has && had && !useProjectStore.getState().stageSelected) goBack();
-      had = has;
-    };
-    const unsubs = [
-      useProjectStore.subscribe((s, p) => {
-        if (s.mode !== p.mode) {
-          had = anySelected();
-          goBack();
-        }
-        if (s.stageSelected && !p.stageSelected) {
-          if (useShell.getState().dock) toEdit();
-          else useShell.getState().setDock('edit');
-        }
-        if (!s.stageSelected && p.stageSelected && !anySelected()) goBack();
-        if (s.selectedIds !== p.selectedIds) onSelect();
-      }),
-      useLightsUI.subscribe(onSelect),
-      useBlockingUI.subscribe(onSelect),
-      useVenueUI.subscribe(onSelect),
-      useForeign.subscribe((s, p) => {
-        if (s.sel && s.sel !== p.sel) {
-          if (useShell.getState().dock) toEdit();
-          else useShell.getState().setDock('edit');
-        }
-        if (!s.sel && p.sel) goBack();
-      }),
-    ];
-    return () => unsubs.forEach((u) => u());
-  }, []);
-}

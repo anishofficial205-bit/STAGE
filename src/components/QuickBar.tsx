@@ -147,7 +147,11 @@ export function QuickBar() {
   const ids = p.ids;
   const one = ids.length === 1;
   const label = one ? nameOf({ domain: p.domain, kind: p.kind, id: ids[0] }) : `${ids.length} selected`;
-  const more = () => useShell.getState().setDock('edit');
+  // More: the full Edit panel under Layers (slid in on a narrow screen), scrolled to the top.
+  const more = () => {
+    useShell.getState().setLayers(true);
+    document.querySelector('.split__bottom')?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const del = () => removePick(p);
 
   let actions: ReactNode;

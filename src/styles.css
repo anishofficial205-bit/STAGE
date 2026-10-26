@@ -1306,3 +1306,21 @@ html, body, #root { overflow: hidden; }
 .venue-list .btn { height: auto; min-height: 38px; padding-top: 6px; padding-bottom: 6px; white-space: normal; text-align: left; flex-wrap: wrap; row-gap: 2px; }
 .venue-list .btn > :first-child { flex: 1 1 auto; min-width: 0; }
 .venue-list .hint { white-space: nowrap; font-size: 12px; }
+
+/* Right side: Layers on top, Edit below, with a draggable divider */
+.layers-side { padding: 0; width: 320px; }
+.app { --right-inset: 352px; }
+.split__top { flex: 0 0 42%; min-height: 0; display: flex; flex-direction: column; padding: 16px 12px 6px; }
+.split__divider { flex: 0 0 11px; cursor: row-resize; position: relative; touch-action: none; }
+.split__divider::after { content: ''; position: absolute; left: 16px; right: 16px; top: 5px; height: 1px; background: var(--border); transition: background 0.12s, height 0.12s; }
+.split__divider:hover::after, .split__divider:focus-visible::after { background: var(--accent); height: 2px; top: 4px; }
+.split__divider:focus-visible { outline: none; }
+.split__bottom { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 18px 18px; }
+.split__bottom > .props:first-child, .split__bottom > .sight-warn + .props, .split__bottom > .props:only-child { border-top: 0; margin-top: 0; padding-top: 0; }
+.split__bottom .panel-title { font-size: 18px; font-weight: 500; color: var(--text); text-transform: none; letter-spacing: 0; }
+@media (max-width: 1099px) {
+  .app { --right-inset: 16px; }
+  .layers-side { width: min(320px, calc(100vw - 116px)); }
+  .app.has-layers .drawer-tab--right { right: calc(min(320px, calc(100vw - 116px)) + 24px); }
+  .app.has-layers .stagebar { right: calc(min(320px, calc(100vw - 116px)) + 24px); }
+}

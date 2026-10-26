@@ -12,7 +12,7 @@ import { PdfPagePicker } from './components/graphics/PdfPagePicker';
 import { ShortcutsSheet } from './components/ShortcutsSheet';
 import { ModeBar } from './components/ModeBar';
 import { NextStep } from './components/NextStep';
-import { useShell, useDockFollowsSelection } from './components/shell';
+import { useShell } from './components/shell';
 import { DrawerTabs } from './components/DrawerTabs';
 import { LabelDeclutter } from './components/LabelDeclutter';
 import { Home } from './components/Home';
@@ -40,7 +40,6 @@ export default function App() {
   const panels = useShell((s) => s.panels);
   const dock = useShell((s) => s.dock);
   const layers = useShell((s) => s.layers);
-  useDockFollowsSelection();
   useEffect(() => startRecentSync(), []);
   const show = venue ? layout : '3d';
   return (
