@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Field } from '../fields';
-import { Collapsible } from '../Collapsible';
 import { useActiveLighting, useProjectStore } from '../../store/useProjectStore';
 import { FIXTURES, GELS, kelvinToHex, type Fixture, type FixtureType, type HangPosition, type Vec3 } from '../../lighting/types';
 import { lightActions } from '../../lighting/actions';
@@ -15,6 +14,8 @@ import { Plain } from '../../glossary/Plain';
 import { MoreOptions } from '../MoreOptions';
 import { MOODS, SIMPLE_LIGHTS, applyMood, useLightPlacing } from '../../lighting/moods';
 import { removePick } from '../layers/ops';
+import { Drill, Group, ListHead, Row, RowPlus, RowSwitch, type PageDef } from '../SettingsList';
+import { create } from 'zustand';
 
 export const LIGHT_DRAG_TYPE = 'application/x-stage-light';
 
@@ -51,20 +52,13 @@ function Library() {
   return (
     <>
       <div className="library__grid">
-        {SIMPLE_LIGHTS.map((x) => (
-          <LightTile key={x.type} t={x.type} name={x.name} />
-        ))}
+        {(Object.keys(FIXTURES) as FixtureType[])
+          .filter((t) => !simple.includes(t))
+          .map((t) => (
+            <LightTile key={t} t={t} />
+          ))}
       </div>
-      <Collapsible id="light-more-types" title="More light types" defaultOpen={false}>
-        <div className="library__grid">
-          {(Object.keys(FIXTURES) as FixtureType[])
-            .filter((t) => !simple.includes(t))
-            .map((t) => (
-              <LightTile key={t} t={t} />
-            ))}
-        </div>
-        <p className="hint">Place manually: drag any light onto a light bar, a side pole or the floor.</p>
-      </Collapsible>
+      <p className="sl-note">Click one, then click on stage — or drag it onto a light bar, a side pole or the floor.</p>
     </>
   );
 }
@@ -74,27 +68,33 @@ function Positions() {
     <>
       <div className="btn-row">
         <button className="btn btn--small" onClick={() => lightActions.addPosition('electric')}>
-          + <Plain text="Electric" />
+          + Bar over the stage
         </button>
         <button className="btn btn--small" onClick={() => lightActions.addPosition('foh')}>
-          + <Plain text="FOH truss" />
+          + Bar over the audience
         </button>
         <button className="btn btn--small" onClick={() => lightActions.addPosition('boom')}>
-          + <Plain text="Boom" />
+          + Side pole
         </button>
       </div>
-      <p className="hint">Lights snap to the light bars, the frame over the audience, side poles, lighting frames from the set and the stage’s own rigging — or the floor.</p>
+      <p className="sl-note">Lights snap to these, to frames from the set, or to the floor.</p>
     </>
   );
 }
 
-/** Left side in Lights mode. */
-export function LightsLeft() {
+/**
+ * Lights mode's keys and setup, mounted all the time (the panels can be tucked
+ * away): Delete removes, ⌘/Ctrl+D duplicates, A aims, Esc deselects.
+ */
+export function useLightsMode() {
   const templateId = useProjectStore((s) => s.templateId);
-  useEffect(() => lightActions.ensureReady(), [templateId]);
-  // Keys: Delete removes, ⌘/Ctrl+D duplicates, A aims, Esc deselects.
+  const mode = useProjectStore((s) => s.mode);
+  useEffect(() => {
+    if (mode === 'lights') lightActions.ensureReady();
+  }, [templateId, mode]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (useProjectStore.getState().mode !== 'lights') return;
       const el = e.target as HTMLElement;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
       const ui = useLightsUI.getState();
@@ -116,18 +116,45 @@ export function LightsLeft() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-  const fixtureCount = useActiveLighting().fixtures.length;
+}
+
+/** Start placing a light (or add it straight away when it stands on the floor). */
+function chooseLight(t: FixtureType) {
+  if (FIXTURES[t].mount !== 'rig') return void lightActions.addFixture(t);
+  const p = useLightPlacing.getState();
+  if (p.type === t) p.cancel();
+  else p.start(t);
+}
+
+/** “Add a light” rows: the three everyday lights, and a page with the other kinds. */
+function AddLightRows() {
+  const choosing = useLightPlacing((s) => s.type);
   return (
     <>
-      <Collapsible id="light-library" title="Add lights" tour="light-library">
-        <Library />
-      </Collapsible>
-      <Collapsible id="light-positions" title="Hanging positions">
-        <Positions />
-      </Collapsible>
-      <LooksSection />
-      {fixtureCount >= 2 && <GroupsSection />}
+      {SIMPLE_LIGHTS.map((x) => (
+        <Row key={x.type} icon={<span className="sl-glyph">{ICONS[x.type]}</span>} label={x.name} value={choosing === x.type ? 'Click the stage…' : undefined} accent={choosing === x.type} action={<RowPlus />} onClick={() => chooseLight(x.type)} title={x.help} />
+      ))}
+      <Row label="More kinds" value={String(Object.keys(FIXTURES).length - SIMPLE_LIGHTS.length)} page="more-kinds" />
     </>
+  );
+}
+
+const moreKindsPage: PageDef = { title: 'More kinds of light', render: () => <Library /> };
+const placesPage: PageDef = { title: 'Places to hang lights', render: () => <Positions /> };
+
+/** The left panel in Lights mode: adding lights and places to hang them. */
+export function LightsLeft() {
+  const positions = useActiveLighting().positions.length;
+  return (
+    <Drill pages={{ 'more-kinds': moreKindsPage, places: placesPage }}>
+      <Group>
+        <AddLightRows />
+      </Group>
+      <Group>
+        <Row label="Places to hang lights" value={String(positions)} page="places" />
+      </Group>
+      <p className="sl-note">Pick a light, then click on stage where you want it.</p>
+    </Drill>
   );
 }
 
@@ -383,105 +410,123 @@ function PositionProps({ p }: { p: HangPosition }) {
   );
 }
 
+/** The mood last picked (shown on the Mood row until the lights are changed by hand). */
+const useLastMood = create<{ name: string | null; set: (name: string | null) => void }>((set) => ({ name: null, set: (name) => set({ name }) }));
+const pickMood = (id: string) => {
+  applyMood(id);
+  useLastMood.getState().set(MOODS.find((m) => m.id === id)?.name ?? null);
+};
+
+/** Lights with nothing picked: a list — mood, audience and work light, adding lights, then looks, groups, the plan and haze. */
 function Overview() {
   const lighting = useActiveLighting();
   const quality = useProjectStore((s) => s.lightQuality);
   const workLight = useLightsUI((s) => s.workLight);
+  const lastMood = useLastMood((s) => s.name);
   const house = lighting.fixtures.filter((f) => f.type === 'house');
   const houseLevel = house.length ? Math.round(house.reduce((t, f) => t + (f.on ? f.intensity : 0), 0) / house.length) : 0;
   const { real, approx, shadows } = lightBudget(lighting.fixtures, quality);
   const lit = real.size + approx.size;
-  const [lastMood, setLastMood] = useState<string | null>(null);
-  return (
-    <div className="props">
-      <div className="panel-head">
-        <h2 className="panel-title">Lights</h2>
-      </div>
-      {lighting.fixtures.length ? (
-        <p className="sidebar__empty">Pick a mood, or click a light to change its colour and brightness.</p>
-      ) : (
-        <div className="empty-state">
-          <p>Pick a mood to light your stage.</p>
-          <button className="btn btn--primary btn--big" onClick={() => (applyMood('warm'), setLastMood('Warm evening'))}>
-            Light the stage
-          </button>
-        </div>
-      )}
-      <div className="mood-cards">
-        {MOODS.map((m) => {
-          const current = lighting.looks.some((k) => k.name === m.name) && lastMood === m.name;
-          return (
-            <button key={m.id} className={`mood-card ${current ? 'is-active' : ''}`} onClick={() => (applyMood(m.id), setLastMood(m.name))} title={m.blurb}>
+  const mood = MOODS.find((m) => m.name === lastMood);
+  const count = lighting.fixtures.length;
+
+  const pages: Record<string, PageDef | null> = {
+    mood: {
+      title: 'Mood',
+      render: () => (
+        <div className="mood-cards">
+          {MOODS.map((m) => (
+            <button key={m.id} className={`mood-card ${m.name === lastMood ? 'is-active' : ''}`} onClick={() => pickMood(m.id)} title={m.blurb}>
               <img src={m.image} alt="" />
               <span className="mood-card__name">{m.name}</span>
             </button>
-          );
-        })}
-      </div>
-      <label className="field field--inline">
-        <span className="field__label">Work light</span>
-        <button type="button" role="switch" aria-checked={workLight} className={`switch ${workLight ? 'is-on' : ''}`} onClick={() => useLightsUI.getState().toggleWorkLight()}>
-          <span className="switch__knob" />
-        </button>
-      </label>
-      {house.length > 0 ? (
-        <Field def={num('house', 'House lights (%)', 0, 100, 1)} value={houseLevel} units="m" onChange={(v) => lightActions.patch(house.map((f) => f.id), { intensity: v as number, on: (v as number) > 0 }, 'house')} />
-      ) : (
-        <div className="field">
-          <span className="field__label">House lights</span>
-          <button className="btn btn--small" onClick={() => lightActions.addFixture('house')}>
-            + Add house lights
-          </button>
+          ))}
         </div>
-      )}
-      {lighting.fixtures.length > 0 && (
-        <div className="btn-row">
-          <button className="btn" onClick={() => useLightsUI.getState().setPlotOpen(true)} title="A drawing of where every light hangs, for the crew">
-            <Plain text="Light plot" />
-          </button>
-        </div>
-      )}
-      <MoreOptions id="lights">
-        <section className="group">
-          <h3 className="group__title">Atmosphere</h3>
+      ),
+    },
+    audience: {
+      title: 'Audience lights',
+      render: () =>
+        house.length > 0 ? (
+          <Field def={num('house', 'Brightness (%)', 0, 100, 1)} value={houseLevel} units="m" onChange={(v) => lightActions.patch(house.map((f) => f.id), { intensity: v as number, on: (v as number) > 0 }, 'house')} />
+        ) : (
+          <>
+            <p className="sl-note">Soft light over the seats, set as one level.</p>
+            <button className="btn btn--primary" onClick={() => lightActions.addFixture('house')}>
+              + Add audience lights
+            </button>
+          </>
+        ),
+    },
+    'more-kinds': moreKindsPage,
+    places: placesPage,
+    looks: { title: 'Saved looks', render: () => <LooksSection /> },
+    groups: count >= 2 ? { title: 'Light groups', render: () => <GroupsSection /> } : null,
+    atmosphere: {
+      title: 'Haze and quality',
+      render: () => (
+        <>
           <label className="field field--inline">
-            <span className="field__label">
-              <Plain text="Haze (visible beams)" />
-            </span>
+            <span className="field__label">Haze (see the beams)</span>
             <button type="button" role="switch" aria-checked={lighting.haze.on} className={`switch ${lighting.haze.on ? 'is-on' : ''}`} onClick={() => lightActions.setHaze({ on: !lighting.haze.on })}>
               <span className="switch__knob" />
             </button>
           </label>
-          {lighting.haze.on && <Field def={num('density', 'Density (%)', 0, 100, 1)} value={lighting.haze.density} units="m" onChange={(v) => lightActions.setHaze({ density: v as number })} />}
-        </section>
-        <section className="group">
-          <h3 className="group__title">Quality</h3>
+          {lighting.haze.on && <Field def={num('density', 'How thick (%)', 0, 100, 1)} value={lighting.haze.density} units="m" onChange={(v) => lightActions.setHaze({ density: v as number })} />}
+          <p className="sl-gt">Quality</p>
           <div className="segmented segmented--wide2" role="group" aria-label="Lighting quality">
             <button className={quality === 'draft' ? 'is-active' : ''} onClick={() => useProjectStore.getState().setLightQuality('draft')} title="Fast: no shadows (gobos still project)">
-              Draft
+              Fast
             </button>
             <button className={quality === 'presentation' ? 'is-active' : ''} onClick={() => useProjectStore.getState().setLightQuality('presentation')} title={`Shadows from up to ${MAX_SHADOWS} lights; exports always use this`}>
-              Presentation
+              With shadows
             </button>
           </div>
-          <p className="hint">
-            {lighting.fixtures.length} lights · {lit} on · {shadows.size} casting shadows
+          <p className="sl-note">
+            {count} lights · {lit} on · {shadows.size} casting shadows
           </p>
-        </section>
-        {lighting.fixtures.length > 0 && (
-          <div className="btn-row">
+          {count > 0 && (
             <button className="btn" onClick={lightActions.renumber} title="Number channels from front of house to the back">
-              <Plain text="Renumber channels" />
+              Renumber the lights
             </button>
-          </div>
-        )}
-      </MoreOptions>
+          )}
+        </>
+      ),
+    },
+  };
+
+  return (
+    <Drill pages={pages}>
+      <ListHead title="Lights" />
+      {count === 0 && (
+        <div className="empty-state">
+          <p>Pick a mood to light your stage.</p>
+          <button className="btn btn--primary btn--big" onClick={() => pickMood('warm')}>
+            Light the stage
+          </button>
+        </div>
+      )}
+      <Group>
+        <Row icon={mood ? <img className="sl-thumb" src={mood.image} alt="" /> : undefined} label="Mood" value={lastMood ?? 'Pick one'} page="mood" />
+        <Row label="Audience lights" value={house.length ? `${houseLevel}%` : 'None'} page="audience" />
+        <Row label="Work light" title="Flat bright light while you build" action={<RowSwitch on={workLight} />} onClick={() => useLightsUI.getState().toggleWorkLight()} />
+      </Group>
+      <Group title="Add a light">
+        <AddLightRows />
+      </Group>
+      <Group>
+        <Row label="Places to hang lights" value={String(lighting.positions.length)} page="places" />
+        <Row label="Saved looks" value={lighting.looks.length ? String(lighting.looks.length) : ''} page="looks" />
+        {count >= 2 && <Row label="Light groups" value={lighting.groups.length ? String(lighting.groups.length) : ''} page="groups" />}
+        <Row label="Plan for the crew" disabled={!count} onClick={() => useLightsUI.getState().setPlotOpen(true)} action={<span className="sl-row__chev-text">Open</span>} title="A drawing of where every light hangs" />
+        <Row label="Haze and quality" value={lighting.haze.on ? 'Haze on' : ''} page="atmosphere" />
+      </Group>
       {approx.size > 0 && (
-        <p className="panel-msg panel-msg--info">
-          {lit} lights are on. To keep the view fast, the {MAX_REAL} brightest are real lights; the other {approx.size} are drawn as soft pools of light (and haze beams).
+        <p className="sl-note">
+          {lit} lights are on. To keep things fast, the {MAX_REAL} brightest are real lights and the other {approx.size} are drawn as soft pools.
         </p>
       )}
-    </div>
+    </Drill>
   );
 }
 

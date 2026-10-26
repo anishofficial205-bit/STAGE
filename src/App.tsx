@@ -27,12 +27,21 @@ import { VenueViewBar } from './components/venue/VenuePanels';
 import { useProjectStore } from './store/useProjectStore';
 import { useVenueUI } from './venue/ui';
 import { ItemMenu } from './components/layers/ItemMenu';
+import { useLightsMode } from './components/lights/LightsPanels';
+import { useBlockingKeys } from './components/blocking/BlockingPanels';
 
 /**
  * The 3D stage fills the window and everything else floats over it: the top bar
  * (project, modes, share), the tool strip and its panel on the left, Layers on the
  * right, a quick bar over whatever is picked, and the View menu at the bottom.
  */
+/** Each mode's keyboard shortcuts and setup, active whether or not its panels are open. */
+function ModeEffects() {
+  useLightsMode();
+  useBlockingKeys();
+  return null;
+}
+
 export default function App() {
   const mode = useProjectStore((s) => s.mode);
   const venue = mode === 'venue';
@@ -72,6 +81,7 @@ export default function App() {
       <Tips />
       <UndoToast />
       <Shortcuts />
+      <ModeEffects />
       <PdfPagePicker />
       <ShortcutsSheet />
       <LightPlot />

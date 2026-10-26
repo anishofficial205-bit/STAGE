@@ -1324,3 +1324,53 @@ html, body, #root { overflow: hidden; }
   .app.has-layers .drawer-tab--right { right: calc(min(320px, calc(100vw - 116px)) + 24px); }
   .app.has-layers .stagebar { right: calc(min(320px, calc(100vw - 116px)) + 24px); }
 }
+
+/* ===== Settings lists (Panels 2): grouped rows with their value; rows open pages in place ===== */
+.sl-list, .sl-page { display: flex; flex-direction: column; gap: 14px; }
+.sl-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 36px; }
+.sl-head__title { margin: 0; font-size: 19px; font-weight: 500; }
+.sl-head__sub { margin: 2px 0 0; font-size: 13.5px; color: var(--muted); }
+.sl-groupwrap { display: flex; flex-direction: column; gap: 7px; }
+.sl-gt { margin: 4px 0 0 4px; font-size: 13px; color: var(--muted); }
+.sl-group { display: flex; flex-direction: column; border-radius: 15px; background: rgba(255, 255, 255, 0.045); border: 1px solid rgba(255, 255, 255, 0.06); overflow: hidden; }
+.sl-row { display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 6px 14px; border: 0; border-top: 1px solid rgba(255, 255, 255, 0.06); background: transparent; color: var(--text); font: inherit; font-size: 15px; text-align: left; cursor: pointer; width: 100%; box-sizing: border-box; }
+.sl-row:first-child { border-top: 0; }
+.sl-row:hover:not(:disabled) { background: rgba(255, 255, 255, 0.05); }
+.sl-row:disabled { opacity: 0.45; cursor: default; }
+.sl-row.is-accent .sl-row__label { color: #f8a56f; }
+.sl-row__label { flex: 1 1 auto; min-width: 0; }
+.sl-row__value { flex: 0 1 auto; color: var(--muted); font-size: 14px; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+.sl-row__chev { width: 16px; height: 16px; flex: none; color: #7d6c61; }
+.sl-row__chev-text { flex: none; font-size: 13.5px; color: #f8a56f; }
+.sl-row__icon { flex: none; display: flex; align-items: center; justify-content: center; }
+.sl-row__plus { flex: none; width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); display: grid; place-items: center; font-size: 19px; line-height: 1; color: var(--text); }
+.sl-row .switch { flex: none; }
+.sl-row--input { cursor: default; }
+.sl-row--input .field__input { flex: 1; }
+.sl-glyph { width: 30px; height: 30px; border-radius: 9px; background: rgba(242, 122, 53, 0.14); color: #f8a56f; display: grid; place-items: center; font-size: 14px; }
+.sl-thumb { width: 44px; height: 30px; border-radius: 7px; object-fit: cover; display: block; }
+.sl-dot { width: 12px; height: 12px; border-radius: 50%; display: block; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3); }
+.sl-good { color: var(--good); }
+.sl-warn { color: var(--warn-text); }
+.sl-danger { color: var(--danger); }
+.sl-note { margin: 0 4px; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+.sl-page__head { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+.sl-page__title { margin: 0; font-size: 19px; font-weight: 500; }
+.sl-back { width: 36px; height: 36px; flex: none; border-radius: 11px; border: 0; background: rgba(255, 255, 255, 0.07); color: var(--text); display: grid; place-items: center; cursor: pointer; }
+.sl-back:hover { background: var(--hover); }
+.sl-page__body { display: flex; flex-direction: column; gap: 12px; }
+.sl-page__body .flat-section { display: flex; flex-direction: column; gap: 12px; }
+.sl-page__body .flat-section > .hint:last-child, .sl-page__body > .hint { font-size: 13.5px; }
+.sl-sizes { display: flex; flex-direction: column; gap: 8px; }
+.sl-size { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.08); background: rgba(255, 255, 255, 0.04); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.sl-size.is-active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.sl-size b { display: block; font-weight: 500; font-size: 15px; }
+.sl-size small { color: var(--muted); font-size: 13px; }
+.sl-size .preset-card__plan { width: 56px; height: 40px; flex: none; }
+.split__bottom .sl-list > .empty-state, .dock__body .sl-list > .empty-state { margin: 0; }
+.dock__body > .sl-list, .dock__body > .sl-page { padding-top: 2px; }
+/* In a settings page a value is one clear box to type in — no slider beside it */
+.sl-page__body .field__slider { display: none; }
+.sl-page__body .field__row { display: block; }
+.sl-page__body .field__number { width: 100%; height: 46px; box-sizing: border-box; }
+.sl-page__body .field__number input { font-size: 17px; }

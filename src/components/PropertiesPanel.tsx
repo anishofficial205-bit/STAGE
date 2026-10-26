@@ -14,7 +14,6 @@ import { LightsProperties } from './lights/LightsPanels';
 import { BlockingProperties } from './blocking/BlockingPanels';
 import type { ParamDef, ParamValue } from '../types';
 import { Field } from './fields';
-import { MoreOptions } from './MoreOptions';
 import { formatLength } from '../units';
 import type { Units } from '../units';
 
@@ -38,12 +37,28 @@ function PresetPlan({ w, d }: { w: number; d: number }) {
 import { lookup, plainText } from '../glossary/terms';
 import { usePlacing } from '../objects/placing';
 import { useShell } from './shell';
-import { ExampleProjects, MyTemplates } from './ToolsPanel';
+import { MyTemplates } from './ToolsPanel';
+import { Drill, Group, ListHead, Row, type PageDef } from './SettingsList';
 
 /**
  * Generated entirely from the active template's params schema — templates never
  * need to touch this file. Params are grouped by their `group` field in order.
  */
+/** A setting's value in a few words, for the right of a row. */
+export function describeValue(def: ParamDef, value: ParamValue | undefined, units: Units): string {
+  if (value === undefined) return '';
+  if (def.type === 'number') {
+    if (def.unit !== 'none') return formatLength(Number(value), units);
+    // Counts read as words: "15 rows", not a bare "15".
+    const n = Math.round(Number(value) * 100) / 100;
+    return `${n} ${def.label.replace(/^number of /i, '').toLowerCase()}`;
+  }
+  if (def.type === 'boolean') return value ? 'On' : 'Off';
+  if (def.type === 'select') return plainText(def.options.find((o) => o.value === value)?.label ?? String(value));
+  return '';
+}
+
+/** The stage's settings, as a list: type, size and height, then everything around it, one page each. */
 function TemplateProperties() {
   const templateId = useProjectStore((s) => s.templateId);
   const units = useProjectStore((s) => s.units);
@@ -55,87 +70,97 @@ function TemplateProperties() {
   const template = getTemplate(templateId)!;
   const selectStage = useProjectStore((s) => s.selectStage);
 
-  // Width, depth and height first; everything else under More options.
-  const mainKeys = template.dimensions ? [template.dimensions.width, template.dimensions.depth, template.dimensions.height].filter(Boolean) : [];
-  const main = mainKeys.map((k) => template.params.find((d) => d.key === k)).filter((d): d is ParamDef => !!d && (!d.visible || d.visible(params)));
+  const dims = template.dimensions;
+  const def = (k?: string) => (k ? template.params.find((d) => d.key === k && (!d.visible || d.visible(params))) : undefined);
+  const width = def(dims?.width);
+  const depth = def(dims?.depth);
+  const height = def(dims?.height);
+  const mainKeys = [dims?.width, dims?.depth, dims?.height].filter(Boolean) as string[];
   const groups: { name: string; defs: ParamDef[] }[] = [];
-  for (const def of template.params) {
-    if (def.visible && !def.visible(params)) continue;
-    if (mainKeys.includes(def.key)) continue;
-    let g = groups.find((x) => x.name === def.group);
-    if (!g) groups.push((g = { name: def.group, defs: [] }));
-    g.defs.push(def);
+  for (const d of template.params) {
+    if (d.visible && !d.visible(params)) continue;
+    if (mainKeys.includes(d.key)) continue;
+    let g = groups.find((x) => x.name === d.group);
+    if (!g) groups.push((g = { name: d.group, defs: [] }));
+    g.defs.push(d);
   }
   const messages = template.messages?.(params, data) ?? [];
   const Extra = template.Panel;
+  const field = (d: ParamDef) => <Field key={d.key} def={d} value={params[d.key]} units={units} onChange={(v) => setParam(d.key, v as ParamValue)} />;
+  const name = lookup(template.name)?.plain ?? template.name;
+  const size = width && depth ? formatSize(Number(params[width.key]), Number(params[depth.key]), units) : '';
 
-  return (
+  const sizePage = () => (
     <>
-      <div className="panel-head">
-        <h2 className="panel-title">
-          Stage — {template.name}
-        </h2>
-        <button className="btn btn--small" onClick={() => selectStage(false)} title="Stop editing the stage">
-          Done
-        </button>
-      </div>
-      {lookup(template.name) && lookup(template.name)!.plain !== template.name && <p className="hint">{lookup(template.name)!.plain}</p>}
-      <div className="stage-props__actions">
-        <button className="btn btn--small" onClick={() => useShell.getState().setNewProject(true, true)}>
-          Change stage type…
-        </button>
-        <button className="btn btn--link" onClick={resetToDefaults} title="Put every setting of this stage back to its default">
-          Reset to defaults
-        </button>
-      </div>
+      {[width, depth].filter((d): d is ParamDef => !!d).map(field)}
       {template.presets && template.presets.length > 0 && (
-        <section className="presets">
-          <h3 className="group__title">Start from a size</h3>
-          <div className="preset-cards">
+        <>
+          <p className="sl-gt">Or pick a common size</p>
+          <div className="sl-sizes">
             {template.presets.map((preset, i) => {
               const active = Object.entries(preset.params).every(([k, v]) => params[k] === v);
-              const dims = template.dimensions;
               const w = dims?.width ? Number(preset.params[dims.width] ?? params[dims.width]) : NaN;
               const d = dims?.depth ? Number(preset.params[dims.depth] ?? params[dims.depth]) : NaN;
               return (
-                <button key={preset.name} className={`preset-card ${active ? 'is-active' : ''}`} onClick={() => applyPreset(i)} title={preset.description}>
+                <button key={preset.name} className={`sl-size ${active ? 'is-active' : ''}`} onClick={() => applyPreset(i)} title={preset.description}>
                   <PresetPlan w={w} d={d} />
-                  <span className="preset-card__name">{preset.name}</span>
-                  {Number.isFinite(w) && Number.isFinite(d) && <span className="preset-card__dims">{formatSize(w, d, units)}</span>}
+                  <span>
+                    <b>{preset.name}</b>
+                    {Number.isFinite(w) && Number.isFinite(d) && <small>{formatSize(w, d, units)}</small>}
+                  </span>
                 </button>
               );
             })}
           </div>
-        </section>
+        </>
       )}
+      <p className="sl-note">You can also drag the round handles on the stage.</p>
+    </>
+  );
+
+  const pages: Record<string, PageDef | null> = {
+    size: { title: 'Size', render: sizePage },
+    height: height ? { title: 'Height', render: () => field(height) } : null,
+    saved: { title: 'My saved stages', render: () => <MyTemplates /> },
+  };
+  const plainName = (t: string) => lookup(t)?.plain ?? t;
+  for (const g of groups) pages[`g:${g.name}`] = { title: plainName(g.name), render: () => <>{g.defs.map(field)}</> };
+
+  return (
+    <Drill resetKey={templateId} pages={pages}>
+      <ListHead
+        title="Stage"
+        action={
+          <button className="btn btn--small" onClick={() => selectStage(false)} title="Stop editing the stage (Esc)">
+            Done
+          </button>
+        }
+      />
       {messages.map((m, i) => (
         <p key={i} className={`panel-msg panel-msg--${m.kind}`}>
           {m.text}
         </p>
       ))}
       {Extra && <Extra />}
-      {main.length > 0 && (
-        <section className="group">
-          <h3 className="group__title">Stage size</h3>
-          {main.map((def) => (
-            <Field key={def.key} def={def} value={params[def.key]} units={units} onChange={(v) => setParam(def.key, v as ParamValue)} />
+      <Group>
+        <Row label="Type" value={name} onClick={() => useShell.getState().setNewProject(true, true)} action={<span className="sl-row__chev-text">Change</span>} />
+        {width && depth && <Row label="Size" value={size} page="size" />}
+        {height && <Row label="Height" value={describeValue(height, params[height.key], units)} page="height" />}
+      </Group>
+      {groups.length > 0 && (
+        <Group title="Around the stage">
+          {groups.map((g) => (
+            <Row key={g.name} label={plainName(g.name)} value={describeValue(g.defs[0], params[g.defs[0].key], units)} page={`g:${g.name}`} />
           ))}
-          <p className="hint">Tip: drag the round handles on the stage edges to resize it.</p>
-        </section>
+        </Group>
       )}
-      <MoreOptions id={`stage:${template.id}`}>
-        {groups.map((g) => (
-          <section key={g.name} className="group">
-            <h3 className="group__title">{g.name}</h3>
-            {g.defs.map((def) => (
-              <Field key={def.key} def={def} value={params[def.key]} units={units} onChange={(v) => setParam(def.key, v as ParamValue)} />
-            ))}
-          </section>
-        ))}
-      </MoreOptions>
-      <MyTemplates />
-      <ExampleProjects />
-    </>
+      <Group>
+        <Row label="My saved stages" page="saved" />
+      </Group>
+      <Group>
+        <Row label="Reset the stage" accent onClick={resetToDefaults} title="Put every setting of this stage back to its default" />
+      </Group>
+    </Drill>
   );
 }
 

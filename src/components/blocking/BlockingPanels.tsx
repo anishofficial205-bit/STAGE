@@ -8,58 +8,41 @@ import { useBlockingUI } from '../../blocking/ui';
 import { computeEntrances } from '../../blocking/entrances';
 import { SPEEDS, initials, type Path, type Performer } from '../../blocking/types';
 import { ChecksSection } from './ChecksPanel';
+import { Drill, Group, ListHead, Row, RowPlus, type PageDef } from '../SettingsList';
 import { Plain } from '../../glossary/Plain';
-import { plainText } from '../../glossary/terms';
+import { lookup, plainText } from '../../glossary/terms';
 import { removePick } from '../layers/ops';
 
+/** Scenes as rows (click one to open it), then what you can do to the one that's open. */
 function Scenes() {
   const b = useActiveBlocking();
-  const [editing, setEditing] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const i = b.scenes.findIndex((x) => x.id === b.sceneId);
+  const scene = b.scenes[i];
   return (
-    <Collapsible id="bk-scenes" title={`Scenes (${b.scenes.length})`}>
-      <ul className="look-list">
-        {b.scenes.map((s, i) => (
-          <li key={s.id} className={`look-row ${s.id === b.sceneId ? 'is-current' : ''}`}>
-            {editing === s.id ? (
-              <input className="field__input" autoFocus value={s.name} onChange={(e) => blockingActions.renameScene(s.id, e.target.value)} onBlur={() => setEditing(null)} onKeyDown={(e) => e.key === 'Enter' && setEditing(null)} />
-            ) : (
-              <button className="look-row__go" onClick={() => blockingActions.openScene(s.id)} onDoubleClick={() => setEditing(s.id)} title="Open this scene (double-click to rename)">
-                {i + 1}. {s.name}
-              </button>
-            )}
-            <span className="look-row__tools">
-              <button onClick={() => blockingActions.moveScene(s.id, -1)} disabled={i === 0} title="Move up">
-                ▲
-              </button>
-              <button onClick={() => blockingActions.moveScene(s.id, 1)} disabled={i === b.scenes.length - 1} title="Move down">
-                ▼
-              </button>
-              <button onClick={() => setEditing(s.id)} title="Rename">✎</button>
-              <button onClick={() => blockingActions.duplicateScene(s.id)} title="Duplicate: a new scene starting where this one ends">⧉</button>
-              <button onClick={() => blockingActions.removeScene(s.id)} disabled={b.scenes.length <= 1} title="Delete">
-                ×
-              </button>
-            </span>
-          </li>
+    <>
+      <Group>
+        {b.scenes.map((s, n) => (
+          <Row key={s.id} label={`${n + 1}. ${s.name}`} accent={s.id === b.sceneId} value={s.id === b.sceneId ? 'Open' : ''} onClick={() => blockingActions.openScene(s.id)} />
         ))}
-      </ul>
-      <button className="btn btn--small" onClick={blockingActions.addScene}>
-        + Add scene
-      </button>
-    </Collapsible>
-  );
-}
-
-/** Adding performers (they're listed, renamed, hidden and deleted in Layers). */
-function Cast() {
-  const count = useActiveBlocking().performers.length;
-  return (
-    <Collapsible id="bk-cast" title={`Cast (${count})`} tour="cast">
-      <button className="btn btn--small" onClick={blockingActions.addPerformer}>
-        + Add performer
-      </button>
-      <p className="hint">Performers are listed in Layers on the right; click one to change its colour, height and posture.</p>
-    </Collapsible>
+        <Row label="Add a scene" accent action={<RowPlus />} onClick={blockingActions.addScene} />
+      </Group>
+      {scene && (
+        <Group title={`This scene: ${scene.name}`}>
+          {renaming ? (
+            <div className="sl-row sl-row--input">
+              <input className="field__input" autoFocus value={scene.name} onChange={(e) => blockingActions.renameScene(scene.id, e.target.value)} onBlur={() => setRenaming(false)} onKeyDown={(e) => e.key === 'Enter' && setRenaming(false)} aria-label="Scene name" />
+            </div>
+          ) : (
+            <Row label="Rename" onClick={() => setRenaming(true)} />
+          )}
+          <Row label="Copy it" value="starts where this one ends" onClick={() => blockingActions.duplicateScene(scene.id)} />
+          <Row label="Move earlier" disabled={i === 0} onClick={() => blockingActions.moveScene(scene.id, -1)} />
+          <Row label="Move later" disabled={i === b.scenes.length - 1} onClick={() => blockingActions.moveScene(scene.id, 1)} />
+          <Row label={<span className="sl-danger">Delete this scene</span>} disabled={b.scenes.length <= 1} onClick={() => blockingActions.removeScene(scene.id)} />
+        </Group>
+      )}
+    </>
   );
 }
 
@@ -100,38 +83,33 @@ function Groups() {
   );
 }
 
+/** Ways on and off stage, found from the stage and venue, plus any you add. */
 function Entrances() {
   const b = useActiveBlocking();
   const s = useProjectStore();
   const tool = useBlockingUI((x) => x.tool);
   const list = useMemo(() => computeEntrances(s, b), [s, b]);
-  const labels: Record<string, string> = { wings: 'wings', venue: 'venue door', stage: 'stage', house: 'house', custom: 'custom' };
+  const labels: Record<string, string> = { wings: 'side', venue: 'door', stage: 'stage', house: 'aisle', custom: 'yours' };
   return (
-    <Collapsible id="bk-entrances" title={`Entrances (${list.length})`}>
-      <ul className="venue-list">
+    <>
+      <Group>
         {list.map((e) => (
-          <li key={e.id}>
-            <button className="btn btn--ghost" onClick={() => useBlockingUI.getState().select({ kind: 'entrance', id: e.id })}>
-              <Plain text={e.name} /> <span className="hint">{plainText(labels[e.source])}</span>
-            </button>
-          </li>
+          <Row key={e.id} label={lookup(e.name)?.plain ?? e.name} value={labels[e.source]} onClick={() => useBlockingUI.getState().select({ kind: 'entrance', id: e.id })} />
         ))}
-      </ul>
-      <button className={`btn btn--small ${tool === 'entrance' ? 'is-active' : ''}`} onClick={() => useBlockingUI.getState().setTool(tool === 'entrance' ? null : 'entrance')}>
-        + Add entrance
-      </button>
-      <p className="hint">Found from wing gaps between masking legs, venue doors marked as stage entrances, vomitories and house aisles.</p>
-    </Collapsible>
+        <Row label={tool === 'entrance' ? 'Click the stage to place it…' : 'Add a way on'} accent action={<RowPlus />} onClick={() => useBlockingUI.getState().setTool(tool === 'entrance' ? null : 'entrance')} />
+      </Group>
+      <p className="sl-note">Found from gaps between the side curtains, doors marked in Backstage, and the aisles.</p>
+    </>
   );
 }
 
-/** Left side in Blocking mode. */
-export function BlockingLeft() {
-  // Keys: Space plays/pauses; Delete removes the selection.
+/** Performers mode's keys, mounted all the time: Space plays/pauses, Delete removes the selection, Esc lets go. */
+export function useBlockingKeys() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (useProjectStore.getState().mode !== 'blocking') return;
       const el = e.target as HTMLElement;
-      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable)) return;
+      if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable || el.tagName === 'BUTTON')) return;
       const ui = useBlockingUI.getState();
       if (e.key === ' ') {
         e.preventDefault();
@@ -145,14 +123,45 @@ export function BlockingLeft() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-  const performerCount = useActiveBlocking().performers.length;
+}
+
+/** Pages shared by the Cast panel and the Performers overview. */
+function usePerformerPages(): Record<string, PageDef | null> {
+  const b = useActiveBlocking();
+  const scene = b.scenes.find((x) => x.id === b.sceneId)!;
+  return {
+    scenes: { title: 'Scenes', render: () => <Scenes /> },
+    entrances: { title: 'Ways on and off stage', render: () => <Entrances /> },
+    groups: { title: 'Groups', render: () => <Groups /> },
+    checks: { title: 'Checks', render: () => <ChecksSection /> },
+    notes: {
+      title: 'Scene notes',
+      render: () => (
+        <label className="field">
+          <span className="field__label">Printed on the blocking sheet</span>
+          <textarea className="field__input scene-notes" rows={6} value={scene.notes} onChange={(e) => blockingActions.setNotes(e.target.value)} />
+        </label>
+      ),
+    },
+  };
+}
+
+/** The left panel in Performers mode: adding people, scenes and ways on and off stage. */
+export function BlockingLeft() {
+  const b = useActiveBlocking();
+  const scene = b.scenes.find((x) => x.id === b.sceneId);
+  const s = useProjectStore();
+  const entrances = useMemo(() => computeEntrances(s, b), [s, b]);
+  const pages = usePerformerPages();
   return (
-    <>
-      <Scenes />
-      <Cast />
-      {performerCount >= 2 && <Groups />}
-      <Entrances />
-    </>
+    <Drill pages={pages}>
+      <Group>
+        <Row label="Add a performer" accent action={<RowPlus />} onClick={blockingActions.addPerformer} />
+        <Row label="Scene" value={scene?.name} page="scenes" />
+        <Row label="Ways on and off stage" value={String(entrances.length)} page="entrances" />
+        {b.performers.length >= 2 && <Row label="Groups" value={b.groups.length ? String(b.groups.length) : 'none'} page="groups" />}
+      </Group>
+    </Drill>
   );
 }
 
@@ -301,14 +310,22 @@ function PathProps({ path }: { path: Path }) {
   );
 }
 
+/** Performers with nothing picked: the scene, who is in it, and the rest as rows. */
 function SceneProps() {
   const b = useActiveBlocking();
   const scene = b.scenes.find((x) => x.id === b.sceneId)!;
+  const s = useProjectStore();
+  const entrances = useMemo(() => computeEntrances(s, b), [s, b]);
+  const warnings = useBlockingUI((x) => x.warnings);
+  const checking = useBlockingUI((x) => x.checking);
+  const pages = usePerformerPages();
+  const status = !b.performers.length ? '' : checking !== null ? 'Checking…' : !warnings ? '' : warnings.length ? `${warnings.length} to look at` : 'All clear';
   return (
-    <div className="props">
-      <div className="panel-head">
-        <h2 className="panel-title">{scene.name}</h2>
-      </div>
+    <Drill pages={pages} resetKey={b.sceneId}>
+      <ListHead title="Performers" />
+      <Group>
+        <Row label="Scene" value={scene.name} page="scenes" />
+      </Group>
       {b.performers.length === 0 ? (
         <div className="empty-state">
           <p>Add the people on stage, then plan where they move.</p>
@@ -317,17 +334,29 @@ function SceneProps() {
           </button>
         </div>
       ) : (
-        <p className="sidebar__empty">Select a performer and draw their path. Press Space to play the scene.</p>
+        <Group title="In this scene">
+          {b.performers.map((p) => {
+            const moves = scene.paths.filter((x) => x.performerId === p.id).length;
+            return (
+              <Row
+                key={p.id}
+                icon={<span className="sl-dot" style={{ background: p.color }} />}
+                label={p.name}
+                value={moves ? `${moves} move${moves === 1 ? '' : 's'}` : 'no moves yet'}
+                onClick={() => useBlockingUI.getState().select({ kind: 'performer', ids: [p.id] })}
+              />
+            );
+          })}
+          <Row label="Add a performer" accent action={<RowPlus />} onClick={blockingActions.addPerformer} />
+        </Group>
       )}
-      <ChecksSection
-        more={
-          <label className="field">
-            <span className="field__label">Notes (on the blocking sheet)</span>
-            <textarea className="field__input scene-notes" rows={4} value={scene.notes} onChange={(e) => blockingActions.setNotes(e.target.value)} />
-          </label>
-        }
-      />
-    </div>
+      <Group>
+        <Row label="Ways on and off stage" value={String(entrances.length)} page="entrances" />
+        {b.performers.length >= 2 && <Row label="Groups" value={b.groups.length ? String(b.groups.length) : 'none'} page="groups" />}
+        <Row label="Checks" value={<span className={status === 'All clear' ? 'sl-good' : status.includes('look') ? 'sl-warn' : ''}>{status}</span>} page="checks" />
+        <Row label="Scene notes" value={scene.notes ? 'Written' : ''} page="notes" />
+      </Group>
+    </Drill>
   );
 }
 
