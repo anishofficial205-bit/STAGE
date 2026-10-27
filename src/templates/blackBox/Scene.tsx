@@ -20,7 +20,7 @@ export const WALL_COLORS: Record<string, { wall: string; floor: string; grid: st
   white: { wall: '#e8e8e6', floor: '#bfc1c4', grid: '#6b7078' },
 };
 
-const SELECTED = '#f27a35';
+const SELECTED = '#d4f542';
 const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 
 /** Click to select, drag across the floor to move (orbiting is paused while dragging). */

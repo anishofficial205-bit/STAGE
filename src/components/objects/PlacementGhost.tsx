@@ -96,8 +96,8 @@ export function PlacementGhost() {
     <group position={[at[0], y, at[1]]} userData={{ noOcclude: true }}>
       <mesh position={[0, h / 2, 0]} raycast={() => null}>
         <boxGeometry args={[Math.max(0.05, size.width), h, Math.max(0.05, size.depth)]} />
-        <meshBasicMaterial color="#ffd2ae" transparent opacity={0.22} depthWrite={false} />
-        <Edges color="#ffd2ae" />
+        <meshBasicMaterial color="#e9f8a6" transparent opacity={0.22} depthWrite={false} />
+        <Edges color="#e9f8a6" />
       </mesh>
       <Html center position={[0, h + 0.5, 0]} zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
         <span className="dim-label">

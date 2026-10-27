@@ -77,7 +77,7 @@ export function LightClickPlacer() {
     <group position={at} userData={{ lightHelper: true }}>
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} raycast={() => null}>
         <ringGeometry args={[0.5, 0.62, 40]} />
-        <meshBasicMaterial color="#ffd2ae" transparent opacity={0.9} depthTest={false} />
+        <meshBasicMaterial color="#e9f8a6" transparent opacity={0.9} depthTest={false} />
       </mesh>
       <Html center position={[0, 0.8, 0]} zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
         <span className="dim-label">

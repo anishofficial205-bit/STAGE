@@ -22,7 +22,7 @@ import { beamCone, hazeMaterial, poolTexture } from './haze';
 import { lightBudget } from './budget';
 import { Plain } from '../../glossary/Plain';
 
-const ACCENT = '#f27a35';
+const ACCENT = '#d4f542';
 /** Light output at 100% (decay 0, so brightness doesn't depend on throw distance). */
 const K_SPOT = 4;
 const K_POINT = 2.5;

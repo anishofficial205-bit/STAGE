@@ -21,7 +21,7 @@ export const ObjectFaces = createContext<FaceContext | null>(null);
 /** The face key used for parts that aren't a named face, and for "apply to all faces". */
 export const ALL_FACES = '*';
 
-const HIGHLIGHT = new THREE.Color('#f27a35');
+const HIGHLIGHT = new THREE.Color('#d4f542');
 
 /** Things that change a material's compiled shader. */
 export const shaderKey = (map: unknown, envMap: unknown, transparent: unknown, emissiveMap: unknown, fit: boolean) =>

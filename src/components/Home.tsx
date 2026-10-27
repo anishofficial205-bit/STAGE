@@ -10,6 +10,8 @@ import { lookup } from '../glossary/terms';
 import { Modal } from './Modal';
 import { useDismiss } from './useDismiss';
 import { ModeIcon } from './ModeBar';
+import { ThemeToggle } from './ThemeToggle';
+import { useTheme } from './theme';
 import type { Units } from '../units';
 
 const ago = (t: number) => {
@@ -260,6 +262,7 @@ export function Home() {
   const file = useRef<HTMLInputElement>(null);
   const currentId = useProjectStore((s) => s.projectId);
   const units = useProjectStore((s) => s.units);
+  const theme = useTheme((s) => s.theme);
 
   useEffect(() => {
     if (!home) return;
@@ -365,6 +368,10 @@ export function Home() {
           }}
         />
         <div className="hm-side__foot">
+          <span className="hm-side__row">
+            <span className="hm-side__label">{theme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
+            <ThemeToggle />
+          </span>
           <span className="hm-side__label">Measure in</span>
           <span className="segmented hm-units" role="group" aria-label="Units">
             <button className={units === 'm' ? 'is-active' : ''} onClick={() => setUnits('m')}>

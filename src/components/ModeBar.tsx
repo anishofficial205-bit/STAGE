@@ -4,6 +4,7 @@ import { MODES, type Mode } from '../modes';
 import { useBlackBoxUI } from '../templates/blackBox/blocks';
 import { useObjectUI } from '../objects/ui';
 import { useShell } from './shell';
+import { ThemeToggle } from './ThemeToggle';
 
 
 const ICONS: Record<Mode, string> = {
@@ -21,7 +22,7 @@ export function ModeIcon({ mode, size = 18 }: { mode: Mode; size?: number }) {
   );
 }
 
-/** The mode switcher at the top centre: Set, Lights, Performers (keys 1–3), then Backstage (4). Also holds the mode keys and F for Focus mode. */
+/** The mode switcher at the top centre: Set, Lights, Performers (keys 1–3), then Backstage (4), and the light/dark switch. Also holds the mode keys and F for Focus mode. */
 export function ModeBar() {
   const mode = useProjectStore((s) => s.mode);
   const setMode = useProjectStore((s) => s.setMode);
@@ -74,6 +75,8 @@ export function ModeBar() {
           </button>
         </span>
       ))}
+      <span className="modes__sep" aria-hidden />
+      <ThemeToggle className="modes__theme" />
     </nav>
   );
 }

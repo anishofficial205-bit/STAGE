@@ -81,7 +81,7 @@ function Overlay({ surface, style, highlight }: { surface: Surface; style?: Face
   const euler = new THREE.Euler(...surface.rotation);
   const n = new THREE.Vector3(0, 0, 1).applyEuler(euler).multiplyScalar(OFFSET);
   const size = surfaceSize(surface);
-  const props = style ? styleProps(style, '#ffffff', size) : { color: '#f27a35', transparent: true, opacity: 0.25, depthWrite: false };
+  const props = style ? styleProps(style, '#ffffff', size) : { color: '#d4f542', transparent: true, opacity: 0.25, depthWrite: false };
   const graphic = usePlacedGraphic(style?.graphic, size);
   const glow = !!graphic && !!surface.glow;
   return (
@@ -94,7 +94,7 @@ function Overlay({ surface, style, highlight }: { surface: Surface; style?: Face
         side={THREE.DoubleSide}
         polygonOffset
         polygonOffsetFactor={-2}
-        {...(glow ? {} : { emissive: highlight && style ? '#f27a35' : '#000000', emissiveIntensity: highlight && style ? 0.35 : 0 })}
+        {...(glow ? {} : { emissive: highlight && style ? '#d4f542' : '#000000', emissiveIntensity: highlight && style ? 0.35 : 0 })}
         userData={{ surface: surface.id }}
       />
     </mesh>

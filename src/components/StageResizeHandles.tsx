@@ -106,7 +106,7 @@ function Handle({ t, which, dimKey }: { t: StageTemplate; which: 'width' | 'dept
         userData={{ handle: true }}
       >
         <sphereGeometry args={[hover || live !== null ? 0.32 : 0.26, 20, 14]} />
-        <meshBasicMaterial color={hover || live !== null ? '#ffffff' : '#ffd2ae'} depthTest={false} transparent opacity={0.95} />
+        <meshBasicMaterial color={hover || live !== null ? '#ffffff' : '#e9f8a6'} depthTest={false} transparent opacity={0.95} />
       </mesh>
       {(hover || live !== null) && (
         <Html center position={[0, 0.7, 0]} zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>

@@ -22,7 +22,7 @@ import { initials, type Performer, type Pt } from '../../blocking/types';
 import { Figure } from './Figure';
 import { Plain } from '../../glossary/Plain';
 
-const ACCENT = '#f27a35';
+const ACCENT = '#d4f542';
 const WARN = '#e03131';
 const rad = (d: number) => (d * Math.PI) / 180;
 const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
