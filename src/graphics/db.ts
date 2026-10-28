@@ -8,13 +8,15 @@ const STORE = 'graphics';
 export const TEMPLATES = 'templates';
 /** Recent projects for the start screen: the project file plus a small picture. */
 export const PROJECTS = 'projects';
+/** Props made from photos ("My props"), shared by every project in this browser. */
+export const PROPS = 'props';
 
 let opening: Promise<IDBDatabase> | null = null;
 function db(): Promise<IDBDatabase> {
   opening ??= new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB, 3);
+    const req = indexedDB.open(DB, 4);
     req.onupgradeneeded = () => {
-      for (const name of [STORE, TEMPLATES, PROJECTS]) if (!req.result.objectStoreNames.contains(name)) req.result.createObjectStore(name);
+      for (const name of [STORE, TEMPLATES, PROJECTS, PROPS]) if (!req.result.objectStoreNames.contains(name)) req.result.createObjectStore(name);
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);

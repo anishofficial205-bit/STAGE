@@ -15,7 +15,7 @@ import { place, rotateXZ, type Placed } from './geometry';
 import { snapMove } from './snapping';
 import { useObjectUI } from './ui';
 import { placementOf, resizeRule, type SetObject } from './types';
-import { freeSpot, recordUse } from './placing';
+import { freeSpot, recordUse, type PlaceInit } from './placing';
 
 /** Grid step for objects: 0.25 m, or 6 in when working in feet. */
 export const gridStep = () => (useProjectStore.getState().units === 'ft' ? 0.5 * M_PER_FT : 0.25);
@@ -131,14 +131,16 @@ export function nudge(dx: number, dz: number) {
 }
 
 /** Add an object at a world point (or the stage centre) and settle it with the usual snapping. */
-export function addObjectAt(typeId: string, world?: Pt) {
+export function addObjectAt(typeId: string, world?: Pt, init?: PlaceInit | null) {
   const { info } = currentStage();
   const s = useProjectStore.getState();
   const at = world ? { x: world[0] - info.centre[0], z: world[1] - info.centre[1] } : undefined;
   const id = s.addObject(typeId, at);
   if (!id) return;
-  const obj = objects().find((o) => o.id === id)!;
   const type = getObjectType(typeId)!;
+  if (init?.params || init?.name)
+    s.updateObjects((list) => list.map((o) => (o.id === id ? { ...o, name: init.name ?? o.name, params: init.params ? applyConstraints(type, { ...o.params, ...init.params }) : o.params } : o)), MERGE_WITH_PREVIOUS);
+  const obj = objects().find((o) => o.id === id)!;
   // Clicked (not dropped): some pieces know their usual spot, e.g. a main curtain behind the arch.
   const spot = !world && type.autoPlace?.(info, obj.params);
   if (spot) {

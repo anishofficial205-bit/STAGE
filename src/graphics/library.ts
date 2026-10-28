@@ -6,6 +6,8 @@
 import * as THREE from 'three';
 import { create } from 'zustand';
 import JSZip from 'jszip';
+import { getProp, saveProp } from '../photoProps/store';
+import { PHOTO_PROP } from '../objects/photoProp';
 import { importMyTemplates, refreshMyTemplates, useMyTemplates } from '../templates/custom/myTemplates';
 import { traceKey } from '../venue/trace';
 import { useEffect } from 'react';
@@ -293,6 +295,15 @@ export async function exportZip(): Promise<Blob> {
     const blob = await getBlob(g.id);
     if (blob) zip.file(`images/${g.id}.${EXT[g.mime] ?? 'bin'}`, blob);
   }
+  // Props made from photos that this project uses.
+  const propIds = new Set(Object.values(s.objectsByTemplate).flatMap((list) => list.filter((o) => o.type === PHOTO_PROP).map((o) => String(o.params.source))));
+  for (const id of propIds) {
+    const p = await getProp(id);
+    if (!p) continue;
+    const { front, depthMap, side, back, ...meta } = p;
+    zip.file(`props/${id}/prop.json`, JSON.stringify(meta));
+    for (const [name, blob] of Object.entries({ front, depthMap, side, back })) if (blob) zip.file(`props/${id}/${name}.png`, blob);
+  }
   return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
 }
 
@@ -318,6 +329,20 @@ export async function importZip(file: Blob) {
     if (gm) await putBlob(`gobo-${gm[1]}`, new Blob([await zip.file(path)!.async('arraybuffer')], { type: 'image/png' }));
     const m = path.match(/^trace\/([^/.]+)\.\w+$/);
     if (m) await putBlob(traceKey(m[1]), new Blob([await zip.file(path)!.async('arraybuffer')], { type: project.venue?.trace?.mime ?? 'image/png' }));
+  }
+  // Props made from photos: added to My props in this browser.
+  for (const path of Object.keys(zip.files)) {
+    const pm = path.match(/^props\/([^/]+)\/prop\.json$/);
+    if (!pm) continue;
+    const meta = JSON.parse(await zip.file(path)!.async('string'));
+    const file = async (name: string) => {
+      const f = zip.file(`props/${pm[1]}/${name}.png`);
+      return f ? new Blob([await f.async('arraybuffer')], { type: 'image/png' }) : undefined;
+    };
+    const front = await file('front');
+    if (!front || (await getProp(pm[1]))) continue;
+    const [depthMap, side, back] = [await file('depthMap'), await file('side'), await file('back')];
+    await saveProp({ ...meta, id: pm[1], front, ...(depthMap ? { depthMap } : {}), ...(side ? { side } : {}), ...(back ? { back } : {}) }).catch(() => undefined);
   }
   const mine = zip.file('my-templates.json');
   if (mine) await importMyTemplates(JSON.parse(await mine.async('string'))).catch(() => undefined);

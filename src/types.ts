@@ -43,6 +43,8 @@ export interface SelectParam extends ParamBase {
   type: 'select';
   default: string;
   options: { value: string; label: string }[];
+  /** Any string is allowed, not just the options (e.g. a reference to a saved prop). */
+  free?: boolean;
 }
 
 /** A colour (hex), with optional named swatches. */

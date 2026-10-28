@@ -32,6 +32,7 @@ import { mainCurtainObject } from './curtains/mainCurtain';
 import { valanceObject } from './curtains/valance';
 import { borderObject, cycClothObject, legObject, scrimObject, stageSkirtObject, travelerObject } from './curtains/drapes';
 import { propObjects } from './props';
+import { photoPropObject } from './photoProp';
 
 export const objectTypes: SetObjectType[] = [
   boxObject,
@@ -67,6 +68,7 @@ export const objectTypes: SetObjectType[] = [
   stageSkirtObject,
   fixtureObject,
   ...propObjects,
+  photoPropObject,
 ];
 
 /** Old type ids still found in saved projects. */
@@ -75,4 +77,4 @@ const RENAMED: Record<string, string> = { block: 'box' };
 export const getObjectType = (id: string) => objectTypes.find((t) => t.id === (RENAMED[id] ?? id));
 
 /** Categories in library order. */
-export const objectCategories = () => [...new Set(objectTypes.map((t) => t.category))];
+export const objectCategories = () => [...new Set(objectTypes.filter((t) => t.library !== false).map((t) => t.category))];

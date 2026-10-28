@@ -12,6 +12,7 @@ import { Modal } from '../Modal';
 import { useProjectStore } from '../../store/useProjectStore';
 import { STARTER_SETS } from '../../starters';
 import type { SetObjectType } from '../../objects/types';
+import { MyProps } from '../props/MyProps';
 
 const CATEGORY_TOOLS: Record<string, () => JSX.Element> = { [CURTAINS]: CurtainTools };
 
@@ -95,13 +96,14 @@ export function ObjectLibrary() {
   const [q, setQ] = useState('');
   const counts = useUsage((s) => s.counts);
   const query = q.trim().toLowerCase();
-  const found = useMemo(() => (query ? objectTypes.filter((t) => query.split(/\s+/).every((w) => searchText(t).includes(w.length > 3 ? w.replace(/(es|s)$/, '') : w))) : []), [query]);
+  const found = useMemo(() => (query ? objectTypes.filter((t) => t.library !== false && query.split(/\s+/).every((w) => searchText(t).includes(w.length > 3 ? w.replace(/(es|s)$/, '') : w))) : []), [query]);
   const top = mostUsed(counts)
     .map((id) => objectTypes.find((t) => t.id === id))
     .filter((t): t is SetObjectType => !!t);
   return (
     <div className="library" data-tour="library">
       <ReadyMadeSets />
+      <MyProps />
       <label className="library__search">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
           <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3" />

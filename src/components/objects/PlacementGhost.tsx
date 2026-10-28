@@ -21,10 +21,11 @@ const rc = new THREE.Raycaster();
  */
 export function PlacementGhost() {
   const typeId = usePlacing((s) => s.typeId);
+  const init = usePlacing((s) => s.init);
   const mode = useProjectStore((s) => s.mode);
   const { camera, gl } = useThree();
   const [at, setAt] = useState<Pt | null>(null);
-  const size = useMemo(() => (typeId ? defaultSize(typeId) : null), [typeId]);
+  const size = useMemo(() => (typeId ? defaultSize(typeId, init?.params) : null), [typeId, init]);
 
   useEffect(() => {
     if (mode !== 'set') usePlacing.getState().cancel();
@@ -60,7 +61,7 @@ export function PlacementGhost() {
       e.stopImmediatePropagation();
       placed = true;
       usePlacing.getState().cancel();
-      addObjectAt(typeId, p);
+      addObjectAt(typeId, p, init);
     };
     // The click that placed the piece shouldn't also deselect it.
     const onClick = (e: MouseEvent) => {
@@ -86,7 +87,7 @@ export function PlacementGhost() {
       el.style.cursor = '';
       setAt(null);
     };
-  }, [typeId, size, camera, gl]);
+  }, [typeId, init, size, camera, gl]);
 
   if (!typeId || !size || !at) return null;
   const { info } = currentStage();
@@ -101,7 +102,7 @@ export function PlacementGhost() {
       </mesh>
       <Html center position={[0, h + 0.5, 0]} zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
         <span className="dim-label">
-          <span className="dim-label__name">{getObjectType(typeId)?.name}</span>Click to place · Esc to cancel
+          <span className="dim-label__name">{init?.name ?? getObjectType(typeId)?.name}</span>Click to place · Esc to cancel
         </span>
       </Html>
     </group>

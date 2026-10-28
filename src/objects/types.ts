@@ -71,6 +71,8 @@ export interface SetObjectType {
    * main curtain behind the proscenium arch. Position is relative to the stage centre.
    */
   autoPlace?: (info: StageInfo, params: Params) => { x: number; z: number; elevation?: number; rotation?: number; params?: Params } | null;
+  /** False: not shown in the library (added another way, e.g. My props). */
+  library?: false;
   /** Extra controls in the properties panel, below the params (e.g. "Play open"). */
   Panel?: ComponentType<{ o: SetObject }>;
 }

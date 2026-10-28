@@ -10,12 +10,22 @@ import type { Pt } from '../venue/types';
 import { getObjectType } from './registry';
 import { placementOf } from './types';
 import type { Placed } from './geometry';
-import { defaultParams } from '../helpers/params';
+import { applyConstraints, defaultParams } from '../helpers/params';
+import type { Params } from '../types';
 
-export const usePlacing = create<{ typeId: string | null; start: (typeId: string) => void; cancel: () => void }>((set) => ({
+/** What a piece starts with when it isn't a plain library piece (e.g. one of My props). */
+export interface PlaceInit {
+  params?: Params;
+  name?: string;
+  /** Changing these (e.g. a different prop) re-measures the ghost. */
+  key?: string;
+}
+
+export const usePlacing = create<{ typeId: string | null; init: PlaceInit | null; start: (typeId: string, init?: PlaceInit) => void; cancel: () => void }>((set) => ({
   typeId: null,
-  start: (typeId) => set({ typeId }),
-  cancel: () => set({ typeId: null }),
+  init: null,
+  start: (typeId, init) => set({ typeId, init: init ?? null }),
+  cancel: () => set({ typeId: null, init: null }),
 }));
 
 // ---- Most used -----------------------------------------------------------
@@ -49,7 +59,7 @@ export function mostUsed(counts: Record<string, number>): string[] {
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   if (total < 5) return DEFAULT_MOST_USED;
   const mine = Object.entries(counts)
-    .filter(([id]) => getObjectType(id))
+    .filter(([id]) => getObjectType(id) && getObjectType(id)!.library !== false)
     .sort((a, b) => b[1] - a[1])
     .map(([id]) => id);
   return [...new Set([...mine, ...DEFAULT_MOST_USED])].slice(0, 6);
@@ -111,9 +121,10 @@ export function freeSpot(want: Pt, w: number, d: number, deg: number, others: Pl
 }
 
 /** Footprint of a new piece of this type with default settings. */
-export function defaultSize(typeId: string) {
+export function defaultSize(typeId: string, params?: Params) {
   const type = getObjectType(typeId);
   if (!type) return null;
-  const s = type.size(defaultParams(type));
-  return { width: s.width, depth: s.depth, height: s.height, floor: placementOf(type, defaultParams(type)) === 'floor' };
+  const p = params ? applyConstraints(type, { ...defaultParams(type), ...params }) : defaultParams(type);
+  const s = type.size(p);
+  return { width: s.width, depth: s.depth, height: s.height, floor: placementOf(type, p) === 'floor' };
 }

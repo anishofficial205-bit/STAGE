@@ -38,7 +38,7 @@ export function applyConstraints(template: Schema, input: Params): Params {
     } else if (d.type === 'color') {
       out[d.key] = typeof raw === 'string' && /^#[0-9a-f]{6}$/i.test(raw) ? raw.toLowerCase() : d.default;
     } else {
-      out[d.key] = d.options.some((o) => o.value === raw) ? (raw as string) : d.default;
+      out[d.key] = d.options.some((o) => o.value === raw) || (d.free && typeof raw === 'string') ? (raw as string) : d.default;
     }
   }
   return template.constraints(out);
