@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { templates, getTemplate } from '../templates/registry';
+import { useEffect, useState } from 'react';
+import { getTemplate } from '../templates/registry';
 import { freshProject, newProjectId, useProjectStore } from '../store/useProjectStore';
 import { defaultParams } from '../helpers/params';
 import { useThumbnails } from './Thumbnails';
 import { useShell } from './shell';
-import { lookup } from '../glossary/terms';
 import { Field } from './fields';
 import { MoreOptions } from './MoreOptions';
 import { formatLength } from '../units';
@@ -12,55 +11,41 @@ import { useCustomUI } from '../templates/custom/ui';
 import { recordWithPicture } from '../projects/library';
 import type { NumberParam, ParamDef, ParamValue, Params, StageTemplate } from '../types';
 
-/** One card: a stage type at its default size, or one of its size presets. */
-interface Card {
+/** One kind of stage in the picker: a stage type, or a variant of one (e.g. a theatre with a balcony). */
+interface Kind {
   key: string;
   templateId: string;
-  preset?: number;
   title: string;
-  /** The stage type, when the card is a preset (e.g. "Regional theatre" → Thrust). */
-  type: string;
-  params: Params;
-  dashed?: boolean;
+  blurb: string;
+  group: 'theatre' | 'events' | 'scratch';
+  /** Settings this kind always has (e.g. the balcony). */
+  params?: Params;
 }
 
-type Category = 'all' | 'theatre' | 'events' | 'custom' | 'recent';
-const CATEGORIES: { id: Category; label: string }[] = [
-  { id: 'all', label: 'All stages' },
-  { id: 'theatre', label: 'Theatre' },
-  { id: 'events', label: 'Events & outdoor' },
-  { id: 'custom', label: 'Custom' },
-  { id: 'recent', label: 'Recently used' },
+const KINDS: Kind[] = [
+  { key: 'proscenium', templateId: 'proscenium', title: 'Framed stage', blurb: 'A classic theatre: the stage sits behind an arch, the audience in front.', group: 'theatre' },
+  { key: 'proscenium:balcony', templateId: 'proscenium', title: 'Theatre with a balcony', blurb: 'Two floors of seating: the stalls below and a balcony above.', group: 'theatre', params: { balcony: true } },
+  { key: 'thrust', templateId: 'thrust', title: 'Thrust stage', blurb: 'The stage reaches out into the audience, seated on three sides.', group: 'theatre' },
+  { key: 'in-the-round', templateId: 'in-the-round', title: 'In the round', blurb: 'The audience sits all the way round a central stage.', group: 'theatre' },
+  { key: 'black-box', templateId: 'black-box', title: 'Studio', blurb: 'A flexible empty room (a black box) that you arrange yourself.', group: 'theatre' },
+  { key: 'end-stage', templateId: 'end-stage', title: 'Hall stage', blurb: 'A platform at one end of a flat room: schools, halls and conferences.', group: 'events' },
+  { key: 'traverse', templateId: 'traverse', title: 'Runway', blurb: 'A long strip with the audience along both sides: fashion shows and catwalks.', group: 'events' },
+  { key: 'open-air', templateId: 'open-air', title: 'Outdoor stage', blurb: 'A stage with truss under the sky: festivals, weddings and concerts.', group: 'events' },
+  { key: 'custom', templateId: 'custom', title: 'Your own shape', blurb: 'Draw any stage outline on an empty floor.', group: 'scratch' },
 ];
-const THEATRE = ['proscenium', 'end-stage', 'thrust', 'in-the-round', 'traverse', 'black-box'];
-const EVENTS = ['open-air', 'end-stage', 'traverse'];
-const EVENT_TITLES: Record<string, string> = { 'end-stage': 'End stage for events', traverse: 'Runway' };
-const CAT_KEY = 'stage-builder:new-project-category';
-const RECENT_KEY = 'stage-builder:recent-presets';
 
-const plainName = (t: StageTemplate) => lookup(t.name)?.plain ?? t.name;
-const read = <T,>(k: string, fallback: T): T => {
-  try {
-    const v = localStorage.getItem(k);
-    return v ? (JSON.parse(v) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-};
-const write = (k: string, v: unknown) => {
-  try {
-    localStorage.setItem(k, JSON.stringify(v));
-  } catch {
-    /* not remembered */
-  }
-};
+const GROUPS: { id: Kind['group']; label: string }[] = [
+  { id: 'theatre', label: 'Theatres' },
+  { id: 'events', label: 'Events and outdoor' },
+  { id: 'scratch', label: 'Start from scratch' },
+];
 
-function cardsFor(t: StageTemplate, title?: string): Card[] {
-  const base = defaultParams(t);
-  const custom = t.id === 'custom';
-  const out: Card[] = [{ key: `${t.id}`, templateId: t.id, title: custom ? 'Build your own stage' : (title ?? plainName(t)), type: t.name, params: base, dashed: custom }];
-  (t.presets ?? []).forEach((p, i) => out.push({ key: `${t.id}:${i}`, templateId: t.id, preset: i, title: p.name, type: title ?? plainName(t), params: { ...base, ...p.params } }));
-  return out;
+/** The ready-made sizes of a kind: its standard size, then the stage type's presets. */
+function sizesOf(k: Kind): { name: string; note: string; params: Params }[] {
+  const t = getTemplate(k.templateId)!;
+  const base = { ...defaultParams(t), ...k.params };
+  if (k.templateId === 'custom') return [{ name: 'Empty floor', note: '', params: base }];
+  return [{ name: 'Standard', note: t.description, params: base }, ...(t.presets ?? []).map((p) => ({ name: p.name, note: p.description ?? '', params: { ...base, ...p.params, ...k.params } }))];
 }
 
 function sizeOf(t: StageTemplate, params: Params) {
@@ -73,18 +58,8 @@ function sizeOf(t: StageTemplate, params: Params) {
 /** Seating "rows" settings that can go to zero (so seating can be switched off). */
 const rowDefs = (t: StageTemplate) => t.params.filter((p): p is NumberParam => p.type === 'number' && /^rows/i.test(p.key) && (p.min ?? 0) === 0);
 
-/** A tiny live plan of the stage at the chosen size. */
-function Plan({ w, d }: { w: number; d: number }) {
-  const k = Math.min(150 / w, 70 / d);
-  return (
-    <svg className="np__plan" viewBox="0 0 180 110" aria-hidden>
-      <rect x={90 - (w * k) / 2} y={12} width={w * k} height={d * k} rx={2} />
-      {[0, 1, 2].map((i) => (
-        <path key={i} d={`M ${90 - (w * k) / 2 - 6 + i * 3} ${d * k + 22 + i * 7} Q 90 ${d * k + 28 + i * 7} ${90 + (w * k) / 2 + 6 - i * 3} ${d * k + 22 + i * 7}`} />
-      ))}
-    </svg>
-  );
-}
+/** The kind a project's stage belongs to (a framed stage with a balcony is the balcony kind). */
+const kindOf = (templateId: string, params: Params) => KINDS.find((k) => k.templateId === templateId && (templateId !== 'proscenium' || !!params.balcony === !!k.params?.balcony)) ?? KINDS[0];
 
 /**
  * Create a project with a stage. `mode: 'change'` reuses the dialog to change the
@@ -119,33 +94,33 @@ export function NewProjectDialog() {
   const setOpen = useShell((s) => s.setNewProject);
   const images = useThumbnails((s) => s.images);
   const units = useProjectStore((s) => s.units);
-  const [cat, setCat] = useState<Category>(() => read(CAT_KEY, 'all'));
-  const [sel, setSel] = useState<Card | null>(null);
+  const [kind, setKind] = useState<Kind>(KINDS[0]);
+  const [sizeIdx, setSizeIdx] = useState<number | null>(0);
   const [name, setName] = useState('Untitled stage');
   const [params, setParams] = useState<Params>({});
 
-  const all = useMemo(() => templates.flatMap((t) => cardsFor(t)), []);
-  const cards = useMemo(() => {
-    if (cat === 'theatre') return THEATRE.flatMap((id) => cardsFor(getTemplate(id)!));
-    if (cat === 'events') return EVENTS.flatMap((id) => cardsFor(getTemplate(id)!, EVENT_TITLES[id]));
-    if (cat === 'custom') return cardsFor(getTemplate('custom')!);
-    if (cat === 'recent') {
-      const keys = read<string[]>(RECENT_KEY, []);
-      return keys.map((k) => all.find((c) => c.key === k)).filter((c): c is Card => !!c);
-    }
-    // All stages: Build your own goes last.
-    return [...all.filter((c) => c.templateId !== 'custom'), ...all.filter((c) => c.templateId === 'custom')];
-  }, [cat, all]);
+  const pickKind = (k: Kind, size = 0) => {
+    setKind(k);
+    setSizeIdx(size);
+    setParams(sizesOf(k)[size].params);
+  };
 
   useEffect(() => {
     if (!open) return;
     setName('Untitled stage');
-    const cur = useProjectStore.getState().templateId;
+    const st = useProjectStore.getState();
     const pick = useShell.getState().newProjectPick;
-    if (pick && cat !== 'all') setCat('all');
-    const first = (pick && all.find((c) => c.key === pick)) || (changing && all.find((c) => c.key === cur)) || cards[0] || all[0];
-    setSel(first);
-    setParams(first.params);
+    const fromPick = pick ? KINDS.find((k) => k.key === pick) ?? KINDS.find((k) => k.templateId === pick.split(':')[0]) : null;
+    if (fromPick) return pickKind(fromPick);
+    if (changing) {
+      const p = st.paramsByTemplate[st.templateId] ?? {};
+      const k = kindOf(st.templateId, p);
+      setKind(k);
+      setSizeIdx(null);
+      setParams({ ...defaultParams(getTemplate(st.templateId)!), ...p });
+      return;
+    }
+    pickKind(KINDS[0]);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -157,79 +132,64 @@ export function NewProjectDialog() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open, setOpen]);
 
-  if (!open || !sel) return null;
-  const t = getTemplate(sel.templateId)!;
-  const pick = (c: Card) => {
-    setSel(c);
-    setParams(c.params);
-  };
-  const create = (c: Card = sel, p: Params = params) => {
-    write(RECENT_KEY, [c.key, ...read<string[]>(RECENT_KEY, []).filter((k) => k !== c.key)].slice(0, 8));
+  if (!open) return null;
+  const t = getTemplate(kind.templateId)!;
+  const sizes = sizesOf(kind);
+  const create = (k: Kind = kind, p: Params = params) => {
     setOpen(false);
     if (changing) {
       const store = useProjectStore.getState();
-      store.changeStage(c.templateId, p);
+      store.changeStage(k.templateId, p);
       store.selectStage(true);
       return;
     }
-    createProject(c.templateId, p, name);
+    createProject(k.templateId, p, name);
     useShell.getState().setHome(false);
-  };
-  const chooseCat = (c: Category) => {
-    setCat(c);
-    write(CAT_KEY, c);
   };
 
   const dimKeys = [t.dimensions?.width, t.dimensions?.depth, t.dimensions?.height].filter(Boolean) as string[];
   const main = dimKeys.map((k) => t.params.find((d) => d.key === k)).filter((d): d is ParamDef => !!d);
   const rows = rowDefs(t);
   const seatingOn = rows.some((r) => Number(params[r.key]) > 0);
-  const rest = t.params.filter((d) => !dimKeys.includes(d.key) && !rows.includes(d as NumberParam) && (!d.visible || d.visible(params)) && /Seating|Audience|Size|Stage|Arch|Thrust|Platform|Runway/i.test(d.group));
+  const hasBalcony = t.params.some((d) => d.key === 'balcony');
+  const rest = t.params.filter((d) => !dimKeys.includes(d.key) && !rows.includes(d as NumberParam) && d.key !== 'balcony' && d.key !== 'balconyRows' && (!d.visible || d.visible(params)) && /Seating|Audience|Size|Stage|Arch|Thrust|Platform|Runway/i.test(d.group));
   const size = sizeOf(t, params);
-  const setParam = (k: string, v: ParamValue) => setParams((p) => ({ ...p, [k]: v }));
+  /** A change by hand: the size is now the user's own. */
+  const setParam = (k: string, v: ParamValue) => {
+    setParams((p) => ({ ...p, [k]: v }));
+    if (dimKeys.includes(k)) setSizeIdx(null);
+  };
+  const balconyRows = t.params.find((d) => d.key === 'balconyRows') as NumberParam | undefined;
 
   return (
     <div className="modal-backdrop np__backdrop" onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}>
-      <div className="np" role="dialog" aria-modal="true" aria-label={changing ? 'Change stage type' : 'New project'}>
-        <nav className="np__cats" aria-label="Categories">
-          <h2 className="np__title">{changing ? 'Change stage' : 'New project'}</h2>
-          {CATEGORIES.map((c) => (
-            <button key={c.id} className={`np__cat ${cat === c.id ? 'is-active' : ''}`} onClick={() => chooseCat(c.id)} aria-pressed={cat === c.id}>
-              {c.label}
-            </button>
+      <div className="np np2" role="dialog" aria-modal="true" aria-label={changing ? 'Change the stage' : 'New project'}>
+        <div className="np2__pick">
+          <div className="np2__head">
+            <h2 className="np2__title">{changing ? 'Change the stage' : 'What kind of stage?'}</h2>
+            <p className="np2__lead">{changing ? 'Pick a new stage. Your set, lights and performers stay.' : 'Pick the closest one. You can change its size next, and anything else later.'}</p>
+          </div>
+          {GROUPS.map((g) => (
+            <section key={g.id} className="np2__group">
+              <h3 className="np2__group-title">{g.label}</h3>
+              <div className="np2__grid">
+                {KINDS.filter((k) => k.group === g.id).map((k) => (
+                  <button key={k.key} className={`np2__card ${kind.key === k.key ? 'is-active' : ''} ${k.templateId === 'custom' ? 'is-dashed' : ''}`} onClick={() => pickKind(k)} onDoubleClick={() => create(k, sizesOf(k)[0].params)} data-tip-anchor="preset-card">
+                    <span className="np2__pic">{images[k.key] ? <img src={images[k.key]} alt="" /> : k.templateId === 'custom' ? <span className="np__nopic">✎</span> : <span className="card__loading" />}</span>
+                    <span className="np2__name">{k.title}</span>
+                    <span className="np2__blurb">{k.blurb}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
           ))}
-        </nav>
-
-        <div className="np__cards">
-          {cards.length === 0 ? (
-            <p className="start__empty">Stages you create projects from will show here.</p>
-          ) : (
-            cards.map((c) => {
-              const ct = getTemplate(c.templateId)!;
-              const sz = sizeOf(ct, c.params);
-              const term = lookup(ct.name);
-              return (
-                <button key={`${cat}:${c.key}`} className={`np__card ${sel.key === c.key ? 'is-active' : ''} ${c.dashed ? 'is-dashed' : ''}`} onClick={() => pick(c)} onDoubleClick={() => create(c, c.params)} data-tip-anchor="preset-card">
-                  <span className="np__pic">{images[c.templateId] ? <img src={images[c.templateId]} alt="" /> : c.dashed ? <span className="np__nopic">✎</span> : <span className="card__loading" />}</span>
-                  <span className="np__name">{c.title}</span>
-                  <span className="np__sub">
-                    {c.preset !== undefined ? c.type : term && term.plain !== term.tech ? term.tech : ''}
-                    {sz ? `${c.preset !== undefined || (term && term.plain !== term.tech) ? ' · ' : ''}${formatLength(sz.w, units)} × ${formatLength(sz.d, units)}` : c.dashed ? 'Draw any shape' : ''}
-                  </span>
-                </button>
-              );
-            })
-          )}
         </div>
 
-        <aside className="np__details" aria-label="Details">
-          <div className="np__preview">
-            {images[sel.templateId] ? <img src={images[sel.templateId]} alt="" /> : <span className="card__loading" />}
-            {size && <Plan w={size.w} d={size.d} />}
-          </div>
-          <div className="np__heading">
-            <b>{sel.title}</b>
-            <span className="hint">{size ? `${formatLength(size.w, units)} × ${formatLength(size.d, units)}` : t.description}</span>
+        <aside className="np2__details" aria-label="Details">
+          <div className="np2__preview">{images[kind.key] ? <img src={images[kind.key]} alt="" /> : <span className="card__loading" />}</div>
+          <div className="np2__heading">
+            <b>{kind.title}</b>
+            <span className="hint">{size ? `${formatLength(size.w, units)} × ${formatLength(size.d, units)} stage` : kind.blurb}</span>
           </div>
           {changing ? (
             <p className="panel-msg panel-msg--warning">Set pieces, lights and performers stay where they are. Some may end up off the new stage.</p>
@@ -239,19 +199,57 @@ export function NewProjectDialog() {
               <input className="field__input" value={name} onChange={(e) => setName(e.target.value)} onFocus={(e) => e.target.select()} />
             </label>
           )}
-          {main.map((d) => (
-            <Field key={d.key} def={d} value={params[d.key]} units={units} onChange={(v) => setParam(d.key, v as ParamValue)} />
-          ))}
+          {sizes.length > 1 && (
+            <div className="np2__sizes" role="radiogroup" aria-label="Size">
+              <span className="field__label">Size</span>
+              {sizes.map((z, i) => {
+                const zs = sizeOf(t, z.params);
+                return (
+                  <button
+                    key={z.name}
+                    role="radio"
+                    aria-checked={sizeIdx === i}
+                    className={`np2__size ${sizeIdx === i ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setSizeIdx(i);
+                      // Keep the balcony switch as it is when changing size.
+                      setParams(hasBalcony ? { ...z.params, balcony: params.balcony ?? z.params.balcony, balconyRows: params.balconyRows ?? z.params.balconyRows } : z.params);
+                    }}
+                    title={z.note}
+                  >
+                    <b>{z.name}</b>
+                    {zs && (
+                      <small>
+                        {formatLength(zs.w, units)} × {formatLength(zs.d, units)}
+                      </small>
+                    )}
+                  </button>
+                );
+              })}
+              {sizeIdx === null && <p className="hint np2__own">Your own size</p>}
+            </div>
+          )}
+          {hasBalcony && (
+            <>
+              <label className="field field--inline">
+                <span className="field__label">Seating on two floors (balcony)</span>
+                <button type="button" role="switch" aria-checked={!!params.balcony} className={`switch ${params.balcony ? 'is-on' : ''}`} onClick={() => setParams((p) => ({ ...p, balcony: !p.balcony }))}>
+                  <span className="switch__knob" />
+                </button>
+              </label>
+              {params.balcony && balconyRows && <Field def={{ ...balconyRows, label: 'Balcony rows' }} value={params.balconyRows ?? balconyRows.default} units={units} onChange={(v) => setParams((p) => ({ ...p, balconyRows: v as ParamValue }))} />}
+            </>
+          )}
           {rows.length > 0 && (
             <>
               <label className="field field--inline">
-                <span className="field__label">Seating</span>
+                <span className="field__label">{hasBalcony ? 'Seating downstairs' : 'Seating'}</span>
                 <button
                   type="button"
                   role="switch"
                   aria-checked={seatingOn}
                   className={`switch ${seatingOn ? 'is-on' : ''}`}
-                  onClick={() => setParams((p) => ({ ...p, ...Object.fromEntries(rows.map((r) => [r.key, seatingOn ? 0 : (sel.params[r.key] as number) || r.default || 10])) }))}
+                  onClick={() => setParams((p) => ({ ...p, ...Object.fromEntries(rows.map((r) => [r.key, seatingOn ? 0 : (sizes[sizeIdx ?? 0]?.params[r.key] as number) || r.default || 10])) }))}
                 >
                   <span className="switch__knob" />
                 </button>
@@ -259,8 +257,11 @@ export function NewProjectDialog() {
               {seatingOn && rows.map((r) => <Field key={r.key} def={r} value={params[r.key]} units={units} onChange={(v) => setParam(r.key, v as ParamValue)} />)}
             </>
           )}
-          {rest.length > 0 && (
-            <MoreOptions id="new-project">
+          {(main.length > 0 || rest.length > 0) && (
+            <MoreOptions id="new-project" title="Exact size and more">
+              {main.map((d) => (
+                <Field key={d.key} def={d} value={params[d.key]} units={units} onChange={(v) => setParam(d.key, v as ParamValue)} />
+              ))}
               {rest.map((d) => (
                 <Field key={d.key} def={d} value={params[d.key]} units={units} onChange={(v) => setParam(d.key, v as ParamValue)} />
               ))}
@@ -271,7 +272,7 @@ export function NewProjectDialog() {
               Cancel
             </button>
             <button className="btn btn--primary btn--big" onClick={() => create()}>
-              {changing ? 'Change stage' : 'Create'}
+              {changing ? 'Change the stage' : 'Create'}
             </button>
           </div>
         </aside>
