@@ -142,9 +142,12 @@ export function Capturer() {
           }),
       );
 
+    exporter.scene = (fn) => withExportMode(() => fn(scene));
+
     return () => {
       exporter.capture = null;
       exporter.turntable = null;
+      exporter.scene = null;
     };
   }, [gl, scene, camera, controls, size]);
 

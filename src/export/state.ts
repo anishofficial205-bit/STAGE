@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { Scene } from 'three';
 import type { PresetView, Vec3 } from '../types';
 
 /** While exporting, UI-only things (grid, handles, outlines, hover markers) are hidden. */
@@ -28,4 +29,6 @@ export interface CaptureOptions {
 export const exporter: {
   capture: ((o: CaptureOptions) => Promise<string>) | null;
   turntable: ((seconds: number, size: [number, number]) => Promise<Blob>) | null;
-} = { capture: null, turntable: null };
+  /** Run `fn` on the 3D scene with the editing helpers hidden (for exporting the model). */
+  scene: (<T>(fn: (scene: Scene) => T | Promise<T>) => Promise<T>) | null;
+} = { capture: null, turntable: null, scene: null };

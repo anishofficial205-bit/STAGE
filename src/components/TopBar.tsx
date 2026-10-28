@@ -5,6 +5,7 @@ import { resetTips, showTip } from './Tips';
 import { exportZip, importZip } from '../graphics/library';
 import { PrintCheckDialog } from './graphics/PrintCheck';
 import { ExportDialog } from './export/ExportDialog';
+import { ModelDialog } from './export/ModelDialog';
 import { SHORTCUTS_EVENT } from './ShortcutsSheet';
 import { useDismiss } from './useDismiss';
 import { useObjectUI } from '../objects/ui';
@@ -24,6 +25,7 @@ export function TopBar() {
   const [toast, setToast] = useState<string | null>(null);
   const [printCheck, setPrintCheck] = useState(false);
   const [render, setRender] = useState(false);
+  const [model, setModel] = useState(false);
   const [menu, setMenu] = useState<'view' | 'help' | 'file' | null>(null);
   const allDims = useLabelPrefs((l) => l.allDimensions);
   const toggleAllDims = useLabelPrefs((l) => l.toggleAllDimensions);
@@ -204,6 +206,9 @@ export function TopBar() {
               <button role="menuitem" onClick={() => { close(); setRender(true); }} title="Export images, all views, a presentation sheet or a turntable video">
                 Render images and video…
               </button>
+              <button role="menuitem" onClick={() => { close(); setModel(true); }} title="The stage, seating and set as a 3D model for SketchUp, Blender, Rhino or any program that reads OBJ">
+                3D model (SketchUp, Blender, Rhino)…
+              </button>
               <button role="menuitem" onClick={() => { close(); setPrintCheck(true); }} title="Check graphics resolution and export the spec sheet">
                 Print check…
               </button>
@@ -237,6 +242,7 @@ export function TopBar() {
       {toast && <div className="toast">{toast}</div>}
       {printCheck && <PrintCheckDialog onClose={() => setPrintCheck(false)} />}
       {render && <ExportDialog onClose={() => setRender(false)} />}
+      {model && <ModelDialog onClose={() => setModel(false)} />}
     </header>
   );
 }
