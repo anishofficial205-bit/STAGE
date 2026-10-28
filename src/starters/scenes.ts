@@ -11,6 +11,11 @@ import { buildLights } from './projects';
 import { actingCentre, blockingActions } from '../blocking/actions';
 import { useBlockingUI } from '../blocking/ui';
 import type { Units } from '../units';
+import type { Params } from '../types';
+import { getTemplate } from '../templates/registry';
+import { storeFiles } from '../graphics/library';
+import { SHOWCASE_SCENES, type ArtIds } from './showcase';
+import { ART, renderArt, type ArtKey } from './showcaseArt';
 
 export interface StarterScene {
   id: string;
@@ -20,7 +25,12 @@ export interface StarterScene {
   image: string;
   templateId: string;
   units?: Units;
-  build: () => void;
+  /** A size from the template's list, then changes on top of it. */
+  preset?: string;
+  params?: Params;
+  /** Artwork drawn and added to the project before it's built. */
+  art?: ArtKey[];
+  build: (art: ArtIds) => void;
 }
 
 const P = (type: string, x: number, z: number, params: StarterPiece['params'] = {}, extra: Partial<StarterPiece> = {}): StarterPiece => ({ type, x, z, params, ...extra });
@@ -52,6 +62,7 @@ function tint(names: string[], color: string) {
 }
 
 export const STARTER_SCENES: StarterScene[] = [
+  ...SHOWCASE_SCENES,
   {
     id: 'play',
     title: 'A play',
@@ -155,15 +166,31 @@ export const STARTER_SCENES: StarterScene[] = [
 ];
 
 /** Open a starter scene as a new project (one undo step). */
-export function loadStarterScene(id: string) {
+export async function loadStarterScene(id: string) {
   const scene = STARTER_SCENES.find((s) => s.id === id);
   if (!scene) return;
+  // Artwork is drawn and stored first, so the build can put it straight on faces.
+  const keys = scene.art ?? [];
+  const metas = keys.length ? await storeFiles(await Promise.all(keys.map((k) => renderArt(ART[k])))) : [];
+  const art: ArtIds = Object.fromEntries(keys.map((k, i) => [k, metas[i]?.id]));
   const store = useProjectStore.getState();
   const base = freshProject();
+  const preset = scene.preset ? getTemplate(scene.templateId)?.presets?.find((p) => p.name === scene.preset)?.params : undefined;
   const name = scene.id === 'scratch' ? 'Untitled stage' : `${scene.title.replace(/^An? /, '').replace(/^./, (c) => c.toUpperCase())} (Starter)`;
   store.batch(`Started “${scene.title}”`, () => {
-    store.loadFile({ ...base, app: 'stage-builder', version: 2, projectId: newProjectId(), projectName: name, units: scene.units ?? base.units, templateId: scene.templateId, mode: 'stage' });
-    scene.build();
+    store.loadFile({
+      ...base,
+      app: 'stage-builder',
+      version: 2,
+      projectId: newProjectId(),
+      projectName: name,
+      units: scene.units ?? base.units,
+      templateId: scene.templateId,
+      paramsByTemplate: { ...base.paramsByTemplate, [scene.templateId]: { ...base.paramsByTemplate[scene.templateId], ...preset, ...scene.params } },
+      mode: 'stage',
+    });
+    if (metas.length) useProjectStore.getState().addGraphics(metas);
+    scene.build(art);
     useProjectStore.getState().select([]);
     useProjectStore.getState().setMode('set');
   });

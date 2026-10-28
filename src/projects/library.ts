@@ -5,7 +5,7 @@
  */
 import { create } from 'zustand';
 import { PROJECTS, deleteRecord, getAllRecords, getRecord, putRecord } from '../graphics/db';
-import { newProjectId, useProjectStore } from '../store/useProjectStore';
+import { freshProject, newProjectId, useProjectStore } from '../store/useProjectStore';
 import { exportCurrentView } from '../export/exports';
 
 export interface ProjectRecord {
@@ -132,10 +132,23 @@ export async function duplicateProject(id: string) {
   await refreshRecent();
 }
 
-export const deleteProject = async (id: string) => {
-  await deleteRecord(PROJECTS, id);
+/**
+ * Remove projects from this browser. If one of them is open, a blank stage takes
+ * its place — otherwise its autosave would put it straight back in the list.
+ */
+export const deleteProjects = async (ids: string[]) => {
+  const store = useProjectStore.getState();
+  if (ids.includes(store.projectId)) {
+    store.loadFile({ ...freshProject(), app: 'stage-builder', version: 2, units: store.units });
+    useProjectStore.getState().save();
+  }
+  await serial(async () => {
+    for (const id of ids) await deleteRecord(PROJECTS, id);
+  });
   await refreshRecent();
 };
+
+export const deleteProject = (id: string) => deleteProjects([id]);
 
 let lastPicture = 0;
 /** Keep the recent list in step with saves; refresh the picture at most every two minutes. */

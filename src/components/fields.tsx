@@ -29,7 +29,18 @@ export function Field(props: FieldProps<ParamDef, unknown>) {
   if (def.type === 'number') return <NumberField {...(props as FieldProps<NumberParam, number>)} label={label} />;
   if (def.type === 'boolean') return <BooleanField {...(props as FieldProps<BooleanParam, boolean>)} label={label} />;
   if (def.type === 'color') return <ColorField {...(props as FieldProps<ColorParam, string>)} label={label} />;
+  if ((def as SelectParam).text) return <TextField {...(props as FieldProps<SelectParam, string>)} label={label} />;
   return <SelectField {...(props as FieldProps<SelectParam, string>)} label={label} />;
+}
+
+/** Words to type (e.g. a neon sign's text). */
+function TextField({ value, onChange, label }: FieldProps<SelectParam, string> & WithLabel) {
+  return (
+    <label className="field">
+      {label}
+      <input className="field__input" value={value ?? ''} maxLength={40} onChange={(e) => onChange(e.target.value)} />
+    </label>
+  );
 }
 
 type WithLabel = { label: React.ReactNode };

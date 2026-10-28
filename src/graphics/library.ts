@@ -177,12 +177,18 @@ async function store(file: File, id: string): Promise<GraphicMeta | null> {
 
 /** Add files to the library. Returns the new graphics (unsupported files are skipped). */
 export async function importFiles(files: File[]): Promise<GraphicMeta[]> {
+  const metas = await storeFiles(files);
+  useProjectStore.getState().addGraphics(metas);
+  return metas;
+}
+
+/** Store pictures without adding them to the open project (for one about to be opened). */
+export async function storeFiles(files: File[]): Promise<GraphicMeta[]> {
   const metas: GraphicMeta[] = [];
   for (const f of files.filter(isSupported)) {
     const m = await store(f, newObjectId());
     if (m) metas.push(m);
   }
-  useProjectStore.getState().addGraphics(metas);
   return metas;
 }
 

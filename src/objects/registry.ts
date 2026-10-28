@@ -33,6 +33,7 @@ import { valanceObject } from './curtains/valance';
 import { borderObject, cycClothObject, legObject, scrimObject, stageSkirtObject, travelerObject } from './curtains/drapes';
 import { propObjects } from './props';
 import { photoPropObject } from './photoProp';
+import { showpieceObjects } from './showpieces';
 
 export const objectTypes: SetObjectType[] = [
   boxObject,
@@ -68,6 +69,7 @@ export const objectTypes: SetObjectType[] = [
   stageSkirtObject,
   fixtureObject,
   ...propObjects,
+  ...showpieceObjects,
   photoPropObject,
 ];
 

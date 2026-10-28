@@ -1454,8 +1454,16 @@ html, body, #root { overflow: hidden; }
 .hm-card__meta { display: flex; flex-direction: column; gap: 2px; padding-right: 34px; min-width: 0; }
 .hm-card__name { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hm-card__meta small { font-size: 13px; color: var(--muted); }
-.hm-card__more { position: absolute; right: 0; bottom: 4px; width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; opacity: 0; }
-.hm-card:hover .hm-card__more, .hm-card__more[aria-expanded='true'], .hm-card__more:focus-visible { opacity: 1; }
+.hm-card__more { position: absolute; right: 0; bottom: 4px; width: 32px; height: 32px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; }
+.hm-card__delete { position: absolute; right: 10px; top: 10px; width: 34px; height: 34px; border-radius: 10px; border: 0; display: grid; place-items: center; cursor: pointer; color: #fff; background: rgba(20, 20, 24, 0.55); backdrop-filter: blur(6px); opacity: 0; transition: opacity 0.15s, background 0.15s; }
+.hm-card:hover .hm-card__delete, .hm-card__delete:focus-visible { opacity: 1; }
+.hm-card__delete:hover { background: #d8453a; }
+@media (hover: none) { .hm-card__delete { opacity: 1; } }
+.hm-card__check { position: absolute; left: 10px; top: 10px; width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; font-size: 15px; font-weight: 700; color: var(--on-pri); background: rgba(255, 255, 255, 0.85); border: 2px solid color-mix(in srgb, var(--text) 25%, transparent); }
+.hm-card.is-picked .hm-card__check { background: var(--accent); border-color: var(--accent); }
+.hm-card.is-picked .hm-card__pic { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); }
+.hm-section__tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.hm-picked { font-size: 14px; color: var(--muted); margin-right: 4px; }
 .hm-card__more:hover { background: color-mix(in srgb, var(--text) 7%, transparent); color: var(--text); }
 .hm-card__menu { right: 0; top: auto; bottom: 40px; }
 .hm-types { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; }

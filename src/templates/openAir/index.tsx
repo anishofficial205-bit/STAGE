@@ -18,6 +18,7 @@ import { Seating, type SeatingOptions } from '../../helpers/Seating';
 import { Box, Panel, Slab, Truss } from '../../helpers/primitives';
 import { COLORS, ROUGHNESS } from '../../helpers/materials';
 import { Crowd, Skyline, Trees } from './scenery';
+import { Stadium } from './stadium';
 import { rect } from '../../helpers/stageInfo';
 import { generateSeats } from '../../helpers/Seating';
 import { blockSeats } from '../../helpers/seats';
@@ -231,6 +232,7 @@ function Scene({ p }: { p: Params }) {
 
       {str(p, 'background') === 'trees' && <Trees inner={horizon} outer={horizon + 35} night={night} />}
       {str(p, 'background') === 'city' && <Skyline inner={horizon} night={night} />}
+      {str(p, 'background') === 'stadium' && <Stadium width={L.gw} length={L.gl} cz={(L.groundZ0 + L.groundZ1) / 2} night={night} />}
 
       {(night || time === 'sunset') && <ShowLights L={L} strength={night ? 1 : 0.45} />}
 
@@ -314,6 +316,11 @@ export const openAirTemplate: StageTemplate = {
       description: 'Roofed main stage with LED screen towers and a huge crowd.',
       params: { groundWidth: 140, groundLength: 140, platformWidth: 24, platformDepth: 16, platformHeight: 2.2, structure: 'roofed', trussHeight: 14, trussMatch: true, towers: true, towerHeight: 12, screenWidth: 8, audienceType: 'standing', audienceWidth: 80, audienceDepth: 70, foh: true },
     },
+    {
+      name: 'Stadium',
+      description: 'A stadium show at night: the stage at one end of the field, stands all round.',
+      params: { groundWidth: 70, groundLength: 105, groundType: 'grass', background: 'stadium', timeOfDay: 'night', platformWidth: 30, platformDepth: 14, platformHeight: 1.8, structure: 'none', towers: true, towerHeight: 13, screenWidth: 10, backdrop: false, audienceType: 'standing', audienceWidth: 64, audienceDepth: 70, foh: true },
+    },
   ],
 
   params: [
@@ -355,7 +362,7 @@ export const openAirTemplate: StageTemplate = {
     { key: 'rowSpacing', label: 'Row spacing', group: 'Audience', type: 'number', default: 0.9, min: 0.75, max: 1.5, step: 0.05, help: 'Distance from one row to the next.', visible: isSeated },
     { key: 'foh', label: 'Front-of-house desk', group: 'Audience', type: 'boolean', default: true, help: 'The sound and lighting control position.' },
     { key: 'timeOfDay', label: 'Time of day', group: 'Environment', type: 'select', default: 'day', options: [{ value: 'day', label: 'Day' }, { value: 'sunset', label: 'Sunset' }, { value: 'night', label: 'Night' }] },
-    { key: 'background', label: 'Background', group: 'Environment', type: 'select', default: 'trees', options: [{ value: 'open', label: 'Open' }, { value: 'trees', label: 'Trees' }, { value: 'city', label: 'City skyline' }] },
+    { key: 'background', label: 'Background', group: 'Environment', type: 'select', default: 'trees', options: [{ value: 'open', label: 'Open' }, { value: 'trees', label: 'Trees' }, { value: 'city', label: 'City skyline' }, { value: 'stadium', label: 'Stadium stands' }] },
   ],
 
   constraints: (p) => p, // audience area is trimmed to the ground in layout()

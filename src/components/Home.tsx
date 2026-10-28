@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useShell } from './shell';
 import { STARTER_SCENES, loadStarterScene } from '../starters/scenes';
-import { deleteProject, duplicateProject, recordCurrentProject, recordWithPicture, refreshRecent, renameProject, useRecentProjects, type ProjectRecord } from '../projects/library';
+import { deleteProject, deleteProjects, duplicateProject, recordCurrentProject, recordWithPicture, refreshRecent, renameProject, useRecentProjects, type ProjectRecord } from '../projects/library';
 import { savedDefaultUnits, setDefaultUnits, useProjectStore } from '../store/useProjectStore';
 import { importZip } from '../graphics/library';
 import { getTemplate } from '../templates/registry';
@@ -70,7 +70,13 @@ function ProjectPicture({ p }: { p: ProjectRecord }) {
   );
 }
 
-function ProjectCard({ p, onOpen, badge }: { p: ProjectRecord; onOpen: () => void; badge?: string }) {
+interface Picking {
+  on: boolean;
+  picked: boolean;
+  toggle: () => void;
+}
+
+function ProjectCard({ p, onOpen, badge, pick }: { p: ProjectRecord; onOpen: () => void; badge?: string; pick?: Picking }) {
   const [menu, setMenu] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -83,13 +89,24 @@ function ProjectCard({ p, onOpen, badge }: { p: ProjectRecord; onOpen: () => voi
     else setName(p.name);
   };
   return (
-    <div className="hm-card" ref={ref}>
-      <button className="hm-card__open" onClick={onOpen} title={`Open “${p.name}”`}>
+    <div className={`hm-card${pick?.picked ? ' is-picked' : ''}`} ref={ref}>
+      <button
+        className="hm-card__open"
+        onClick={pick?.on ? pick.toggle : onOpen}
+        title={pick?.on ? `Select “${p.name}”` : `Open “${p.name}”`}
+        aria-pressed={pick?.on ? pick.picked : undefined}
+      >
         <span className="hm-card__pic">
           <ProjectPicture p={p} />
-          {badge && <span className="hm-card__badge">{badge}</span>}
+          {badge && !pick?.on && <span className="hm-card__badge">{badge}</span>}
+          {pick?.on && <span className="hm-card__check" aria-hidden>{pick.picked ? '✓' : ''}</span>}
         </span>
       </button>
+      {!pick?.on && (
+        <button className="hm-card__delete" onClick={() => setConfirm(true)} aria-label={`Delete “${p.name}”`} title="Delete">
+          <Icon d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
+        </button>
+      )}
       <div className="hm-card__meta">
         {renaming ? (
           <input
@@ -112,9 +129,11 @@ function ProjectCard({ p, onOpen, badge }: { p: ProjectRecord; onOpen: () => voi
           {stageOf(p).name} · {ago(p.savedAt).replace(/^edited /, '')}
         </small>
       </div>
-      <button className="hm-card__more" onClick={() => setMenu(!menu)} aria-label={`More for “${p.name}”`} aria-expanded={menu}>
-        ⋯
-      </button>
+      {!pick?.on && (
+        <button className="hm-card__more" onClick={() => setMenu(!menu)} aria-label={`More for “${p.name}”`} aria-expanded={menu}>
+          ⋯
+        </button>
+      )}
       {menu && (
         <span className="menu__list hm-card__menu" role="menu">
           <button role="menuitem" onClick={() => (setMenu(false), onOpen())}>
@@ -259,6 +278,10 @@ export function Home() {
   const [q, setQ] = useState('');
   const [view, setView] = useState<View>('home');
   const [sort, setSort] = useState<'recent' | 'name'>('recent');
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const [confirmMany, setConfirmMany] = useState(false);
+  const stopPicking = () => (setPicking(false), setPicked([]));
   const file = useRef<HTMLInputElement>(null);
   const currentId = useProjectStore((s) => s.projectId);
   const units = useProjectStore((s) => s.units);
@@ -268,6 +291,8 @@ export function Home() {
     if (!home) return;
     // Coming back always lands on Home itself.
     setView('home');
+    setPicking(false);
+    setPicked([]);
     setQ('');
     // The open project goes in the list too (so "Jump back in" can offer it), then refresh.
     void recordCurrentProject().then(refreshRecent);
@@ -285,8 +310,8 @@ export function Home() {
 
   if (!home) return null;
 
-  const start = (id: string) => {
-    loadStarterScene(id);
+  const start = async (id: string) => {
+    await loadStarterScene(id);
     setHome(false);
     window.setTimeout(() => void recordWithPicture(), 2500);
   };
@@ -509,21 +534,65 @@ export function Home() {
               <h2>
                 {projects.length} project{projects.length === 1 ? '' : 's'}
               </h2>
-              <select className="field__select hm-sort" value={sort} onChange={(e) => setSort(e.target.value as 'recent' | 'name')} aria-label="Sort projects">
-                <option value="recent">Most recent first</option>
-                <option value="name">By name</option>
-              </select>
+              <div className="hm-section__tools">
+                {picking ? (
+                  <>
+                    <span className="hm-picked">{picked.length ? `${picked.length} selected` : 'Pick projects'}</span>
+                    <button className="btn" onClick={() => setPicked(picked.length === projects.length ? [] : projects.map((p) => p.id))}>
+                      {picked.length === projects.length ? 'Select none' : 'Select all'}
+                    </button>
+                    <button className="btn btn--danger" onClick={() => picked.length && setConfirmMany(true)} aria-disabled={!picked.length}>
+                      Delete
+                    </button>
+                    <button className="btn" onClick={stopPicking}>
+                      Done
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {projects.length > 0 && (
+                      <button className="btn" onClick={() => setPicking(true)}>
+                        Select
+                      </button>
+                    )}
+                    <select className="field__select hm-sort" value={sort} onChange={(e) => setSort(e.target.value as 'recent' | 'name')} aria-label="Sort projects">
+                      <option value="recent">Most recent first</option>
+                      <option value="name">By name</option>
+                    </select>
+                  </>
+                )}
+              </div>
             </div>
             {projects.length ? (
               <div className="hm-grid hm-grid--4">
                 {projects.map((p) => (
-                  <ProjectCard key={p.id} p={p} onOpen={() => reopen(p)} badge={p.id === currentId ? 'Last opened' : undefined} />
+                  <ProjectCard
+                    key={p.id}
+                    p={p}
+                    onOpen={() => reopen(p)}
+                    badge={p.id === currentId ? 'Last opened' : undefined}
+                    pick={{ on: picking, picked: picked.includes(p.id), toggle: () => setPicked((l) => (l.includes(p.id) ? l.filter((x) => x !== p.id) : [...l, p.id])) }}
+                  />
                 ))}
               </div>
             ) : (
               <p className="hm-empty">{query ? `No projects called “${q}”.` : 'No projects yet. Start one with New project.'}</p>
             )}
           </section>
+        )}
+
+        {confirmMany && (
+          <Modal title={`Delete ${picked.length} project${picked.length === 1 ? '' : 's'}?`} onClose={() => setConfirmMany(false)}>
+            <p className="modal__text">They will be removed from this browser. If you might want one later, open it and use Share → Download project first.</p>
+            <div className="modal__actions">
+              <button className="btn" onClick={() => setConfirmMany(false)} autoFocus>
+                Cancel
+              </button>
+              <button className="btn btn--danger" onClick={() => (setConfirmMany(false), void deleteProjects(picked), stopPicking())}>
+                Delete {picked.length}
+              </button>
+            </div>
+          </Modal>
         )}
 
         {view === 'templates' && (
