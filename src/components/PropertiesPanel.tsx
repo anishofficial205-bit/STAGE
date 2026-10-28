@@ -35,7 +35,6 @@ function PresetPlan({ w, d }: { w: number; d: number }) {
   );
 }
 import { lookup, plainText } from '../glossary/terms';
-import { usePlacing } from '../objects/placing';
 import { useShell } from './shell';
 import { MyTemplates } from './ToolsPanel';
 import { Drill, Group, ListHead, Row, type PageDef } from './SettingsList';
@@ -172,16 +171,7 @@ function SetProperties() {
       <div className="panel-head">
         <h2 className="panel-title">Set</h2>
       </div>
-      {empty ? (
-        <div className="empty-state">
-          <p>Add your first piece of scenery, then click on the stage to place it.</p>
-          <button className="btn btn--primary btn--big" onClick={() => usePlacing.getState().start('flat')}>
-            + Add a wall panel
-          </button>
-        </div>
-      ) : (
-        <p className="sidebar__empty">Click a piece to edit it, or add pieces from the library on the left.</p>
-      )}
+      <p className="sidebar__empty">{empty ? 'No scenery yet. Add pieces with Add on the left, then click on the stage to place them.' : 'Click a piece to edit it.'}</p>
       <SurfacesSection />
     </>
   );

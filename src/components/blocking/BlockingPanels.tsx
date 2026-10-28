@@ -149,7 +149,6 @@ function usePerformerPages(): Record<string, PageDef | null> {
 /** The left panel in Performers mode: adding people, scenes and ways on and off stage. */
 export function BlockingLeft() {
   const b = useActiveBlocking();
-  const scene = b.scenes.find((x) => x.id === b.sceneId);
   const s = useProjectStore();
   const entrances = useMemo(() => computeEntrances(s, b), [s, b]);
   const pages = usePerformerPages();
@@ -157,7 +156,6 @@ export function BlockingLeft() {
     <Drill pages={pages}>
       <Group>
         <Row label="Add a performer" accent action={<RowPlus />} onClick={blockingActions.addPerformer} />
-        <Row label="Scene" value={scene?.name} page="scenes" />
         <Row label="Ways on and off stage" value={String(entrances.length)} page="entrances" />
         {b.performers.length >= 2 && <Row label="Groups" value={b.groups.length ? String(b.groups.length) : 'none'} page="groups" />}
       </Group>
@@ -314,8 +312,6 @@ function PathProps({ path }: { path: Path }) {
 function SceneProps() {
   const b = useActiveBlocking();
   const scene = b.scenes.find((x) => x.id === b.sceneId)!;
-  const s = useProjectStore();
-  const entrances = useMemo(() => computeEntrances(s, b), [s, b]);
   const warnings = useBlockingUI((x) => x.warnings);
   const checking = useBlockingUI((x) => x.checking);
   const pages = usePerformerPages();
@@ -327,12 +323,7 @@ function SceneProps() {
         <Row label="Scene" value={scene.name} page="scenes" />
       </Group>
       {b.performers.length === 0 ? (
-        <div className="empty-state">
-          <p>Add the people on stage, then plan where they move.</p>
-          <button className="btn btn--primary btn--big" onClick={() => blockingActions.addPerformer()}>
-            + Add a performer
-          </button>
-        </div>
+        <p className="sl-note">No one on stage yet. Add performers with Cast on the left, then plan where they move.</p>
       ) : (
         <Group title="In this scene">
           {b.performers.map((p) => {
@@ -347,12 +338,9 @@ function SceneProps() {
               />
             );
           })}
-          <Row label="Add a performer" accent action={<RowPlus />} onClick={blockingActions.addPerformer} />
         </Group>
       )}
       <Group>
-        <Row label="Ways on and off stage" value={String(entrances.length)} page="entrances" />
-        {b.performers.length >= 2 && <Row label="Groups" value={b.groups.length ? String(b.groups.length) : 'none'} page="groups" />}
         <Row label="Checks" value={<span className={status === 'All clear' ? 'sl-good' : status.includes('look') ? 'sl-warn' : ''}>{status}</span>} page="checks" />
         <Row label="Scene notes" value={scene.notes ? 'Written' : ''} page="notes" />
       </Group>

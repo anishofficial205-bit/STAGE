@@ -166,13 +166,16 @@ const placesPage: PageDef = { title: 'Places to hang lights', render: () => <Pos
 /** The left panel in Lights mode: adding lights and places to hang them. */
 export function LightsLeft() {
   const positions = useActiveLighting().positions.length;
+  const performers = useActiveBlocking().performers.length;
   return (
-    <Drill pages={{ 'more-kinds': moreKindsPage, places: placesPage }}>
+    <Drill pages={{ 'more-kinds': moreKindsPage, places: placesPage, performers: { title: 'Light a performer', render: () => <LightPerformers /> } }}>
       <Group>
         <AddLightRows />
+        <Row label="Light a performer" value={performers ? String(performers) : ''} page="performers" title="A spotlight or soft light that follows them" />
       </Group>
       <Group>
         <Row label="Places to hang lights" value={String(positions)} page="places" />
+        <Row label="Bring in lights from a file" onClick={() => useLightsUI.getState().setImportOpen(true)} action={<span className="sl-row__chev-text">Import</span>} title="A spreadsheet (CSV) of your lights, or an MVR file from Vectorworks and other lighting software" />
       </Group>
       <p className="sl-note">Pick a light, then click on stage where you want it.</p>
     </Drill>
@@ -526,7 +529,6 @@ function Overview() {
   const lit = real.size + approx.size;
   const mood = MOODS.find((m) => m.name === lastMood);
   const count = lighting.fixtures.length;
-  const performers = useActiveBlocking().performers.length;
   const presetCount = useLightPresets((s) => s.list.length);
   const solo = useLightsUI((s) => s.solo);
 
@@ -561,11 +563,8 @@ function Overview() {
           </>
         ),
     },
-    'more-kinds': moreKindsPage,
-    places: placesPage,
     looks: { title: 'Saved looks', render: () => <LooksSection /> },
     presets: { title: 'My presets', render: () => <PresetsPage /> },
-    performers: { title: 'Light a performer', render: () => <LightPerformers /> },
     groups: count >= 2 ? { title: 'Light groups', render: () => <GroupsSection /> } : null,
     atmosphere: {
       title: 'Haze and quality',
@@ -624,20 +623,14 @@ function Overview() {
         <Row label="Audience lights" value={house.length ? `${houseLevel}%` : 'None'} page="audience" />
         <Row label="Work light" title="Flat bright light while you build" action={<RowSwitch on={workLight} />} onClick={() => useLightsUI.getState().toggleWorkLight()} />
       </Group>
-      <Group title="Add a light">
-        <AddLightRows />
-        <Row label="Light a performer" value={performers ? String(performers) : ''} page="performers" title="A spotlight or soft light that follows them" />
-      </Group>
       <Group>
         <Row label="My presets" value={presetCount ? String(presetCount) : ''} page="presets" title="Moods, rigs and lights you saved — for every project" />
-        <Row label="Places to hang lights" value={String(lighting.positions.length)} page="places" />
         <Row label="Saved looks" value={lighting.looks.length ? String(lighting.looks.length) : ''} page="looks" />
         {count >= 2 && <Row label="Light groups" value={lighting.groups.length ? String(lighting.groups.length) : ''} page="groups" />}
         <Row label="Plan for the crew" disabled={!count} onClick={() => useLightsUI.getState().setPlotOpen(true)} action={<span className="sl-row__chev-text">Open</span>} title="A drawing of where every light hangs" />
       </Group>
       <Group title="Every light at once">
         <Row label="Table of all lights" value={count ? String(count) : ''} disabled={!count} onClick={() => useLightsUI.getState().setTableOpen(true)} action={<span className="sl-row__chev-text">Open</span>} title="Edit channels, colours and levels in a list (T)" />
-        <Row label="Bring in lights from a file" onClick={() => useLightsUI.getState().setImportOpen(true)} action={<span className="sl-row__chev-text">Import</span>} title="A spreadsheet (CSV) of your lights, or an MVR file from Vectorworks and other lighting software" />
         <Row label="Save the light list as a spreadsheet" disabled={!count} onClick={exportLightList} action={<span className="sl-row__chev-text">Download</span>} title="CSV with channel, kind, position, colour and level — it can be imported again" />
         <Row label="Haze and quality" value={lighting.haze.on ? 'Haze on' : ''} page="atmosphere" />
       </Group>

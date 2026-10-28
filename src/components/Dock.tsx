@@ -18,7 +18,7 @@ const DRAW = 'M3 21h18M5 21V8l7-5 7 5v13';
 const ADD_LABEL: Record<Mode, { tab: string; title: string; icon: string }> = {
   set: { tab: 'Add', title: 'Add to the set', icon: ADD },
   lights: { tab: 'Add', title: 'Add lights', icon: ADD },
-  blocking: { tab: 'Cast', title: 'Cast and scenes', icon: ADD },
+  blocking: { tab: 'Cast', title: 'Add performers', icon: ADD },
   venue: { tab: 'Draw', title: 'Draw the building', icon: DRAW },
 };
 
