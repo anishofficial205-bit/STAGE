@@ -4,12 +4,14 @@ import { deleteProp, refreshMyProps, useMyProps, type PhotoProp } from '../../ph
 import { usePlacing } from '../../objects/placing';
 import { PHOTO_PROP } from '../../objects/photoProp';
 import { MakeProp } from './MakeProp';
+import { ImportModel } from './ImportModel';
 import { Modal } from '../Modal';
 
-/** My props in the Add panel: make one from photos, or place one you made before (in any project). */
+/** My props in the Add panel: make one from photos, import a 3D model, or place one you made before (in any project). */
 export function MyProps() {
   const list = useMyProps((s) => s.list);
   const [making, setMaking] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [removing, setRemoving] = useState<PhotoProp | null>(null);
   const placing = usePlacing((s) => (s.typeId === PHOTO_PROP ? s.init?.key : null));
   useEffect(() => {
@@ -28,6 +30,13 @@ export function MyProps() {
           <circle cx="12" cy="13" r="3.5" />
         </svg>
         Make a prop from photos…
+      </button>
+      <button className="btn btn--wide my-props__make" onClick={() => setImporting(true)} title="OBJ (with its colours and pictures), or glTF — from SketchUp, Blender, Rhino or a model website">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          <path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z" />
+          <path d="M4 7.5 12 12l8-4.5M12 12v9" />
+        </svg>
+        Import a 3D model (.obj)…
       </button>
       {list.length > 0 && (
         <>
@@ -49,6 +58,7 @@ export function MyProps() {
       )}
       {/* On the page itself, not inside the panel (which would clip it). */}
       {making && createPortal(<MakeProp onClose={() => setMaking(false)} />, document.body)}
+      {importing && createPortal(<ImportModel onClose={() => setImporting(false)} />, document.body)}
       {removing &&
         createPortal(
         <Modal title={`Delete “${removing.name}” from My props?`} onClose={() => setRemoving(null)}>

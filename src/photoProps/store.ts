@@ -1,5 +1,5 @@
 /**
- * "My props": props made from photos, kept in IndexedDB so every project in
+ * "My props": props made from photos or imported as 3D models, kept in IndexedDB so every project in
  * this browser can use them (and copied into a project's .zip when it uses
  * them). Each keeps its cut-out photos and the AI depth map; the 3D shape is
  * rebuilt from them when needed.
@@ -22,8 +22,12 @@ export interface PhotoProp {
   width: number;
   height: number;
   depth: number;
-  /** Front photo cropped to the prop, with the background made transparent (PNG). */
-  front: Blob;
+  /** Made from photos, or an imported 3D model. */
+  kind?: 'photo' | 'model';
+  /** Imported model: the shape fitted into a 1 × 1 × 1 box (.glb), scaled to the real size when placed. */
+  model?: Blob;
+  /** Front photo cropped to the prop, with the background made transparent (PNG). Photo props only. */
+  front?: Blob;
   /** How near each pixel of the front is (brighter = nearer), same size as `front` (PNG). */
   depthMap?: Blob;
   /** Side photo, cut out the same way (gives the thickness, top to bottom). */
@@ -32,7 +36,7 @@ export interface PhotoProp {
   back?: Blob;
 }
 
-const isProp = (p: unknown): p is PhotoProp => !!p && typeof (p as PhotoProp).id === 'string' && (p as PhotoProp).front instanceof Blob;
+const isProp = (p: unknown): p is PhotoProp => !!p && typeof (p as PhotoProp).id === 'string' && ((p as PhotoProp).front instanceof Blob || (p as PhotoProp).model instanceof Blob);
 
 export const useMyProps = create<{ list: PhotoProp[]; loaded: boolean }>(() => ({ list: [], loaded: false }));
 

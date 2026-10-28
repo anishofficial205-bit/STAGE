@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import * as THREE from 'three';
 import { getProp, type PhotoProp } from './store';
 import { buildPropGeometry, type Outline } from './mesh';
+import { readGlb } from './modelImport';
 
 interface Built {
   geometry: THREE.BufferGeometry;
@@ -44,7 +45,7 @@ export function buildProp(p: PhotoProp): Promise<Built | null> {
   let b = built.get(key);
   if (!b) {
     b = (async () => {
-      const front = await pixels(p.front);
+      const front = await pixels(p.front!);
       const depth = p.depthMap ? await pixels(p.depthMap) : null;
       const side = p.side ? await pixels(p.side) : null;
       const back = p.back ? await pixels(p.back) : null;
@@ -64,17 +65,20 @@ export function buildProp(p: PhotoProp): Promise<Built | null> {
   return b;
 }
 
-/** A prop made from photos, sized to width × height × depth (metres), standing on y = 0. */
+/** One of My props (from photos or an imported model), sized to width × height × depth (metres), standing on y = 0. */
 export function PhotoPropModel({ id, width, height, depth }: { id: string; width: number; height: number; depth: number }) {
-  const [model, setModel] = useState<Built | null | 'missing'>(null);
+  const [model, setModel] = useState<Built | THREE.Object3D | null | 'missing'>(null);
   useEffect(() => {
     let live = true;
     setModel(null);
-    void getProp(id).then((p) => (p ? buildProp(p) : null)).then((b) => live && setModel(b ?? 'missing'));
+    void getProp(id)
+      .then((p): Promise<Built | THREE.Object3D | null> | null => (!p ? null : p.model ? readGlb(`${p.id}:${p.savedAt}`, p.model).then((o) => o?.clone(true) ?? null) : buildProp(p)))
+      .then((b) => live && setModel(b ?? 'missing'));
     return () => {
       live = false;
     };
   }, [id]);
+  if (model instanceof THREE.Object3D) return <primitive object={model} scale={[width, height, depth]} />;
   if (!model || model === 'missing')
     return (
       <mesh position={[0, height / 2, 0]} castShadow receiveShadow>

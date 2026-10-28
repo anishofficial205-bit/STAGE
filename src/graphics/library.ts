@@ -300,9 +300,10 @@ export async function exportZip(): Promise<Blob> {
   for (const id of propIds) {
     const p = await getProp(id);
     if (!p) continue;
-    const { front, depthMap, side, back, ...meta } = p;
+    const { front, depthMap, side, back, model, ...meta } = p;
     zip.file(`props/${id}/prop.json`, JSON.stringify(meta));
     for (const [name, blob] of Object.entries({ front, depthMap, side, back })) if (blob) zip.file(`props/${id}/${name}.png`, blob);
+    if (model) zip.file(`props/${id}/model.glb`, model);
   }
   return zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
 }
@@ -335,14 +336,15 @@ export async function importZip(file: Blob) {
     const pm = path.match(/^props\/([^/]+)\/prop\.json$/);
     if (!pm) continue;
     const meta = JSON.parse(await zip.file(path)!.async('string'));
-    const file = async (name: string) => {
-      const f = zip.file(`props/${pm[1]}/${name}.png`);
-      return f ? new Blob([await f.async('arraybuffer')], { type: 'image/png' }) : undefined;
+    const file = async (name: string, type = 'image/png') => {
+      const f = zip.file(`props/${pm[1]}/${name}`);
+      return f ? new Blob([await f.async('arraybuffer')], { type }) : undefined;
     };
-    const front = await file('front');
-    if (!front || (await getProp(pm[1]))) continue;
-    const [depthMap, side, back] = [await file('depthMap'), await file('side'), await file('back')];
-    await saveProp({ ...meta, id: pm[1], front, ...(depthMap ? { depthMap } : {}), ...(side ? { side } : {}), ...(back ? { back } : {}) }).catch(() => undefined);
+    const front = await file('front.png');
+    const model = await file('model.glb', 'model/gltf-binary');
+    if ((!front && !model) || (await getProp(pm[1]))) continue;
+    const [depthMap, side, back] = [await file('depthMap.png'), await file('side.png'), await file('back.png')];
+    await saveProp({ ...meta, id: pm[1], ...(front ? { front } : {}), ...(model ? { model } : {}), ...(depthMap ? { depthMap } : {}), ...(side ? { side } : {}), ...(back ? { back } : {}) }).catch(() => undefined);
   }
   const mine = zip.file('my-templates.json');
   if (mine) await importMyTemplates(JSON.parse(await mine.async('string'))).catch(() => undefined);
