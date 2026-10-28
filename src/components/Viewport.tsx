@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Canvas, events as defaultEvents, useThree } from '@react-three/fiber';
+import { Canvas, events as defaultEvents, useFrame, useThree } from '@react-three/fiber';
 import { AdaptiveDpr } from '@react-three/drei';
 import { getTemplate } from '../templates/registry';
 import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } from '../store/useProjectStore';
@@ -54,6 +54,26 @@ function Reflections() {
     pmrem.dispose();
     useReflectionsReady.setState({ ready: true });
   }, [gl]);
+  return null;
+}
+
+/**
+ * The camera's depth range follows how far away you are: the nearest distance
+ * it draws is about 1% of the distance to what you're looking at. A fixed tiny
+ * near distance (with a far one of 3 km for the sky) leaves too little depth
+ * precision far away, and surfaces close together flicker as the view moves.
+ */
+function DepthRange() {
+  useFrame(({ camera, controls }) => {
+    const target = (controls as unknown as { target?: THREE.Vector3 } | null)?.target;
+    if (!target || !(camera as THREE.PerspectiveCamera).isPerspectiveCamera) return;
+    const near = Math.min(0.25, Math.max(0.05, camera.position.distanceTo(target) * 0.01));
+    const cam = camera as THREE.PerspectiveCamera;
+    if (Math.abs(cam.near - near) / cam.near > 0.1) {
+      cam.near = near;
+      cam.updateProjectionMatrix();
+    }
+  });
   return null;
 }
 
@@ -193,11 +213,10 @@ export function Viewport() {
       }}
       shadows
       dpr={[1, 2]}
-      // While orbiting, resolution may drop to half to stay smooth; it recovers when you stop.
-      performance={{ min: 0.5 }}
       camera={{ fov: CAMERA_FOV, near: 0.1, far: 3000, position: [15, 12, 25] }}
       gl={{ antialias: true }}
     >
+      <DepthRange />
       <StageScene template={template} params={params} data={data} />
       <OtherLayer layer="venue">
         <VenueLayer />

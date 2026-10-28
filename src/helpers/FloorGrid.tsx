@@ -16,13 +16,14 @@ export function FloorGrid({ env }: { env: Environment }) {
   const section = units === 'ft' ? M_PER_FT * 10 : 5;
   return (
     <group userData={{ noOcclude: true }}>
-      <mesh rotation-x={-Math.PI / 2} position-y={-0.002} receiveShadow>
+      {/* Ground and grid sit clearly below y = 0, so floors at y = 0 cover them cleanly instead of flickering against them. */}
+      <mesh rotation-x={-Math.PI / 2} position-y={-0.03} receiveShadow>
         <planeGeometry args={[600, 600]} />
         <meshStandardMaterial color={env.ground} roughness={ROUGHNESS} />
       </mesh>
       <Grid
         visible={!exporting}
-        position={[0, 0.001, 0]}
+        position={[0, -0.015, 0]}
         args={[10, 10]}
         infiniteGrid
         cellSize={cell}

@@ -220,8 +220,9 @@ function FixtureView({ f, real, shadow, approx, selected, active, haze, presenta
           distance={0}
           castShadow={shadow}
           shadow-mapSize={presentation ? [2048, 2048] : [1024, 1024]}
-          shadow-bias={-0.0004}
-          shadow-normalBias={0.04}
+          // Enough offset that surfaces lit at a shallow angle (e.g. the inside of the arch) don't shade themselves in stripes.
+          shadow-bias={-0.0006}
+          shadow-normalBias={0.07}
           shadow-camera-near={0.3}
           shadow-camera-far={80}
           map={gobo}

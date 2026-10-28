@@ -29,13 +29,15 @@ function Lights({ bounds, env: base }: { bounds: Bounds; env: Environment }) {
       <hemisphereLight args={[env.hemisphere.sky, env.hemisphere.ground, env.hemisphere.intensity]} />
       <ambientLight intensity={env.ambient} />
       <directionalLight
+        // A new light when the shadow detail changes: three.js keeps the first shadow map's size otherwise.
+        key={presentation ? 'fine' : 'draft'}
         position={[cx + size * dx, size * dy, cz + size * dz]}
         color={env.sun.color}
         intensity={env.sun.intensity}
         castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-bias={-0.001}
-        shadow-normalBias={0.06}
+        shadow-mapSize={presentation ? [4096, 4096] : [2048, 2048]}
+        shadow-bias={-0.0008}
+        shadow-normalBias={0.05}
         shadow-radius={presentation ? 10 : 4}
         shadow-camera-left={-size}
         shadow-camera-right={size}
