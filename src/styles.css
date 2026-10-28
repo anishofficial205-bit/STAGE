@@ -1828,3 +1828,17 @@ input[type='range'], input[type='checkbox'], input[type='radio'], .field__slider
 .mp__ai.is-error { color: #ffd2c8; }
 .mp__tip { margin: 0 auto 0 0; max-width: 520px; font-size: 12.5px; }
 @media (max-width: 860px) { .mp__body { grid-template-columns: 1fr; } }
+.mp__stage { position: relative; }
+.mp__stage .mp__ai { left: 50%; right: auto; transform: translateX(-50%); bottom: 12px; white-space: nowrap; }
+.mp__canvas.is-tap { cursor: pointer; }
+.mp__canvas:not(.is-tap) { cursor: crosshair; }
+.mp__check { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+.mp__how { margin: 0; font-size: 12.5px; }
+.mp__problems { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.mp__problems .panel-msg { margin: 0; font-size: 13px; }
+.mp__suggest { margin: 0; font-size: 13px; }
+.mp__suggest .btn--link { padding: 0; font-weight: 600; }
+.mp__detail { display: flex; flex-direction: column; gap: 4px; }
+.mp__detail-row { display: flex; align-items: center; gap: 8px; }
+.mp__detail-row input { flex: 1; }
+.mp__detail-row small { color: var(--muted); font-size: 12px; }

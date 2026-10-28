@@ -1,11 +1,13 @@
 /**
  * Turning a cut-out photo into a solid.
  *
- * The outline comes from the cut-out; the front surface from the depth map
- * (nearer parts stand out more); the thickness, top to bottom, from the side
- * photo's outline when there is one. Edges are rounded so the front and the
- * (smoother) back meet in a closed shape. A "cut-out" is the same with no
- * relief: a flat board shaped like the photo.
+ * The shape starts from the outline, "inflated" like a cushion: fullest in
+ * the middle, rounding to nothing at the edges. That always looks sensible.
+ * The AI depth map then adds detail on top — smoothed, kept away from the
+ * (unreliable) edges, and only as strongly as `detail` says (0 none … 1
+ * strong) — so a confused depth guess gives a plainer prop, not a melted one.
+ * The side photo's outline sets the thickness top to bottom. A "cut-out" is a
+ * flat board shaped like the photo.
  *
  * The result fits a 1 × 1 × 1 box: x −0.5…0.5 across, y 0…1 up, z −0.5…0.5
  * front to back; the piece scales it to the real size.
@@ -19,7 +21,7 @@ export interface Outline {
   alpha: Uint8Array | Uint8ClampedArray;
 }
 
-export function buildPropGeometry(front: Outline, depth: Uint8Array | null, side: Outline | null, mode: 'cutout' | 'solid'): THREE.BufferGeometry {
+export function buildPropGeometry(front: Outline, depth: Uint8Array | null, side: Outline | null, mode: 'cutout' | 'solid', detail = 0.4): THREE.BufferGeometry {
   const { width: w, height: h } = front;
   const N = mode === 'solid' ? 150 : 120;
   const step = Math.max(w, h) / N;
@@ -53,15 +55,44 @@ export function buildPropGeometry(front: Outline, depth: Uint8Array | null, side
       dist[k] = Math.min(dist[k], dist[k + 1] + 1, dist[k + gw + 1] + 1, dist[k + gw + 2] + D, dist[k + gw] + D);
     }
 
-  // Relief: the depth map, stretched to use its full range inside the outline.
+  let dmax = 1;
+  for (let k = 0; k < V; k++) if (inside[k]) dmax = Math.max(dmax, dist[k]);
+  const band = Math.max(2, 0.15 * dmax);
+
+  // Detail from the depth map: stretched over the inside (away from the edges), smoothed, centred on 0.
   const relief = new Float32Array(V);
-  if (depth && mode === 'solid') {
+  if (depth && mode === 'solid' && detail > 0) {
     const vals: number[] = [];
-    for (let j = 0; j <= gh; j++) for (let i = 0; i <= gw; i++) if (inside[id(i, j)]) vals.push(depth[at(i, j)]);
-    vals.sort((a, b) => a - b);
-    const lo = vals[Math.floor(vals.length * 0.05)] ?? 0;
-    const hi = vals[Math.floor(vals.length * 0.95)] ?? 255;
-    for (let j = 0; j <= gh; j++) for (let i = 0; i <= gw; i++) relief[id(i, j)] = Math.min(1, Math.max(0, (depth[at(i, j)] - lo) / Math.max(1, hi - lo)));
+    for (let j = 0; j <= gh; j++) for (let i = 0; i <= gw; i++) if (inside[id(i, j)] && dist[id(i, j)] > band) vals.push(depth[at(i, j)]);
+    if (vals.length > 20) {
+      vals.sort((a, b) => a - b);
+      const lo = vals[Math.floor(vals.length * 0.05)];
+      const hi = vals[Math.floor(vals.length * 0.95)];
+      const mid = vals[Math.floor(vals.length * 0.5)];
+      const span = Math.max(8, hi - lo);
+      for (let j = 0; j <= gh; j++)
+        for (let i = 0; i <= gw; i++) {
+          const k = id(i, j);
+          if (inside[k]) relief[k] = Math.min(0.5, Math.max(-0.5, (depth[at(i, j)] - mid) / span));
+        }
+      // Smooth twice (3 × 3 average over the inside): noise in the depth guess would show as bumps.
+      for (let pass = 0; pass < 3; pass++) {
+        const src = relief.slice();
+        for (let j = 1; j < gh; j++)
+          for (let i = 1; i < gw; i++) {
+            const k = id(i, j);
+            if (!inside[k]) continue;
+            let sum = 0;
+            let n = 0;
+            for (let dj = -1; dj <= 1; dj++)
+              for (let di = -1; di <= 1; di++) {
+                const q = id(i + di, j + dj);
+                if (inside[q]) (sum += src[q]), n++;
+              }
+            relief[k] = sum / n;
+          }
+      }
+    }
   }
 
   // Thickness top to bottom, from the side photo (its width at each height).
@@ -90,7 +121,6 @@ export function buildPropGeometry(front: Outline, depth: Uint8Array | null, side
   }
 
   // Positions on both faces.
-  const R = mode === 'solid' ? Math.max(2, 0.14 * Math.min(gw, gh)) : 1;
   const zf = new Float32Array(V);
   const zb = new Float32Array(V);
   for (let j = 0; j <= gh; j++)
@@ -98,11 +128,18 @@ export function buildPropGeometry(front: Outline, depth: Uint8Array | null, side
       const k = id(i, j);
       // The rim (next to the outside) stays at 0 so the front and back meet in a closed shape.
       if (!inside[k] || dist[k] <= 1) continue;
-      const e = Math.min(1, (dist[k] - 1) / R);
-      const round = mode === 'solid' ? Math.sqrt(1 - (1 - e) * (1 - e)) : 1;
-      const t = 0.5 * thick[j] * round;
-      zf[k] = mode === 'solid' ? t * (0.35 + 0.65 * relief[k]) : t;
-      zb[k] = mode === 'solid' ? -t * 0.7 : -t;
+      const t = 0.5 * thick[j];
+      if (mode === 'cutout') {
+        zf[k] = t;
+        zb[k] = -t;
+        continue;
+      }
+      // Cushion: a rounded dome over the outline.
+      const e = Math.min(1, (dist[k] - 1) / Math.max(1, dmax - 1));
+      const dome = Math.sqrt(1 - (1 - e) * (1 - e));
+      const fade = Math.min(1, (dist[k] - 1) / band);
+      zf[k] = t * Math.max(0.08 * dome, dome * 0.9 + detail * 0.9 * relief[k] * fade);
+      zb[k] = -t * dome * 0.75;
     }
   // Fit the front-to-back extent into −0.5…0.5.
   let zmin = 0;

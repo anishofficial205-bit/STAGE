@@ -254,3 +254,60 @@ async function toPng(rgba: Uint8ClampedArray, w: number, h: number) {
   c.getContext('2d')!.putImageData(new ImageData(rgba, w, h), 0, 0);
   return c.convertToBlob({ type: 'image/png' });
 }
+
+/** Drop specks (pieces under 3% of the biggest); keep real gaps and separate parts. For outlines from the AI. */
+export function despeckle(mask: Uint8Array, w: number, h: number): Uint8Array {
+  const label = new Int32Array(w * h).fill(-1);
+  const sizes: number[] = [];
+  const stack: number[] = [];
+  for (let s = 0; s < w * h; s++) {
+    if (!mask[s] || label[s] >= 0) continue;
+    const n = sizes.length;
+    let size = 0;
+    label[s] = n;
+    stack.push(s);
+    while (stack.length) {
+      const i = stack.pop()!;
+      size++;
+      for (const j of neighbours(i, w, h))
+        if (mask[j] && label[j] < 0) {
+          label[j] = n;
+          stack.push(j);
+        }
+    }
+    sizes.push(size);
+  }
+  const max = Math.max(0, ...sizes);
+  const out = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) if (label[i] >= 0 && sizes[label[i]] >= max * 0.03) out[i] = 255;
+  return out;
+}
+
+/** The cut-out with brush touch-ups on top: (outline + kept) − removed. */
+export function compose(base: Uint8Array, add: Uint8Array, remove: Uint8Array): Uint8Array {
+  const out = new Uint8Array(base.length);
+  for (let i = 0; i < base.length; i++) out[i] = (base[i] || add[i]) && !remove[i] ? 255 : 0;
+  return out;
+}
+
+export type CutoutProblem = 'empty' | 'tiny' | 'everything' | 'edge';
+
+/** Plain checks on a cut-out: nothing kept, almost nothing, nearly the whole photo, or cut off at the photo's edge. */
+export function checkCutout(mask: Uint8Array, w: number, h: number): CutoutProblem[] {
+  let area = 0;
+  for (let i = 0; i < mask.length; i++) if (mask[i]) area++;
+  if (!area) return ['empty'];
+  const share = area / (w * h);
+  const out: CutoutProblem[] = [];
+  if (share < 0.02) out.push('tiny');
+  if (share > 0.88) out.push('everything');
+  // Edge pixels that belong to the prop (ignoring the bottom edge: a prop standing on the floor can touch it).
+  let touch = 0;
+  for (let x = 0; x < w; x++) if (mask[x]) touch++;
+  for (let y = 0; y < h; y++) {
+    if (mask[y * w]) touch++;
+    if (mask[y * w + w - 1]) touch++;
+  }
+  if (share <= 0.88 && touch > (w + 2 * h) * 0.03) out.push('edge');
+  return out;
+}

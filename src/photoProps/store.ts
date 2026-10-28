@@ -16,6 +16,8 @@ export interface PhotoProp {
   /** Small picture for the library (data URL). */
   thumbnail: string;
   mode: PropMode;
+  /** How much of the AI depth shows on top of the rounded shape (0 none … 1 strong). */
+  detail?: number;
   /** Real size in metres (width across the front, depth front-to-back). */
   width: number;
   height: number;

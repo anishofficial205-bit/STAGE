@@ -53,7 +53,7 @@ export function buildProp(p: PhotoProp): Promise<Built | null> {
         depthGray = new Uint8Array(depth.data.width * depth.data.height);
         for (let i = 0; i < depthGray.length; i++) depthGray[i] = depth.data.data[i * 4];
       }
-      const geometry = buildPropGeometry(alphaOf(front.data), depthGray, side ? alphaOf(side.data) : null, p.mode);
+      const geometry = buildPropGeometry(alphaOf(front.data), depthGray, side ? alphaOf(side.data) : null, p.mode, p.detail ?? 0.5);
       const frontTex = texture(front.canvas);
       const frontMat = new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.75, metalness: 0 });
       const backMat = back ? new THREE.MeshStandardMaterial({ map: texture(back.canvas), roughness: 0.75 }) : new THREE.MeshStandardMaterial({ map: frontTex, color: '#9a9a9a', roughness: 0.8 });
