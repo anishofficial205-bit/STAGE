@@ -10,3 +10,14 @@ export const DEFAULT_ENVIRONMENT: Environment = {
   ambient: 0.25,
   sun: { color: '#ffffff', intensity: 1.6, direction: [0.6, 1.4, 0.8] },
 };
+
+/** The same studio in light mode: soft warm-grey surroundings that match the light panels. */
+export const LIGHT_ENVIRONMENT: Environment = {
+  background: '#dcdcd7',
+  fog: '#dcdcd7',
+  ground: '#cfcfc9',
+  grid: { cell: '#c0c0b9', section: '#acaca5' },
+  hemisphere: { sky: '#ffffff', ground: '#d5d8dc', intensity: 0.95 },
+  ambient: 0.32,
+  sun: { color: '#ffffff', intensity: 1.6, direction: [0.6, 1.4, 0.8] },
+};

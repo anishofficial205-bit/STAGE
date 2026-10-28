@@ -3,7 +3,8 @@ import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Sky, Stars } from '@react-three/drei';
 import { FloorGrid } from '../helpers/FloorGrid';
-import { DEFAULT_ENVIRONMENT } from '../helpers/environment';
+import { DEFAULT_ENVIRONMENT, LIGHT_ENVIRONMENT } from '../helpers/environment';
+import { useTheme, type Theme } from './theme';
 import type { Bounds, Environment, Params, StageTemplate } from '../types';
 import { useExportState } from '../export/state';
 import { useProjectStore } from '../store/useProjectStore';
@@ -66,8 +67,9 @@ export class SceneBoundary extends Component<{ resetKey: unknown; children: Reac
   }
 }
 
-export const sceneEnvironment = (template: StageTemplate, params: Params): Environment => ({
-  ...DEFAULT_ENVIRONMENT,
+/** The scene's surroundings: the studio in the app's light or dark look, with the template's own changes (e.g. an outdoor sky) on top. */
+export const sceneEnvironment = (template: StageTemplate, params: Params, theme: Theme = useTheme.getState().theme): Environment => ({
+  ...(theme === 'light' ? LIGHT_ENVIRONMENT : DEFAULT_ENVIRONMENT),
   ...template.environment?.(params),
 });
 
@@ -97,7 +99,8 @@ export function useStageDark() {
 export function StageScene({ template, params, data }: { template: StageTemplate; params: Params; data: unknown }) {
   const bounds = useMemo(() => template.bounds(params, data), [template, params, data]);
   const dark = useStageDark();
-  const env = useMemo(() => (dark ? darkEnvironment : (e: Environment) => e)(sceneEnvironment(template, params)), [template, params, dark]);
+  const theme = useTheme((s) => s.theme);
+  const env = useMemo(() => (dark ? darkEnvironment : (e: Environment) => e)(sceneEnvironment(template, params, theme)), [template, params, dark, theme]);
   // A fresh object whenever the scene inputs change, so a failed scene gets another try.
   const sceneKey = useMemo(() => ({}), [template, params, data]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
