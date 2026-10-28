@@ -168,7 +168,15 @@ export function setDefaultUnits(u: Units) {
     /* not remembered */
   }
 }
-const defaultUnits = (): Units => savedDefaultUnits() ?? 'm';
+/** Until the user picks (Home's Metres / Feet switch), feet in the US and metres elsewhere. */
+const localUnits = (): Units => {
+  try {
+    return /-(US|LR|MM)\b/i.test(navigator.language) ? 'ft' : 'm';
+  } catch {
+    return 'm';
+  }
+};
+const defaultUnits = (): Units => savedDefaultUnits() ?? localUnits();
 
 /** Was a project saved in this browser before this page load? (First launch shows the start screen.) */
 export const hadSavedProject = (() => {

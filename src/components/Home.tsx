@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useShell } from './shell';
 import { STARTER_SCENES, loadStarterScene } from '../starters/scenes';
 import { deleteProject, deleteProjects, duplicateProject, recordCurrentProject, recordWithPicture, refreshRecent, renameProject, useRecentProjects, type ProjectRecord } from '../projects/library';
-import { savedDefaultUnits, setDefaultUnits, useProjectStore } from '../store/useProjectStore';
+import { setDefaultUnits, useProjectStore } from '../store/useProjectStore';
 import { importZip } from '../graphics/library';
 import { getTemplate } from '../templates/registry';
 import { useThumbnails } from './Thumbnails';
@@ -29,31 +29,6 @@ function stageOf(p: ProjectRecord) {
   const id = (p.file as { templateId?: string })?.templateId;
   const t = id ? getTemplate(id) : undefined;
   return { id, name: t ? (lookup(t.name)?.plain ?? t.name) : 'Stage' };
-}
-
-/** First launch only: one question before anything else. */
-function UnitsQuestion({ onDone }: { onDone: () => void }) {
-  const pick = (u: Units) => {
-    setDefaultUnits(u);
-    useProjectStore.getState().setUnits(u);
-    onDone();
-  };
-  return (
-    <div className="start__units">
-      <h1 className="start__title">Do you measure in feet or metres?</h1>
-      <p className="start__lead">We’ll use it for every new project. You can change it any time on this page or in settings.</p>
-      <div className="start__unit-buttons">
-        <button className="start__unit" onClick={() => pick('ft')} autoFocus>
-          <b>Feet</b>
-          <span>12 ft 6 in</span>
-        </button>
-        <button className="start__unit" onClick={() => pick('m')}>
-          <b>Metres</b>
-          <span>3.80 m</span>
-        </button>
-      </div>
-    </div>
-  );
 }
 
 /** Picture of a project, or its stage type when there's no picture yet — never a blank box. */
@@ -273,7 +248,6 @@ export function Home() {
   const home = useShell((s) => s.home);
   const setHome = useShell((s) => s.setHome);
   const recent = useRecentProjects((s) => s.list);
-  const [asking, setAsking] = useState(() => savedDefaultUnits() === null);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [view, setView] = useState<View>('home');
@@ -337,15 +311,6 @@ export function Home() {
     useProjectStore.getState().setUnits(u);
   };
   const newProject = (pick?: string) => useShell.getState().setNewProject(true, false, pick ?? null);
-
-  if (asking)
-    return (
-      <div className="start home" role="dialog" aria-modal="true" aria-label="Home">
-        <div className="start__inner">
-          <UnitsQuestion onDone={() => setAsking(false)} />
-        </div>
-      </div>
-    );
 
   const last = !query && sort === 'recent' ? projects[0] : undefined;
   const others = last ? projects.slice(1) : projects;

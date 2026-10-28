@@ -996,12 +996,6 @@ input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color:
 .start__row { display: flex; align-items: center; gap: 12px; margin: 48px 0 14px; }
 .start__h2 { font-size: 20px; font-weight: 500; margin: 0 auto 0 0; }
 .start__empty { color: var(--muted); }
-.start__units { max-width: 640px; margin: 80px auto 0; text-align: center; }
-.start__unit-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 32px; }
-.start__unit { display: flex; flex-direction: column; gap: 6px; padding: 34px 20px; border-radius: 22px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; }
-.start__unit b { font-size: 26px; font-weight: 500; }
-.start__unit span { color: var(--muted); font-size: 15px; }
-.start__unit:hover, .start__unit:focus-visible { border-color: color-mix(in srgb, var(--hi) 50%, transparent); background: color-mix(in srgb, var(--text) 7%, transparent); outline: none; }
 
 /* Plain words first, technical term second */
 .term { display: inline-flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
