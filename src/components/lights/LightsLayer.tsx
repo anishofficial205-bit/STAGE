@@ -21,6 +21,7 @@ import { FixtureModel, PracticalModel } from './models';
 import { beamCone, hazeMaterial, poolTexture } from './haze';
 import { lightBudget } from './budget';
 import { Plain } from '../../glossary/Plain';
+import { performerNear, useFollowTargets } from '../../lighting/follow';
 
 const ACCENT = '#d4f542';
 /** Light output at 100% (decay 0, so brightness doesn't depend on throw distance). */
@@ -76,7 +77,7 @@ function useOrbitPause() {
 }
 
 /** Drag helper: click (no movement) → onClick; movement → onMove each step, onEnd at the end. */
-function useDrag(o: { onDown?: (e: ThreeEvent<PointerEvent>) => boolean; onMove: (e: ThreeEvent<PointerEvent>) => void; onClick?: (e: ThreeEvent<PointerEvent>) => void }) {
+function useDrag(o: { onDown?: (e: ThreeEvent<PointerEvent>) => boolean; onMove: (e: ThreeEvent<PointerEvent>) => void; onClick?: (e: ThreeEvent<PointerEvent>) => void; onEnd?: () => void }) {
   const pause = useOrbitPause();
   const start = useRef<[number, number] | null>(null);
   const moved = useRef(false);
@@ -104,6 +105,7 @@ function useDrag(o: { onDown?: (e: ThreeEvent<PointerEvent>) => boolean; onMove:
       (e.target as unknown as Element).releasePointerCapture(e.pointerId);
       pause(false);
       if (!moved.current) o.onClick?.(e);
+      else o.onEnd?.();
     },
   };
 }
@@ -255,10 +257,10 @@ function FixtureView({ f, real, shadow, approx, selected, active, haze, presenta
             {beam && level > 0 && <mesh geometry={beam} material={hazeMat} renderOrder={5} />}
           </group>
         )}
-        {selected && !exporting && (
+        {(selected || (hot && active)) && !exporting && (
           <mesh>
             <sphereGeometry args={[spec.point ? 0.3 : 0.36, 16, 12]} />
-            <meshBasicMaterial color={ACCENT} wireframe transparent opacity={0.6} depthTest={false} />
+            <meshBasicMaterial color={ACCENT} wireframe transparent opacity={selected ? 0.6 : 0.3} depthTest={false} />
           </mesh>
         )}
         {showTag && !exporting && (
@@ -273,33 +275,81 @@ function FixtureView({ f, real, shadow, approx, selected, active, haze, presenta
   );
 }
 
-/** For each selected light: a line to where it points and a marker you can drag to re-aim it. */
-function TargetMarker({ f }: { f: Fixture }) {
+/**
+ * Where a light points (its anchor): a ring on the floor in the light's colour
+ * with its channel number, joined to the light by a line. Shown for the
+ * selected lights and the one under the pointer; hovering either end lights
+ * up the other. Drag the ring to re-aim; drop it on a performer to follow them.
+ */
+function Anchor({ f, selected }: { f: Fixture; selected: boolean }) {
   const scene = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
+  const exporting = useExportState((s) => s.exporting);
+  const hot = useHovered(`light:${f.id}`);
+  const hover = hoverProps(`light:${f.id}`);
   const key = useRef('');
+  const last = useRef<Vec3 | null>(null);
   const drag = useDrag({
     onDown: () => {
+      useLightsUI.getState().select({ kind: 'fixture', ids: [f.id] });
       key.current = `fx-aim:${f.id}:${Date.now()}`;
-      return true;
+      last.current = null;
+      return !f.locked;
     },
     onMove: (e) => {
       const p = surfaceHit(e.ray, scene, camera);
-      if (p) lightActions.focus([f.id], p, key.current);
+      if (!p) return;
+      last.current = p;
+      lightActions.patch([f.id], { target: p, follow: undefined }, key.current);
+    },
+    onEnd: () => {
+      const at = last.current;
+      const who = at && performerNear(at);
+      if (who) lightActions.patch([f.id], { follow: who }, key.current);
     },
   });
+  if ((!selected && !hot) || exporting) return null;
+  const level = f.on ? f.intensity : 0;
+  const tone = level > 0 ? f.color : '#8a9099';
+  // The ring is roughly where the light lands (its pool), so it's easy to see and grab.
+  const ring = Math.max(0.4, Math.min(2.5, len(sub(f.target, f.pos)) * Math.tan(rad(f.beam) / 2) * 0.8));
   return (
     <group userData={{ lightHelper: true }}>
-      <Line points={[f.pos, f.target]} color={ACCENT} lineWidth={1} dashed dashSize={0.25} gapSize={0.15} depthTest={false} renderOrder={998} />
-      <mesh position={f.target} renderOrder={999} {...drag} onPointerOver={() => (document.body.style.cursor = 'crosshair')} onPointerOut={() => (document.body.style.cursor = '')}>
-        <sphereGeometry args={[0.14, 16, 12]} />
-        <meshBasicMaterial color={ACCENT} depthTest={false} transparent opacity={0.9} />
-      </mesh>
-      <Html position={f.target} center zIndexRange={[15, 0]} style={{ pointerEvents: 'none', transform: 'translateY(-22px)' }}>
-        <span className="channel-tag" data-lp={LABEL_PRIORITY.light + 10}>
-          Aim · <Plain text={f.name} />
-        </span>
-      </Html>
+      <Line points={[f.pos, f.target]} color={selected ? ACCENT : tone} lineWidth={selected ? 1.5 : 1} transparent opacity={selected ? 0.95 : 0.7} depthTest={false} renderOrder={998} />
+      <group position={[f.target[0], f.target[1] + 0.02, f.target[2]]}>
+        <mesh rotation-x={-Math.PI / 2} renderOrder={999}>
+          <ringGeometry args={[ring, ring + 0.09, 40]} />
+          <meshBasicMaterial color={tone} depthTest={false} transparent opacity={0.95} />
+        </mesh>
+        {selected && (
+          <mesh rotation-x={-Math.PI / 2} renderOrder={999}>
+            <ringGeometry args={[ring + 0.11, ring + 0.16, 40]} />
+            <meshBasicMaterial color={ACCENT} depthTest={false} transparent opacity={0.95} />
+          </mesh>
+        )}
+        {/* Grab area: the whole disc. */}
+        <mesh
+          rotation-x={-Math.PI / 2}
+          {...drag}
+          onPointerOver={() => {
+            document.body.style.cursor = 'grab';
+            hover.onPointerOver();
+          }}
+          onPointerOut={() => {
+            document.body.style.cursor = '';
+            hover.onPointerOut();
+          }}
+        >
+          <circleGeometry args={[ring + 0.16, 32]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+        <Html center zIndexRange={[15, 0]} style={{ pointerEvents: 'none' }}>
+          <span className={`anchor-badge ${selected ? 'is-selected' : ''}`} style={{ ['--tone' as string]: tone }} data-lp={LABEL_PRIORITY.light + 10}>
+            {f.channel}
+            {f.follow ? <small>following</small> : null}
+          </span>
+        </Html>
+      </group>
     </group>
   );
 }
@@ -341,10 +391,19 @@ function FocusClick() {
 export function useEffectiveLighting() {
   const lighting = useActiveLighting();
   const live = useLightsUI((s) => s.live);
+  const solo = useLightsUI((s) => s.solo);
+  const follow = useFollowTargets(lighting.fixtures);
   return useMemo(() => {
-    if (!live) return lighting;
-    return { ...lighting, haze: live.haze, fixtures: lighting.fixtures.map((f) => (live.states[f.id] ? { ...f, ...live.states[f.id] } : f)) };
-  }, [lighting, live]);
+    if (!live && !solo && !follow) return lighting;
+    const fixtures = lighting.fixtures.map((f) => {
+      let x = live?.states[f.id] ? { ...f, ...live.states[f.id] } : f;
+      const at = f.follow && follow?.get(f.follow);
+      if (at) x = { ...x, target: at };
+      if (solo && !solo.includes(f.id)) x = { ...x, on: false };
+      return x;
+    });
+    return { ...lighting, haze: live?.haze ?? lighting.haze, fixtures };
+  }, [lighting, live, solo, follow]);
 }
 
 export function LightsLayer() {
@@ -378,7 +437,7 @@ export function LightsLayer() {
       {lighting.fixtures.map((f) => (
         <FixtureView key={f.id} f={f} real={real.has(f.id)} shadow={shadows.has(f.id)} approx={approx.has(f.id)} selected={isSel('fixture', f.id)} active={active} haze={lighting.haze} presentation={presentation} lines={lines} />
       ))}
-      {active && !exporting && selected?.kind === 'fixture' && lighting.fixtures.filter((f) => selected.ids.includes(f.id) && !FIXTURES[f.type].point).map((f) => <TargetMarker key={f.id} f={f} />)}
+      {active && lighting.fixtures.filter((f) => !FIXTURES[f.type].point).map((f) => <Anchor key={f.id} f={f} selected={isSel('fixture', f.id)} />)}
       {active && focusMode && <FocusClick />}
     </group>
   );

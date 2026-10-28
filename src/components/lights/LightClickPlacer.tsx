@@ -4,8 +4,10 @@ import { Html } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { addLightAimedAt, useLightPlacing, SIMPLE_LIGHTS } from '../../lighting/moods';
 import { FIXTURES, type Vec3 } from '../../lighting/types';
-import { useProjectStore } from '../../store/useProjectStore';
+import { MERGE_WITH_PREVIOUS, useProjectStore } from '../../store/useProjectStore';
 import { surfaceHit } from './LightsLayer';
+import { lightActions } from '../../lighting/actions';
+import { presetActions } from '../../lighting/presets';
 
 const ndc = new THREE.Vector2();
 const rc = new THREE.Raycaster();
@@ -13,6 +15,7 @@ const rc = new THREE.Raycaster();
 /** After choosing a light type: "Click where you want light on stage", then hang and aim it there. */
 export function LightClickPlacer() {
   const type = useLightPlacing((s) => s.type);
+  const preset = useLightPlacing((s) => s.preset);
   const mode = useProjectStore((s) => s.mode);
   const { camera, gl, scene } = useThree();
   const [at, setAt] = useState<Vec3 | null>(null);
@@ -44,7 +47,8 @@ export function LightClickPlacer() {
       e.stopImmediatePropagation();
       placed = true;
       useLightPlacing.getState().cancel();
-      addLightAimedAt(type, p);
+      const id = addLightAimedAt(type, p);
+      if (preset) lightActions.patch([id], presetActions.lightPatch(preset), MERGE_WITH_PREVIOUS);
     };
     const onClick = (e: MouseEvent) => {
       if (!placed) return;
@@ -69,10 +73,10 @@ export function LightClickPlacer() {
       el.style.cursor = '';
       setAt(null);
     };
-  }, [type, camera, gl, scene]);
+  }, [type, preset, camera, gl, scene]);
 
   if (!type || !at) return null;
-  const name = SIMPLE_LIGHTS.find((s) => s.type === type)?.name ?? FIXTURES[type].label;
+  const name = preset?.name ?? SIMPLE_LIGHTS.find((s) => s.type === type)?.name ?? FIXTURES[type].label;
   return (
     <group position={at} userData={{ lightHelper: true }}>
       <mesh rotation-x={-Math.PI / 2} position-y={0.02} raycast={() => null}>

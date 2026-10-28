@@ -21,6 +21,8 @@ import { Tips } from './components/Tips';
 import { useEffect } from 'react';
 import { startRecentSync } from './projects/library';
 import { LightPlot } from './components/lights/LightPlot';
+import { LightTable } from './components/lights/LightTable';
+import { ImportLights } from './components/lights/ImportLights';
 import { PlanView } from './components/venue/PlanView';
 import { VenueViewBar } from './components/venue/VenuePanels';
 import { useProjectStore } from './store/useProjectStore';
@@ -82,6 +84,8 @@ export default function App() {
       <PdfPagePicker />
       <ShortcutsSheet />
       <LightPlot />
+      <LightTable />
+      <ImportLights />
       <Tour />
       <ThumbnailRenderer />
       <Home />

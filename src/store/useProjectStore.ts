@@ -568,6 +568,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     },
 
     batch: (label, fn) => {
+      // Inside another batch: just run (the outer batch is the one undo step).
+      if (suspended) return fn();
       commit();
       suspended = true;
       try {

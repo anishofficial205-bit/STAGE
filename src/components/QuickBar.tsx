@@ -86,6 +86,7 @@ const DELETE = 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13';
 const AIM = 'M12 3v4M12 17v4M3 12h4M17 12h4M12 12h.01';
 const PATH = 'M4 18c4 0 4-12 8-12s4 12 8 12';
 const MORE = 'M5 12h.01M12 12h.01M19 12h.01';
+const SOLO = 'M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3zM10 20h4';
 
 function Act({ label, icon, onClick, danger, accent }: { label: string; icon: ReactNode; onClick: () => void; danger?: boolean; accent?: boolean }) {
   return (
@@ -175,6 +176,7 @@ export function QuickBar() {
     actions = (
       <>
         <Act label="Aim" icon={<I d={AIM} />} onClick={() => useLightsUI.getState().setFocusMode(true)} />
+        <SoloAct ids={ids} />
         <Act label="Copy" icon={<I d={COPY} />} onClick={() => lightActions.duplicate(ids)} />
       </>
     );
@@ -190,4 +192,11 @@ export function QuickBar() {
       <Act label="More" icon={<I d={MORE} w={3.4} />} onClick={more} />
     </div>
   );
+}
+
+/** Solo: see only what these lights do (everything else goes dark until you show all again). */
+function SoloAct({ ids }: { ids: string[] }) {
+  const solo = useLightsUI((s) => s.solo);
+  const on = !!solo && solo.length === ids.length && ids.every((id) => solo.includes(id));
+  return <Act label={on ? 'Show all' : 'Solo'} icon={<I d={SOLO} />} onClick={() => useLightsUI.getState().setSolo(on ? null : ids)} />;
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Field } from '../fields';
-import { useActiveLighting, useProjectStore } from '../../store/useProjectStore';
+import { useActiveBlocking, useActiveLighting, useProjectStore } from '../../store/useProjectStore';
 import { FIXTURES, GELS, kelvinToHex, type Fixture, type FixtureType, type HangPosition, type Vec3 } from '../../lighting/types';
 import { lightActions } from '../../lighting/actions';
 import { useLightsUI } from '../../lighting/ui';
@@ -11,8 +11,10 @@ import type { ParamDef } from '../../types';
 import { MAX_REAL, MAX_SHADOWS, lightBudget } from './budget';
 import { LooksSection, GroupsSection } from './LooksPanel';
 import { Plain } from '../../glossary/Plain';
-import { MoreOptions } from '../MoreOptions';
-import { MOODS, SIMPLE_LIGHTS, applyMood, useLightPlacing } from '../../lighting/moods';
+import { MOODS, SIMPLE_LIGHTS, applyMood, lightPerformer, useLightPlacing } from '../../lighting/moods';
+import { MyLightRows, MyMoods, PresetsPage, SaveLightPreset } from './Presets';
+import { useLightPresets } from '../../lighting/presets';
+import { exportLightList } from '../../lighting/csv';
 import { removePick } from '../layers/ops';
 import { Drill, Group, ListHead, Row, RowPlus, RowSwitch, type PageDef } from '../SettingsList';
 import { create } from 'zustand';
@@ -101,7 +103,20 @@ export function useLightsMode() {
       const sel = ui.selected;
       if (e.key === 'Escape') {
         if (ui.focusMode) ui.setFocusMode(false);
-        else ui.select(null);
+        else if (sel) ui.select(null);
+        else ui.setSolo(null);
+        return;
+      }
+      if (e.key.toLowerCase() === 't' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        if (useActiveLightingNow().fixtures.length) ui.setTableOpen(!ui.tableOpen);
+        return;
+      }
+      if (e.key.toLowerCase() === 's' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (sel?.kind === 'fixture') {
+          const on = ui.solo && ui.solo.length === sel.ids.length && sel.ids.every((id) => ui.solo!.includes(id));
+          ui.setSolo(on ? null : sel.ids);
+        } else if (ui.solo) ui.setSolo(null);
         return;
       }
       if (!sel) return;
@@ -117,6 +132,11 @@ export function useLightsMode() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 }
+
+const useActiveLightingNow = () => {
+  const s = useProjectStore.getState();
+  return s.lightingByTemplate[s.templateId] ?? { fixtures: [] };
+};
 
 /** Start placing a light (or add it straight away when it stands on the floor). */
 function chooseLight(t: FixtureType) {
@@ -134,6 +154,7 @@ function AddLightRows() {
       {SIMPLE_LIGHTS.map((x) => (
         <Row key={x.type} icon={<span className="sl-glyph">{ICONS[x.type]}</span>} label={x.name} value={choosing === x.type ? 'Click the stage…' : undefined} accent={choosing === x.type} action={<RowPlus />} onClick={() => chooseLight(x.type)} title={x.help} />
       ))}
+      <MyLightRows />
       <Row label="More kinds" value={String(Object.keys(FIXTURES).length - SIMPLE_LIGHTS.length)} page="more-kinds" />
     </>
   );
@@ -274,16 +295,21 @@ const QUICK_LIGHT_COLOURS: [string, string][] = [
 function FixtureProps({ fixtures }: { fixtures: Fixture[] }) {
   const units = useProjectStore((s) => s.units);
   const positions = useActiveLighting().positions;
+  const performers = useActiveBlocking().performers;
   const focusMode = useLightsUI((s) => s.focusMode);
+  const solo = useLightsUI((s) => s.solo);
+  const all = useLightsUI((s) => s.allSettings);
   const ids = fixtures.map((f) => f.id);
   const f = fixtures[0];
   const one = fixtures.length === 1;
   const spec = FIXTURES[f.type];
   const sameType = fixtures.every((x) => x.type === f.type);
-  const mount = f.mount === 'floor' ? 'Floor' : f.mount === 'rig' ? 'Rigging / truss' : positions.find((p: HangPosition) => p.id === f.mount)?.name ?? 'Free';
+  const mount = f.mount === 'floor' ? 'the floor' : f.mount === 'rig' ? 'the rigging' : positions.find((p: HangPosition) => p.id === f.mount)?.name ?? 'nothing';
   const pt = panTilt(f);
+  const soloed = !!solo && solo.length === ids.length && ids.every((id) => solo.includes(id));
+  const following = fixtures.every((x) => x.follow === f.follow) ? f.follow ?? '' : '';
   return (
-    <div className="props">
+    <div className="props light-props">
       <div className="panel-head">
         {one ? (
           <input className="obj-props__name" value={f.name} onChange={(e) => lightActions.patch(ids, { name: e.target.value }, `name:${f.id}`)} aria-label="Light name" />
@@ -295,11 +321,26 @@ function FixtureProps({ fixtures }: { fixtures: Fixture[] }) {
         </button>
       </div>
       <p className="hint">
-        {sameType ? spec.label : 'Mixed types'}
-        {one ? ` · on ${mount}` : ''}
+        {one && <span className="light-props__ch">{f.channel}</span>}
+        {sameType ? <Plain text={spec.label} /> : 'Mixed types'}
+        {one ? ` · hangs on ${mount}` : ''}
       </p>
+      {one && f.standIn && <p className="panel-msg panel-msg--info">Stands in for your {f.standIn}.</p>}
+      <div className="light-props__actions">
+        <button className={`btn ${soloed ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().setSolo(soloed ? null : ids)} title="See only what this light does; everything else goes dark for now (S)">
+          {soloed ? 'Show all lights' : 'Solo'}
+        </button>
+        {!spec.point && (
+          <button className={`btn ${focusMode ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().setFocusMode(!focusMode)} title="Then click a point on stage (A)">
+            Aim{fixtures.length > 1 ? ' all' : ''}
+          </button>
+        )}
+      </div>
+      {focusMode && <p className="panel-msg panel-msg--info">Click a point on the stage to aim {fixtures.length > 1 ? 'these lights' : 'this light'} there.</p>}
       <section className="group">
-        <h3 className="group__title">Colour</h3>
+        <h3 className="group__title">
+          Colour <span className="term__tech">gel</span>
+        </h3>
         <div className="color-field">
           {QUICK_LIGHT_COLOURS.map(([name, hex]) => (
             <button
@@ -317,60 +358,76 @@ function FixtureProps({ fixtures }: { fixtures: Fixture[] }) {
       </section>
       <Field def={num('intensity', 'Brightness (%)', 0, 100, 1)} value={f.intensity} units={units} onChange={(v) => lightActions.patch(ids, { intensity: v as number, on: (v as number) > 0 }, `int:${ids.join()}`)} />
       {!spec.point && sameType && (
-        <Field def={num('sharp', 'Softer ↔ Sharper', 0, 100, 1, 'How hard the edge of the pool of light is.')} value={100 - Math.round(f.soft * 100)} units={units} onChange={(v) => lightActions.patch(ids, { soft: (100 - (v as number)) / 100 }, `soft:${ids.join()}`)} />
+        <>
+          <Field def={num('beam', 'Beam size (beam angle, °)', spec.beam[0], spec.beam[1], 1, 'How wide the pool of light is.')} value={f.beam} units={units} onChange={(v) => lightActions.patch(ids, { beam: v as number }, `beam:${ids.join()}`)} />
+          <Field def={num('sharp', 'Edge: soft ↔ sharp (focus)', 0, 100, 1, 'How hard the edge of the pool of light is.')} value={100 - Math.round(f.soft * 100)} units={units} onChange={(v) => lightActions.patch(ids, { soft: (100 - (v as number)) / 100 }, `soft:${ids.join()}`)} />
+        </>
       )}
-      <MoreOptions id="light">
-        {one && <Field def={num('channel', 'Channel', 1, 999, 1)} value={f.channel} units={units} onChange={(v) => lightActions.patch(ids, { channel: v as number }, `ch:${f.id}`)} />}
-        <label className="field field--inline">
-          <span className="field__label">On</span>
-          <button type="button" role="switch" aria-checked={f.on} className={`switch ${f.on ? 'is-on' : ''}`} onClick={() => lightActions.patch(ids, { on: !f.on })}>
-            <span className="switch__knob" />
-          </button>
-        </label>
-        {!spec.point && sameType && (
-          <>
-            <Field def={num('beam', 'Beam angle (°)', spec.beam[0], spec.beam[1], 1)} value={f.beam} units={units} onChange={(v) => lightActions.patch(ids, { beam: v as number }, `beam:${ids.join()}`)} />
-          </>
-        )}
-        {!spec.point && (
-          <section className="group">
-            <h3 className="group__title">Focus</h3>
-            <div className="btn-row">
-              <button className={`btn ${focusMode ? 'is-active' : ''}`} onClick={() => useLightsUI.getState().setFocusMode(!focusMode)} title="Then click a point on stage (A)">
-                ⌖ Click to focus{fixtures.length > 1 ? ' all' : ''}
-              </button>
-            </div>
-            {focusMode && <p className="panel-msg panel-msg--info">Click a point on the stage to aim {fixtures.length > 1 ? 'these lights' : 'this light'} there.</p>}
-            <p className="hint">Or drag the blue target marker in the view.</p>
-            {one && (f.type === 'moving' || f.type === 'follow') && (
-              <>
-                <Field def={num('pan', 'Pan (°)', -180, 180, 1)} value={pt.pan} units={units} onChange={(v) => lightActions.focus(ids, aimFrom(f, v as number, pt.tilt), `pan:${f.id}`)} />
-                <Field def={num('tilt', 'Tilt (°)', 0, 135, 1, '0° points straight down.')} value={pt.tilt} units={units} onChange={(v) => lightActions.focus(ids, aimFrom(f, pt.pan, v as number), `tilt:${f.id}`)} />
-              </>
-            )}
-          </section>
-        )}
-        <ColourControls fixtures={fixtures} />
-        {sameType && (f.type === 'profile' || f.type === 'moving' || f.type === 'follow') && <GoboControls fixtures={fixtures} />}
-        {!spec.point && f.type !== 'house' && (
+      {!spec.point && (
+        <section className="group">
+          <h3 className="group__title">
+            Aim <span className="term__tech">focus</span>
+          </h3>
+          <p className="hint">Drag the ring on the stage to move where it points. Drop the ring on a performer to follow them.</p>
+          {performers.length > 0 && (
+            <label className="field">
+              <span className="field__label">Follow a performer</span>
+              <select className="field__select" value={following} onChange={(e) => lightActions.patch(ids, { follow: e.target.value || undefined })}>
+                <option value="">No one — stays where it points</option>
+                {performers.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {all && one && (f.type === 'moving' || f.type === 'follow') && (
+            <>
+              <Field def={num('pan', 'Pan (°)', -180, 180, 1)} value={pt.pan} units={units} onChange={(v) => lightActions.focus(ids, aimFrom(f, v as number, pt.tilt), `pan:${f.id}`)} />
+              <Field def={num('tilt', 'Tilt (°)', 0, 135, 1, '0° points straight down.')} value={pt.tilt} units={units} onChange={(v) => lightActions.focus(ids, aimFrom(f, pt.pan, v as number), `tilt:${f.id}`)} />
+            </>
+          )}
+        </section>
+      )}
+      <label className="field field--inline light-props__all">
+        <span className="field__label">Show every setting</span>
+        <button type="button" role="switch" aria-checked={all} className={`switch ${all ? 'is-on' : ''}`} onClick={() => useLightsUI.getState().toggleAllSettings()}>
+          <span className="switch__knob" />
+        </button>
+      </label>
+      {all && (
+        <>
+          {one && <Field def={num('channel', 'Channel', 1, 999, 1)} value={f.channel} units={units} onChange={(v) => lightActions.patch(ids, { channel: v as number }, `ch:${f.id}`)} />}
           <label className="field field--inline">
-            <span className="field__label">Cast shadows</span>
-            <button type="button" role="switch" aria-checked={f.castShadow} className={`switch ${f.castShadow ? 'is-on' : ''}`} onClick={() => lightActions.patch(ids, { castShadow: !f.castShadow })}>
+            <span className="field__label">On</span>
+            <button type="button" role="switch" aria-checked={f.on} className={`switch ${f.on ? 'is-on' : ''}`} onClick={() => lightActions.patch(ids, { on: !f.on })}>
               <span className="switch__knob" />
             </button>
           </label>
-        )}
-        {one && (
-          <label className="field">
-            <span className="field__label">Purpose (for the hookup list)</span>
-            <input className="field__input" value={f.purpose ?? ''} placeholder="e.g. DSL special" onChange={(e) => lightActions.patch(ids, { purpose: e.target.value }, `purpose:${f.id}`)} />
-          </label>
-        )}
-      </MoreOptions>
+          <ColourControls fixtures={fixtures} />
+          {sameType && (f.type === 'profile' || f.type === 'moving' || f.type === 'follow') && <GoboControls fixtures={fixtures} />}
+          {!spec.point && f.type !== 'house' && (
+            <label className="field field--inline">
+              <span className="field__label">Cast shadows</span>
+              <button type="button" role="switch" aria-checked={f.castShadow} className={`switch ${f.castShadow ? 'is-on' : ''}`} onClick={() => lightActions.patch(ids, { castShadow: !f.castShadow })}>
+                <span className="switch__knob" />
+              </button>
+            </label>
+          )}
+          {one && (
+            <label className="field">
+              <span className="field__label">Purpose (for the crew's list)</span>
+              <input className="field__input" value={f.purpose ?? ''} placeholder="e.g. DSL special" onChange={(e) => lightActions.patch(ids, { purpose: e.target.value }, `purpose:${f.id}`)} />
+            </label>
+          )}
+        </>
+      )}
       <div className="btn-row">
         <button className="btn" onClick={() => lightActions.duplicate(ids)}>
           Duplicate
         </button>
+        {one && <SaveLightPreset f={f} />}
         <button className="btn btn--danger" onClick={() => removePick({ domain: 'lights', kind: 'fixture', ids })}>
           Delete
         </button>
@@ -410,6 +467,46 @@ function PositionProps({ p }: { p: HangPosition }) {
   );
 }
 
+/** Light a performer: a spotlight or soft light hung where it reaches them, which follows them through the scene. */
+function LightPerformers() {
+  const performers = useActiveBlocking().performers;
+  const fixtures = useActiveLighting().fixtures;
+  if (!performers.length)
+    return (
+      <>
+        <p className="sl-note">No performers yet. Add them in Performers mode, then come back to light them.</p>
+        <button className="btn" onClick={() => useProjectStore.getState().setMode('blocking')}>
+          Go to Performers
+        </button>
+      </>
+    );
+  return (
+    <>
+      <Group>
+        {performers.map((p) => {
+          const lit = fixtures.filter((f) => f.follow === p.id).length;
+          return (
+            <div key={p.id} className="sl-row sl-row--input perf-light">
+              <span className="sl-dot" style={{ background: p.color }} />
+              <span className="sl-row__label">
+                {p.name}
+                {lit > 0 && <small className="perf-light__n"> · {lit} following</small>}
+              </span>
+              <button className="btn btn--small" onClick={() => lightPerformer('profile', p.id, p.name)} title="A sharp spotlight that follows them">
+                Spotlight
+              </button>
+              <button className="btn btn--small" onClick={() => lightPerformer('fresnel', p.id, p.name)} title="A soft pool of light that follows them">
+                Soft light
+              </button>
+            </div>
+          );
+        })}
+      </Group>
+      <p className="sl-note">The light hangs where it reaches them best and follows them as the scene plays.</p>
+    </>
+  );
+}
+
 /** The mood last picked (shown on the Mood row until the lights are changed by hand). */
 const useLastMood = create<{ name: string | null; set: (name: string | null) => void }>((set) => ({ name: null, set: (name) => set({ name }) }));
 const pickMood = (id: string) => {
@@ -429,19 +526,25 @@ function Overview() {
   const lit = real.size + approx.size;
   const mood = MOODS.find((m) => m.name === lastMood);
   const count = lighting.fixtures.length;
+  const performers = useActiveBlocking().performers.length;
+  const presetCount = useLightPresets((s) => s.list.length);
+  const solo = useLightsUI((s) => s.solo);
 
   const pages: Record<string, PageDef | null> = {
     mood: {
       title: 'Mood',
       render: () => (
-        <div className="mood-cards">
-          {MOODS.map((m) => (
-            <button key={m.id} className={`mood-card ${m.name === lastMood ? 'is-active' : ''}`} onClick={() => pickMood(m.id)} title={m.blurb}>
-              <img src={m.image} alt="" />
-              <span className="mood-card__name">{m.name}</span>
-            </button>
-          ))}
-        </div>
+        <>
+          <div className="mood-cards">
+            {MOODS.map((m) => (
+              <button key={m.id} className={`mood-card ${m.name === lastMood ? 'is-active' : ''}`} onClick={() => pickMood(m.id)} title={m.blurb}>
+                <img src={m.image} alt="" />
+                <span className="mood-card__name">{m.name}</span>
+              </button>
+            ))}
+          </div>
+          <MyMoods onPick={(name) => useLastMood.getState().set(name)} />
+        </>
       ),
     },
     audience: {
@@ -461,6 +564,8 @@ function Overview() {
     'more-kinds': moreKindsPage,
     places: placesPage,
     looks: { title: 'Saved looks', render: () => <LooksSection /> },
+    presets: { title: 'My presets', render: () => <PresetsPage /> },
+    performers: { title: 'Light a performer', render: () => <LightPerformers /> },
     groups: count >= 2 ? { title: 'Light groups', render: () => <GroupsSection /> } : null,
     atmosphere: {
       title: 'Haze and quality',
@@ -498,6 +603,14 @@ function Overview() {
   return (
     <Drill pages={pages}>
       <ListHead title="Lights" />
+      {solo && (
+        <p className="panel-msg panel-msg--info solo-msg">
+          Solo: only {solo.length === 1 ? 'one light is' : `${solo.length} lights are`} on for now.{' '}
+          <button className="btn btn--link" onClick={() => useLightsUI.getState().setSolo(null)}>
+            Show all lights
+          </button>
+        </p>
+      )}
       {count === 0 && (
         <div className="empty-state">
           <p>Pick a mood to light your stage.</p>
@@ -513,12 +626,19 @@ function Overview() {
       </Group>
       <Group title="Add a light">
         <AddLightRows />
+        <Row label="Light a performer" value={performers ? String(performers) : ''} page="performers" title="A spotlight or soft light that follows them" />
       </Group>
       <Group>
+        <Row label="My presets" value={presetCount ? String(presetCount) : ''} page="presets" title="Moods, rigs and lights you saved — for every project" />
         <Row label="Places to hang lights" value={String(lighting.positions.length)} page="places" />
         <Row label="Saved looks" value={lighting.looks.length ? String(lighting.looks.length) : ''} page="looks" />
         {count >= 2 && <Row label="Light groups" value={lighting.groups.length ? String(lighting.groups.length) : ''} page="groups" />}
         <Row label="Plan for the crew" disabled={!count} onClick={() => useLightsUI.getState().setPlotOpen(true)} action={<span className="sl-row__chev-text">Open</span>} title="A drawing of where every light hangs" />
+      </Group>
+      <Group title="Every light at once">
+        <Row label="Table of all lights" value={count ? String(count) : ''} disabled={!count} onClick={() => useLightsUI.getState().setTableOpen(true)} action={<span className="sl-row__chev-text">Open</span>} title="Edit channels, colours and levels in a list (T)" />
+        <Row label="Bring in lights from a file" onClick={() => useLightsUI.getState().setImportOpen(true)} action={<span className="sl-row__chev-text">Import</span>} title="A spreadsheet (CSV) of your lights, or an MVR file from Vectorworks and other lighting software" />
+        <Row label="Save the light list as a spreadsheet" disabled={!count} onClick={exportLightList} action={<span className="sl-row__chev-text">Download</span>} title="CSV with channel, kind, position, colour and level — it can be imported again" />
         <Row label="Haze and quality" value={lighting.haze.on ? 'Haze on' : ''} page="atmosphere" />
       </Group>
       {approx.size > 0 && (

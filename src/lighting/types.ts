@@ -61,6 +61,10 @@ export interface Fixture {
   locked?: boolean;
   /** What it's for, on the hookup list (e.g. "DSL special"). */
   purpose?: string;
+  /** Performer it follows: its aim moves with them as the scene plays. */
+  follow?: string;
+  /** Imported fixture this light stands in for (its real make and model). */
+  standIn?: string;
 }
 
 /** A pipe or pole lights hang from. Electrics and FOH run along X; booms stand upright. */
@@ -170,6 +174,8 @@ export function sanitizeLighting(raw: unknown): Lighting {
       ...(typeof f.gobo === 'string' ? { gobo: f.gobo } : {}),
       castShadow: !!f.castShadow,
       ...(typeof f.purpose === 'string' ? { purpose: f.purpose } : {}),
+      ...(typeof f.follow === 'string' ? { follow: f.follow } : {}),
+      ...(typeof f.standIn === 'string' ? { standIn: f.standIn } : {}),
     });
   }
   const positions: HangPosition[] = [];

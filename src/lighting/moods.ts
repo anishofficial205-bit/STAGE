@@ -12,6 +12,8 @@ import { PRESET_LOOKS, fadeTo, lookActions } from './looks';
 import { HANG_DROP, positionLine, stageCentre } from './hang';
 import { useLightsUI } from './ui';
 import type { FixtureType, Vec3 } from './types';
+import { aimPoints } from './follow';
+import type { LightPreset } from './presets';
 
 export interface Mood {
   id: string;
@@ -78,10 +80,11 @@ export const SIMPLE_LIGHTS: { type: FixtureType; name: string; help: string }[] 
   { type: 'cyc', name: 'Backdrop light', help: 'Washes a backdrop in colour.' },
 ];
 
-export const useLightPlacing = create<{ type: FixtureType | null; start: (t: FixtureType) => void; cancel: () => void }>((set) => ({
+export const useLightPlacing = create<{ type: FixtureType | null; preset: LightPreset | null; start: (t: FixtureType, preset?: LightPreset) => void; cancel: () => void }>((set) => ({
   type: null,
-  start: (type) => set({ type }),
-  cancel: () => set({ type: null }),
+  preset: null,
+  start: (type, preset) => set({ type, preset: preset ?? null }),
+  cancel: () => set({ type: null, preset: null }),
 }));
 
 /**
@@ -119,4 +122,15 @@ export function addLightAimedAt(type: FixtureType, target: Vec3) {
   });
   useLightsUI.getState().select({ kind: 'fixture', ids: [id] });
   return id;
+}
+
+/** Light a performer: a spotlight or soft wash hung where it reaches them, following them as they move. */
+export function lightPerformer(type: FixtureType, performerId: string, name: string) {
+  const at = aimPoints().get(performerId);
+  if (!at) return;
+  const store = useProjectStore.getState();
+  store.batch(`Lit ${name}`, () => {
+    const id = addLightAimedAt(type, at);
+    lightActions.patch([id], { follow: performerId, name: `${type === 'profile' ? 'Spot' : 'Wash'} on ${name}`, purpose: `${name}` });
+  });
 }
