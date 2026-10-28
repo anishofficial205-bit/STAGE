@@ -25,7 +25,9 @@ import { blockSeats } from '../../helpers/seats';
 
 const WALL = 0.3; // thickness of back and side walls
 const PROS_WALL = 0.6; // thickness of the proscenium wall
-const FRAME_DEPTH = 0.75; // the arch frame stands 0.15 m proud of the wall
+const FRAME_DEPTH = 0.74; // the arch frame stands 0.15 m proud of the wall (its back stops just inside the wall's back face)
+/** Gap that keeps faces that meet from sharing a plane (which flickers as the camera moves). */
+const SEAM = 0.02;
 
 /** Everything derived from params, shared by the scene, views, surfaces and bounds. */
 function layout(p: Params) {
@@ -84,17 +86,19 @@ function Scene({ p }: { p: Params }) {
   const { stageW, stageD, h, houseW, houseTop, archW, archH, archRise, frame } = L;
   const floorTop = Math.max(h, 0.02);
   const wallTop = h + houseTop;
-  const opening = archOutline(archW / 2, 0, h + archH, archRise);
+  // The wall's opening is a touch bigger than the frame's, so the frame alone forms the inside of the arch.
+  const opening = archOutline(archW / 2, 0, h + archH, archRise, SEAM);
 
   return (
     <group>
       {/* Main stage, with the wings in a slightly darker tone either side */}
-      <Box from={[-stageW / 2, 0, -stageD]} to={[stageW / 2, floorTop, 0]} color={COLORS.stageFloor} />
-      <Box from={[-houseW / 2, 0, -stageD]} to={[-stageW / 2, floorTop, 0]} color={COLORS.stageEdge} />
-      <Box from={[stageW / 2, 0, -stageD]} to={[houseW / 2, floorTop, 0]} color={COLORS.stageEdge} />
+      {/* They stop just behind the wall's front face (where the apron takes over), so the two never share a plane. */}
+      <Box from={[-stageW / 2, 0, -stageD]} to={[stageW / 2, floorTop, -SEAM]} color={COLORS.stageFloor} />
+      <Box from={[-houseW / 2, 0, -stageD]} to={[-stageW / 2, floorTop, -SEAM]} color={COLORS.stageEdge} />
+      <Box from={[stageW / 2, 0, -stageD]} to={[houseW / 2, floorTop, -SEAM]} color={COLORS.stageEdge} />
 
       {/* Apron, in front of the arch */}
-      {L.apron > 0.01 && <Slab outline={bulgedRect(L.apronW, -0.01, L.apron, L.bulge)} top={floorTop} color={COLORS.stageFloor} />}
+      {L.apron > 0.01 && <Slab outline={bulgedRect(L.apronW - 2 * SEAM, -SEAM, L.apron, L.bulge)} top={floorTop} color={COLORS.stageFloor} />}
 
       {/* Back wall and the side walls of the stage house */}
       <Box from={[-houseW / 2 - WALL, 0, -stageD - WALL]} to={[houseW / 2 + WALL, wallTop, -stageD]} color={COLORS.wall} />
@@ -104,8 +108,9 @@ function Scene({ p }: { p: Params }) {
       {/* Proscenium wall with the arch opening, and the darker arch frame around it */}
       <WallWithOpening width={houseW + 2 * WALL} height={wallTop} thickness={PROS_WALL} front={0} opening={opening} color={COLORS.wall} />
       <OpeningFrame
-        inner={archOutline(archW / 2, h, h + archH, archRise)}
-        outer={archOutline(archW / 2, h, h + archH, archRise, frame)}
+        // Its feet go a little into the stage floor rather than resting exactly on it (which would flicker).
+        inner={archOutline(archW / 2, h - SEAM, h + archH, archRise)}
+        outer={archOutline(archW / 2, h - SEAM, h + archH, archRise, frame)}
         depth={FRAME_DEPTH}
         front={0.15}
         color={COLORS.frame}
@@ -260,7 +265,7 @@ export const prosceniumTemplate: StageTemplate = {
   stage: (p) => {
     const L = layout(p);
     const floors = [{ outline: rect(-L.houseW / 2, -L.stageD, L.houseW / 2, 0), height: L.h }];
-    if (L.apron > 0.01) floors.push({ outline: bulgedRect(L.apronW, -0.01, L.apron, L.bulge), height: L.h });
+    if (L.apron > 0.01) floors.push({ outline: bulgedRect(L.apronW - 2 * SEAM, -SEAM, L.apron, L.bulge), height: L.h });
     return { centre: [0, -L.stageD / 2], floors, opening: { z: -PROS_WALL / 2 - 0.2, width: L.archW, height: L.archH, backZ: -L.stageD } };
   },
 
