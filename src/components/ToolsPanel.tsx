@@ -103,10 +103,11 @@ export function MyTemplates() {
   );
 }
 
-/** What the left panel's Add tab holds in each mode (Pictures and Library are Set's). */
+/** What the left panel holds: each mode's Add tab, Set's Pictures, and the project library (every mode). */
 export function ModeTools({ tab }: { tab: DockTab }) {
   const mode = useProjectStore((s) => s.mode);
-  if (mode === 'set') return tab === 'pictures' ? <GraphicsPanel /> : tab === 'library' ? <ProjectLibrary /> : <ObjectLibrary />;
+  if (tab === 'library') return <ProjectLibrary />;
+  if (mode === 'set') return tab === 'pictures' ? <GraphicsPanel /> : <ObjectLibrary />;
   if (mode === 'venue') return <VenueLeft />;
   if (mode === 'lights') return <LightsLeft />;
   if (mode === 'blocking') return <BlockingLeft />;

@@ -175,8 +175,9 @@ export function LightsLeft() {
       </Group>
       <Group>
         <Row label="Places to hang lights" value={String(positions)} page="places" />
-        <Row label="Bring in lights from a file" onClick={() => useLightsUI.getState().setImportOpen(true)} action={<span className="sl-row__chev-text">Import</span>} title="A spreadsheet (CSV) of your lights, or an MVR file from Vectorworks and other lighting software" />
+        <Row label="Import your own lights" value="CSV" onClick={() => useLightsUI.getState().setImportOpen(true)} action={<span className="sl-row__chev-text">Import</span>} title="A spreadsheet of your lights saved as CSV, or an MVR file from Vectorworks and other lighting software" />
       </Group>
+      <p className="sl-note">Have a light list already? Save it as a CSV spreadsheet (from Excel, Google Sheets or Lightwright) and import it. MVR files work too.</p>
       <p className="sl-note">Pick a light, then click on stage where you want it.</p>
     </Drill>
   );

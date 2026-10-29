@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLightsUI } from '../../lighting/ui';
-import { FIELDS, guessMapping, parseCsv, recalledMapping, rememberMapping, rowsToLights, type FieldKey, type Mapping } from '../../lighting/csv';
+import { FIELDS, sampleLightList, guessMapping, parseCsv, recalledMapping, rememberMapping, rowsToLights, type FieldKey, type Mapping } from '../../lighting/csv';
 import { readMvr } from '../../lighting/mvr';
 import { placeImported, type ImportLight } from '../../lighting/importPlace';
 import { FIXTURES } from '../../lighting/types';
 import { useActiveLighting } from '../../store/useProjectStore';
+import { download } from '../../graphics/specSheet';
 
 type Loaded = { kind: 'csv'; name: string; head: string[]; rows: string[][] } | { kind: 'mvr'; name: string; lights: ImportLight[]; models: number };
 
@@ -82,9 +83,9 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal modal--wide import" role="dialog" aria-modal="true" aria-label="Bring in lights">
+      <div className="modal modal--wide import" role="dialog" aria-modal="true" aria-label="Import your own lights">
         <div className="import__head">
-          <h2 className="modal__title">Bring in lights</h2>
+          <h2 className="modal__title">Import your own lights</h2>
           {loaded && <span className="hint">{loaded.name}</span>}
         </div>
         {!loaded ? (
@@ -111,6 +112,13 @@ function ImportDialog({ onClose }: { onClose: () => void }) {
             <div className="import__help">
               <p className="sl-gt">What a spreadsheet can have</p>
               <p className="sl-note">One light per row. Any of: channel, name, kind or model, position (“1st Electric”), unit number, X / depth / height, colour or gel, brightness, beam angle, purpose. You’ll match the columns next — we guess most of them.</p>
+              <p className="sl-note">
+                Save it from Excel, Numbers or Google Sheets as <b>CSV</b> (File › Download / Save as › CSV).{' '}
+                <button className="btn btn--link" onClick={() => download(sampleLightList(), 'sample-lights.csv')}>
+                  Download a sample spreadsheet
+                </button>{' '}
+                to fill in.
+              </p>
             </div>
           </>
         ) : (

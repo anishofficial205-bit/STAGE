@@ -42,7 +42,7 @@ export function Dock() {
   const dock = useShell((s) => s.dock);
   const setDock = useShell((s) => s.setDock);
   const stageSelected = useProjectStore((s) => s.stageSelected);
-  const tab = mode !== 'set' && (dock === 'pictures' || dock === 'library') ? 'add' : dock;
+  const tab = mode !== 'set' && dock === 'pictures' ? 'add' : dock;
   const toggle = (t: DockTab) => setDock(tab === t ? null : t);
   const add = ADD_LABEL[mode];
   const title = tab === 'pictures' ? 'Pictures' : tab === 'library' ? 'Project library' : add.title;
@@ -55,9 +55,9 @@ export function Dock() {
           <>
             <StripButton active={tab === 'pictures'} label="Pictures" icon={<Icon d={PICTURES} />} onClick={() => toggle('pictures')} />
             <StripButton active={stageSelected} label="Stage" icon={<Icon d={STAGE} />} onClick={() => useProjectStore.getState().selectStage(!stageSelected)} />
-            <StripButton active={tab === 'library'} label="Library" icon={<Icon d={LIBRARY} />} onClick={() => toggle('library')} />
           </>
         )}
+        <StripButton active={tab === 'library'} label="Library" icon={<Icon d={LIBRARY} />} onClick={() => toggle('library')} />
       </nav>
       {tab && (
         <aside className="dock" aria-label={title}>

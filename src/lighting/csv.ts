@@ -66,6 +66,21 @@ export function exportLightList() {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
 
+/** A starter spreadsheet: our columns and a few example lights to copy and fill in. */
+export function sampleLightList() {
+  const rows = [
+    EXPORT_HEAD,
+    [1, 'Front left', 'Profile', 'ETC Source Four 26°', 'FOH Truss', 1, -3, -6, 7, -2, 2, 1.5, '', 'L201', 80, 26, 'Front light, stage left', ''],
+    [2, 'Front right', 'Profile', 'ETC Source Four 26°', 'FOH Truss', 2, 3, -6, 7, 2, 2, 1.5, '', 'L201', 80, 26, 'Front light, stage right', ''],
+    [11, 'Wash 1', 'Fresnel', 'Arri 1kW Fresnel', '1st Electric', 1, -2, 1, 6.5, -2, 3, 1.5, '', 'R02', 70, 40, 'Warm wash', ''],
+    [12, 'Wash 2', 'Fresnel', 'Arri 1kW Fresnel', '1st Electric', 2, 2, 1, 6.5, 2, 3, 1.5, '', 'R02', 70, 40, 'Warm wash', ''],
+    [21, 'Mover 1', 'Moving light', 'Martin MAC Aura XB', '2nd Electric', 1, 0, 5, 7, 0, 2, 0, '#FF2D95', '', 100, 12, 'Beams', ''],
+    [31, 'Cyc', 'Cyc light / LED bar', 'Chroma-Q Color Force II', 'Cyc Bar', 1, 0, 8.5, 7, 0, 9.5, 3, '#4FA3FF', '', 90, '', 'Sky', ''],
+  ];
+  const text = rows.map((r) => r.map(q).join(',')).join('\r\n') + '\r\n';
+  return new Blob(['\ufeff' + text], { type: 'text/csv;charset=utf-8' });
+}
+
 // ---- Reading -----------------------------------------------------------------
 
 /** Parse CSV / TSV / semicolon-separated text (quotes, doubled quotes and line breaks in quotes). */

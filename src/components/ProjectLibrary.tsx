@@ -7,6 +7,8 @@ import { usageCounts, useGraphicUrl } from '../graphics/library';
 import { FIXTURES, emptyLighting } from '../lighting/types';
 import { useLightsUI } from '../lighting/ui';
 import { useBlockingUI } from '../blocking/ui';
+import { useVenueUI } from '../venue/ui';
+import { ROOM_TYPES } from '../venue/types';
 import { getTemplate } from '../templates/registry';
 import { useShell } from './shell';
 import type { GraphicMeta } from '../graphics/types';
@@ -47,6 +49,7 @@ export function ProjectLibrary() {
   const lighting = useProjectStore((s) => s.lightingByTemplate[s.templateId]) ?? emptyLighting();
   const performers = useProjectStore((s) => s.blockingByTemplate[s.templateId]?.performers) ?? [];
   const graphics = Object.values(useProjectStore((s) => s.graphics));
+  const venue = useProjectStore((s) => s.venue);
   // Recount picture use whenever template surfaces change too.
   useProjectStore((s) => s.surfaceStylesByTemplate);
   const [open, setOpen] = useState<string | null>(null);
@@ -148,6 +151,43 @@ export function ProjectLibrary() {
               <span className="lib__count">{lighting.looks.length}</span>
             </li>
           )}
+        </ul>
+      </Section>
+
+      <Section title="Backstage" count={venue.rooms.length + venue.walls.length + venue.doors.length + venue.furniture.length + venue.routes.length}>
+        <ul className="lib__list">
+          {venue.rooms.map((r) => (
+            <li key={r.id}>
+              <button
+                className="lib__row"
+                onClick={() => {
+                  s.setMode('venue');
+                  useVenueUI.getState().select({ kind: 'room', id: r.id });
+                }}
+              >
+                <span className="lib__dot" style={{ background: ROOM_TYPES[r.type]?.color ?? '#c4c4c4' }} />
+                <span className="lib__name">{r.name}</span>
+                <span className="lib__count">{ROOM_TYPES[r.type]?.label ?? ''}</span>
+              </button>
+            </li>
+          ))}
+          {(
+            [
+              ['Walls', venue.walls.length],
+              ['Doors', venue.doors.length],
+              ['Furniture', venue.furniture.length],
+              ['Routes', venue.routes.length],
+            ] as const
+          )
+            .filter(([, n]) => n > 0)
+            .map(([label, n]) => (
+              <li key={label}>
+                <button className="lib__row" onClick={() => s.setMode('venue')}>
+                  <span className="lib__name">{label}</span>
+                  <span className="lib__count">× {n}</span>
+                </button>
+              </li>
+            ))}
         </ul>
       </Section>
 
