@@ -6,6 +6,7 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { seeded } from './scenery';
+import { useSeatsShown } from '../../helpers/seatsView';
 
 /** One row of the bowl's cross-section: distance out from the field edge, height, and what it is. */
 type Kind = 'wall' | 'seatA' | 'seatB' | 'riser' | 'concourse' | 'boxes';
@@ -129,6 +130,7 @@ function Instances({ geometry, material, matrices, colors }: { geometry: THREE.B
  * passes through the field's corners, so the whole field sits inside it.
  */
 export function Stadium({ width, length, cz, night }: { width: number; length: number; cz: number; night: boolean }) {
+  const shown = useSeatsShown();
   const a = (width / 2) * Math.SQRT2 + 2;
   const b = (length / 2) * Math.SQRT2 + 2;
   const P = useMemo(profile, []);
@@ -176,6 +178,7 @@ export function Stadium({ width, length, cz, night }: { width: number; length: n
     [P, a, b],
   );
 
+  if (!shown) return null;
   return (
     <group position={[0, 0, cz]}>
       <mesh geometry={track} position={[0, 0.006, 0]} receiveShadow>

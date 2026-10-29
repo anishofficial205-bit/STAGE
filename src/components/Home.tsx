@@ -127,7 +127,7 @@ function ProjectCard({ p, onOpen, badge, pick }: { p: ProjectRecord; onOpen: () 
       )}
       {confirm && (
         <Modal title={`Delete “${p.name}”?`} onClose={() => setConfirm(false)}>
-          <p className="modal__text">It will be removed from this browser. If you might want it later, open it and use Share → Download project first.</p>
+          <p className="modal__text">It will be removed from this browser. If you might want it later, open it and use Download → Download project first.</p>
           <div className="modal__actions">
             <button className="btn" onClick={() => setConfirm(false)} autoFocus>
               Cancel
@@ -548,7 +548,7 @@ export function Home() {
 
         {confirmMany && (
           <Modal title={`Delete ${picked.length} project${picked.length === 1 ? '' : 's'}?`} onClose={() => setConfirmMany(false)}>
-            <p className="modal__text">They will be removed from this browser. If you might want one later, open it and use Share → Download project first.</p>
+            <p className="modal__text">They will be removed from this browser. If you might want one later, open it and use Download → Download project first.</p>
             <div className="modal__actions">
               <button className="btn" onClick={() => setConfirmMany(false)} autoFocus>
                 Cancel

@@ -6,10 +6,10 @@ import { checksKey, runChecks } from '../../blocking/checks';
 import { blockingPdf } from '../../blocking/sheets';
 import { useBlockingUI, type BlockingWarning } from '../../blocking/ui';
 import { viewportBridge } from '../../objects/ui';
-import { download } from '../../graphics/specSheet';
 import { exportName } from '../../export/exports';
 import { Plain } from '../../glossary/Plain';
 import { MoreOptions } from '../MoreOptions';
+import { PdfPreview } from '../export/PdfPreview';
 
 const ICON: Record<BlockingWarning['kind'], string> = { wings: '👁', hidden: '▦', collision: '⚠', upstaged: '↺' };
 const fmt = (t: number) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
@@ -38,18 +38,10 @@ export function ChecksSection({ more }: { more?: ReactNode }) {
   const highlight = useBlockingUI((s) => s.highlight);
   const units = useProjectStore((s) => s.units);
   const [who, setWho] = useState('');
-  const [busy, setBusy] = useState(false);
+  const [sheet, setSheet] = useState<{ only?: string } | null>(null);
   const stale = warnings && checksKey(b) !== lastKey;
   const setChecks = (change: Partial<typeof b.checks>) => useProjectStore.getState().setBlocking((x) => ({ ...x, checks: { ...x.checks, ...change } }), `checks:${Object.keys(change).join()}`);
-  const exportPdf = async (only?: string) => {
-    setBusy(true);
-    try {
-      const p = only ? b.performers.find((x) => x.id === only) : undefined;
-      download(await blockingPdf(only), exportName(p ? `track-${p.name.replace(/\W+/g, '-').toLowerCase()}.pdf` : 'blocking.pdf'));
-    } finally {
-      setBusy(false);
-    }
-  };
+  const sheetPerformer = sheet?.only ? b.performers.find((x) => x.id === sheet.only) : undefined;
   return (
     <>
       <section className="group">
@@ -102,8 +94,8 @@ export function ChecksSection({ more }: { more?: ReactNode }) {
         {b.performers.length > 0 && (
           <section className="group">
             <h3 className="group__title">Blocking sheets</h3>
-            <button className="btn" disabled={busy} onClick={() => void exportPdf()}>
-              {busy ? 'Making PDF…' : 'Export blocking sheets (PDF)'}
+            <button className="btn" onClick={() => setSheet({})}>
+              Blocking sheets…
             </button>
             <div className="look-save" style={{ marginTop: 8 }}>
               <select className="field__select" value={who} onChange={(e) => setWho(e.target.value)} aria-label="Performer">
@@ -114,13 +106,21 @@ export function ChecksSection({ more }: { more?: ReactNode }) {
                   </option>
                 ))}
               </select>
-              <button className="btn btn--small" disabled={!who || busy} onClick={() => void exportPdf(who)}>
-                PDF
+              <button className="btn btn--small" disabled={!who} onClick={() => setSheet({ only: who })}>
+                Preview
               </button>
             </div>
           </section>
         )}
       </MoreOptions>
+      {sheet && (
+        <PdfPreview
+          title={sheetPerformer ? `${sheetPerformer.name}’s track` : 'Blocking sheets'}
+          make={() => blockingPdf(sheet.only)}
+          fileName={exportName(sheetPerformer ? `track-${sheetPerformer.name.replace(/\W+/g, '-').toLowerCase()}.pdf` : 'blocking.pdf')}
+          onClose={() => setSheet(null)}
+        />
+      )}
     </>
   );
 }

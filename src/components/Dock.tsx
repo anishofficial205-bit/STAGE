@@ -12,6 +12,7 @@ const Icon = ({ d, w = 1.8 }: { d: string; w?: number }) => (
 const ADD = 'M12 5v14M5 12h14';
 const PICTURES = 'M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 16l5-5 4 4 3-3 6 6';
 const STAGE = 'M3 15l9-5 9 5-9 5zM12 3v7';
+const LIBRARY = 'M4 4h4v16H4zM10 4h4v16h-4zM16 5l3.5-1 3 15.5-3.5 1z';
 const DRAW = 'M3 21h18M5 21V8l7-5 7 5v13';
 
 /** Per mode: what the Add tool is called and what its panel is headed. */
@@ -33,7 +34,7 @@ function StripButton({ active, label, icon, onClick, tour }: { active: boolean; 
 
 /**
  * The left side: a strip of big labelled tools, and one panel beside it with the
- * chosen tool (Add, Pictures). Clicking the open tool again — or ‹ — tucks the
+ * chosen tool (Add, Pictures, Library). Clicking the open tool again — or ‹ — tucks the
  * panel away. Editing what's picked happens on the right, under Layers.
  */
 export function Dock() {
@@ -41,10 +42,10 @@ export function Dock() {
   const dock = useShell((s) => s.dock);
   const setDock = useShell((s) => s.setDock);
   const stageSelected = useProjectStore((s) => s.stageSelected);
-  const tab = mode !== 'set' && dock === 'pictures' ? 'add' : dock;
+  const tab = mode !== 'set' && (dock === 'pictures' || dock === 'library') ? 'add' : dock;
   const toggle = (t: DockTab) => setDock(tab === t ? null : t);
   const add = ADD_LABEL[mode];
-  const title = tab === 'pictures' ? 'Pictures' : add.title;
+  const title = tab === 'pictures' ? 'Pictures' : tab === 'library' ? 'Project library' : add.title;
 
   return (
     <>
@@ -54,6 +55,7 @@ export function Dock() {
           <>
             <StripButton active={tab === 'pictures'} label="Pictures" icon={<Icon d={PICTURES} />} onClick={() => toggle('pictures')} />
             <StripButton active={stageSelected} label="Stage" icon={<Icon d={STAGE} />} onClick={() => useProjectStore.getState().selectStage(!stageSelected)} />
+            <StripButton active={tab === 'library'} label="Library" icon={<Icon d={LIBRARY} />} onClick={() => toggle('library')} />
           </>
         )}
       </nav>

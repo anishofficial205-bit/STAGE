@@ -49,6 +49,8 @@ export function ExampleProjects() {
 import { LightsLeft } from './lights/LightsPanels';
 import { BlockingLeft } from './blocking/BlockingPanels';
 import { deleteMyTemplate, refreshMyTemplates, useMyTemplates, applySavedTemplate, type SavedTemplate } from '../templates/custom/myTemplates';
+import { ProjectLibrary } from './ProjectLibrary';
+import type { DockTab } from './shell';
 
 /** Custom stages saved from Build Your Own, usable in any project. */
 export function MyTemplates() {
@@ -101,10 +103,10 @@ export function MyTemplates() {
   );
 }
 
-/** What the left panel's Add tab holds in each mode (Pictures is Set's graphics). */
-export function ModeTools({ tab }: { tab: 'add' | 'pictures' }) {
+/** What the left panel's Add tab holds in each mode (Pictures and Library are Set's). */
+export function ModeTools({ tab }: { tab: DockTab }) {
   const mode = useProjectStore((s) => s.mode);
-  if (mode === 'set') return tab === 'pictures' ? <GraphicsPanel /> : <ObjectLibrary />;
+  if (mode === 'set') return tab === 'pictures' ? <GraphicsPanel /> : tab === 'library' ? <ProjectLibrary /> : <ObjectLibrary />;
   if (mode === 'venue') return <VenueLeft />;
   if (mode === 'lights') return <LightsLeft />;
   if (mode === 'blocking') return <BlockingLeft />;

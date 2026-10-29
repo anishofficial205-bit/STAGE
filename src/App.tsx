@@ -33,7 +33,7 @@ import { useBlockingKeys } from './components/blocking/BlockingPanels';
 
 /**
  * The 3D stage fills the window and everything else floats over it: the top bar
- * (project, the View menu, share), the tool strip and its panel on the left,
+ * (project, the View menu, Download), the tool strip and its panel on the left,
  * Layers and Edit on the right, a quick bar over whatever is picked, and the
  * modes at the bottom.
  */

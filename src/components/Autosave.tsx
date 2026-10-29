@@ -74,7 +74,7 @@ export function SaveStatus() {
     <button
       className={`save-status ${failed ? 'is-error' : saving ? 'is-pending' : ''}`}
       onClick={() => setFailed(!trySave())}
-      title={failed ? 'This browser refused to save (storage may be full). Click to try again, or use Export → Download project to keep a copy.' : 'Your work is saved in this browser automatically (⌘S saves now). Use Export for a file you can keep or share.'}
+      title={failed ? 'This browser refused to save (storage may be full). Click to try again, or use Download → Download project to keep a copy.' : 'Your work is saved in this browser automatically (⌘S saves now). Use Download for a file you can keep or share.'}
     >
       <span className="save-status__dot" />
       {label}

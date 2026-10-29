@@ -463,6 +463,24 @@ button, input, select { font: inherit; color: inherit; }
 
 /* Graphics */
 .btn--wide { width: 100%; margin-bottom: 8px; }
+/* Project library: everything the project uses */
+.lib { display: grid; gap: 14px; }
+.lib__section { display: grid; gap: 6px; }
+.lib__title { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); display: flex; gap: 6px; }
+.lib__title span { color: var(--text); opacity: 0.6; }
+.lib__list, .lib__sub { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.lib__sub { padding-left: 22px; }
+.lib__row { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 34px; padding: 4px 8px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.lib__row:hover { background: color-mix(in srgb, var(--text) 6%, transparent); }
+.lib__note, .lib__group { cursor: default; }
+.lib__stage { border: 1px solid var(--border); }
+.lib__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib__link { border: 0; background: none; color: inherit; font: inherit; text-align: left; padding: 0; cursor: pointer; }
+.lib__link:hover { text-decoration: underline; }
+.lib__count { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.lib__expand { border: 0; background: none; color: var(--muted); width: 16px; padding: 0; cursor: pointer; font-size: 11px; }
+.lib__thumb { width: 30px; height: 30px; grid-row: auto; flex: none; }
+.lib__dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .graphic-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .graphic { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; gap: 2px 8px; align-items: center; padding: 6px; border: 1px solid var(--border); border-radius: 8px; cursor: grab; }
 .graphic:hover { border-color: var(--accent-line); }
@@ -1883,3 +1901,7 @@ input[type='range'], input[type='checkbox'], input[type='radio'], .field__slider
 .np2__own { margin: 0; }
 @media (max-width: 1000px) { .np2 { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } .np2__details { border-left: 0; border-top: 1px solid var(--border); max-height: 48vh; } }
 @media (max-width: 1000px) { .np2__preview { display: none; } .np2__details { max-height: 55vh; } .np2__pick { padding: 20px; } }
+.stage-props .seats-switch { padding: 8px 12px; margin-bottom: 10px; border: 1px solid var(--border); border-radius: 12px; font-size: 13px; }
+.pdf-preview { height: min(70vh, 720px); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--soft); display: grid; place-items: center; margin-bottom: 14px; }
+.pdf-preview iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.pdf-preview__wait { color: var(--muted); }

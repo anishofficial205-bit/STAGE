@@ -6,6 +6,7 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { useSeatsShown } from '../../helpers/seatsView';
 
 /** Small deterministic PRNG (mulberry32). */
 export function seeded(seed: number) {
@@ -63,6 +64,7 @@ const CLOTHES = ['#5b6472', '#7a6f64', '#4f5d6b', '#8a8f96', '#6d5f72', '#5e6b5a
 
 /** Standing people scattered over a rectangle, avoiding `holes` (e.g. the FOH desk). */
 export function Crowd({ x0, x1, z0, z1, count, holes = [] }: { x0: number; x1: number; z0: number; z1: number; count: number; holes?: [number, number, number, number][] }) {
+  const shown = useSeatsShown();
   const items = useMemo(() => {
     const rnd = seeded(7);
     const out: Placement[] = [];
@@ -76,6 +78,7 @@ export function Crowd({ x0, x1, z0, z1, count, holes = [] }: { x0: number; x1: n
     }
     return out;
   }, [x0, x1, z0, z1, count, JSON.stringify(holes)]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!shown) return null;
   return <Scatter geometry={figureGeometry} material={figureMaterial} items={items} />;
 }
 

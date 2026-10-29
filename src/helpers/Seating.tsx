@@ -4,6 +4,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type { Vec3 } from '../types';
 import { COLORS, ROUGHNESS } from './materials';
 import { offsetPolygon, type Pt } from './shapes';
+import { useSeatsShown } from './seatsView';
 
 /**
  * Shared seating generator.
@@ -272,6 +273,7 @@ const riserMaterial = new THREE.MeshStandardMaterial({ color: COLORS.riser, roug
 
 /** Draws seat placements with two instanced meshes (chairs + risers): cheap even for thousands of seats. */
 export function SeatInstances({ seats }: { seats: SeatPlacement[] }) {
+  const shown = useSeatsShown();
   const chairs = useRef<THREE.InstancedMesh>(null);
   const risers = useRef<THREE.InstancedMesh>(null);
   const raised = useMemo(() => seats.filter((s) => s.y - s.floor > 0.005), [seats]);
@@ -301,8 +303,9 @@ export function SeatInstances({ seats }: { seats: SeatPlacement[] }) {
       risers.current.instanceMatrix.needsUpdate = true;
       risers.current.computeBoundingSphere();
     }
-  }, [seats, raised]);
+  }, [seats, raised, shown]);
 
+  if (!shown) return null;
   return (
     <>
       {seats.length > 0 && (
@@ -346,6 +349,7 @@ export function SeatingFront({
 }: { options: SeatingOptions; inset?: number; bottom: number; top: number; color?: string } & Placement) {
   const arc = arcLayout(options);
   const h = top - bottom;
+  if (!useSeatsShown()) return null;
   return (
     <group position={position} rotation-y={rotationY}>
       {arc ? (

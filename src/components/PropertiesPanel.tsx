@@ -38,6 +38,7 @@ import { lookup, plainText } from '../glossary/terms';
 import { useShell } from './shell';
 import { MyTemplates } from './ToolsPanel';
 import { Drill, Group, ListHead, Row, type PageDef } from './SettingsList';
+import { useSeatsView } from '../helpers/seatsView';
 
 /**
  * Generated entirely from the active template's params schema — templates never
@@ -177,6 +178,19 @@ function SetProperties() {
   );
 }
 
+/** Hide the audience to work on the stage itself. */
+export function SeatsSwitch() {
+  const show = useSeatsView((s) => s.show);
+  return (
+    <span className="menu__row seats-switch" title="Hide the seats and crowd so you can see and work on the stage. Pictures and exports still include them.">
+      Show audience seating
+      <button className={`switch ${show ? 'is-on' : ''}`} role="switch" aria-checked={show} onClick={() => useSeatsView.getState().setShow(!show)} aria-label="Show audience seating">
+        <span className="switch__knob" />
+      </button>
+    </span>
+  );
+}
+
 /** The selection's properties, by mode (each mode's own panels): the Edit part under Layers. */
 export function ModeProperties() {
   const mode = useProjectStore((s) => s.mode);
@@ -187,6 +201,7 @@ export function ModeProperties() {
   if (mode === 'set' && stageSelected)
     return (
       <div className="props stage-props">
+        <SeatsSwitch />
         <TemplateProperties />
       </div>
     );

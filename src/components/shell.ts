@@ -13,12 +13,12 @@ function initialPanels() {
 }
 
 /** The left panel's tabs (null: tucked away). */
-export type DockTab = 'add' | 'pictures';
+export type DockTab = 'add' | 'pictures' | 'library';
 const DOCK_KEY = 'stage-builder:dock';
 function initialDock(): DockTab | null {
   try {
     const v = localStorage.getItem(DOCK_KEY);
-    return v === 'none' ? null : v === 'pictures' ? v : 'add';
+    return v === 'none' ? null : v === 'pictures' || v === 'library' ? v : 'add';
   } catch {
     return 'add';
   }

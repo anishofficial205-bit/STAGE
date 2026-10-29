@@ -42,6 +42,7 @@ import { StageResizeHandles } from './StageResizeHandles';
 import { PlacementGhost } from './objects/PlacementGhost';
 import { LightClickPlacer } from './lights/LightClickPlacer';
 import { useShell } from './shell';
+import { useSeatsShown } from '../helpers/seatsView';
 
 
 /** Builds a soft studio environment once, used only by reflective materials (metal, glass, mirror). */
@@ -110,6 +111,7 @@ export function Viewport() {
   const objects = useActiveObjects();
   const surfaceStyles = useProjectStore((s) => s.surfaceStylesByTemplate[s.templateId]);
   const presentation = useExportState((s) => s.presentation);
+  const seatsShown = useSeatsShown();
   const template = getTemplate(templateId)!;
 
   const rightDown = useRef<[number, number] | null>(null);
@@ -239,7 +241,7 @@ export function Viewport() {
       <SeatLayer />
       <Capturer />
       <Reflections />
-      <ShadowsOnChange deps={[template, params, data, units, objects, surfaceStyles, presentation]} />
+      <ShadowsOnChange deps={[template, params, data, units, objects, surfaceStyles, presentation, seatsShown]} />
       <AdaptiveDpr pixelated />
       <CameraRig />
       <ViewportSync />

@@ -12,12 +12,13 @@ import { useObjectUI } from '../objects/ui';
 import { useLabelPrefs } from '../helpers/labels';
 import { useLightsUI } from '../lighting/ui';
 import { blockingPdf } from '../blocking/sheets';
-import { download } from '../graphics/specSheet';
 import { exportName } from '../export/exports';
 import { useShell } from './shell';
 import { recordWithPicture } from '../projects/library';
 import { useActiveBlocking, useActiveLighting } from '../store/useProjectStore';
 import { SaveStatus } from './Autosave';
+import { SeatsSwitch } from './PropertiesPanel';
+import { PdfPreview } from './export/PdfPreview';
 
 export function TopBar() {
   const s = useProjectStore();
@@ -25,6 +26,7 @@ export function TopBar() {
   const [toast, setToast] = useState<string | null>(null);
   const [printCheck, setPrintCheck] = useState(false);
   const [render, setRender] = useState(false);
+  const [sheets, setSheets] = useState(false);
   const [model, setModel] = useState(false);
   const [menu, setMenu] = useState<'view' | 'help' | 'file' | null>(null);
   const allDims = useLabelPrefs((l) => l.allDimensions);
@@ -74,11 +76,6 @@ export function TopBar() {
     a.click();
     URL.revokeObjectURL(url);
     flash('Exported');
-  };
-
-  const exportSheets = async () => {
-    flash('Preparing blocking sheets…');
-    download(await blockingPdf(), exportName('blocking.pdf'));
   };
 
   /** Import a .zip export (with images) or an older .json export. */
@@ -151,6 +148,7 @@ export function TopBar() {
                   <span className="switch__knob" />
                 </button>
               </span>
+              <SeatsSwitch />
               <span className="menu__row" title="Hide the panels to see the whole stage (F)">
                 Focus mode <kbd>F</kbd>
                 <button className={`switch ${panels ? '' : 'is-on'}`} role="switch" aria-checked={!panels} onClick={() => useShell.getState().togglePanels()} aria-label="Focus mode">
@@ -191,8 +189,8 @@ export function TopBar() {
         </span>
         <span className="menu">
           <button className="glass topbar__share" onClick={() => toggle('file')} aria-expanded={menu === 'file'}>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
-            Share
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3v12M7 10l5 5 5-5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
+            Download
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden><path d="m6 9 6 6 6-6" /></svg>
           </button>
           {menu === 'file' && (
@@ -215,8 +213,8 @@ export function TopBar() {
               <button role="menuitem" disabled={!lightCount} onClick={() => { close(); useLightsUI.getState().setPlotOpen(true); }} title={lightCount ? 'The light plot with a hookup list, for the crew' : 'Add some lights first'}>
                 Lighting plan…
               </button>
-              <button role="menuitem" disabled={!performerCount} onClick={() => { close(); void exportSheets(); }} title={performerCount ? 'One page per scene, for the stage manager and cast' : 'Add performers in Blocking first'}>
-                Blocking sheets (PDF)
+              <button role="menuitem" disabled={!performerCount} onClick={() => { close(); setSheets(true); }} title={performerCount ? 'One page per scene, for the stage manager and cast: preview, then download or print' : 'Add performers in Blocking first'}>
+                Blocking sheets…
               </button>
               <button role="menuitem" onClick={() => { close(); void exportZipFile(); }} title="Download the project and its images as a .zip">
                 Download project (.zip)
@@ -243,6 +241,7 @@ export function TopBar() {
       {printCheck && <PrintCheckDialog onClose={() => setPrintCheck(false)} />}
       {render && <ExportDialog onClose={() => setRender(false)} />}
       {model && <ModelDialog onClose={() => setModel(false)} />}
+      {sheets && <PdfPreview title="Blocking sheets" make={() => blockingPdf()} fileName={exportName('blocking.pdf')} onClose={() => setSheets(false)} />}
     </header>
   );
 }

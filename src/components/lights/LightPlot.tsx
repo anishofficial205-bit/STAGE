@@ -18,6 +18,7 @@ import { useLightsUI } from '../../lighting/ui';
 import { download } from '../../graphics/specSheet';
 import { exportName } from '../../export/exports';
 import { formatLength } from '../../units';
+import { printPdf } from '../export/PdfPreview';
 
 /** Symbols drawn pointing along +x (the beam direction), about 0.6 m long. */
 export function LightSymbol({ type, color }: { type: FixtureType; color?: string }) {
@@ -220,7 +221,7 @@ export function LightPlot() {
     }
   };
   return (
-    <Modal title="Light plot" onClose={close} wide>
+    <Modal title="Lighting plan" onClose={close} wide>
       <div className="plot">
         <div className="plot__drawing">
           <PlotSvg svgRef={svg} venue={lighting.plot.venue} designer={lighting.plot.designer} />
@@ -236,7 +237,10 @@ export function LightPlot() {
           </label>
           <div className="btn-row">
             <button className="btn btn--primary" disabled={!!busy} onClick={() => run('pdf', async () => { if (svg.current) download(await plotPdf(svg.current, rows, projectName), exportName('light-plot.pdf')); })}>
-              {busy === 'pdf' ? 'Making PDF…' : 'PDF'}
+              {busy === 'pdf' ? 'Making PDF…' : 'Download PDF'}
+            </button>
+            <button className="btn" disabled={!!busy} onClick={() => run('print', async () => { if (svg.current) printPdf(await plotPdf(svg.current, rows, projectName)); })} title="The plot and the channel hookup, as on the PDF">
+              {busy === 'print' ? 'Preparing…' : 'Print…'}
             </button>
             <button className="btn" disabled={!!busy} onClick={() => run('png', async () => { if (svg.current) download(await plotPng(svg.current), exportName('light-plot.png')); })}>
               PNG
