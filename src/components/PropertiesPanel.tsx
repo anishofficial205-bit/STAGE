@@ -1,7 +1,5 @@
 import { getTemplate } from '../templates/registry';
 import { useActiveData, useActiveObjects, useActiveParams, useProjectStore } from '../store/useProjectStore';
-import { useRef, useState } from 'react';
-import { Outliner } from './layers/Outliner';
 import { DOMAIN_MODE, editIn, modeLabel, useForeign, type Pick } from './layers/selection';
 import { can, isHidden, isLocked, remove, toggleHidden, toggleLocked } from './layers/ops';
 import { getObjectType } from '../objects/registry';
@@ -191,7 +189,7 @@ export function SeatsSwitch() {
   );
 }
 
-/** The selection's properties, by mode (each mode's own panels): the Edit part under Layers. */
+/** The selection's properties, by mode (each mode's own panels): the sidebar's Edit tab. */
 export function ModeProperties() {
   const mode = useProjectStore((s) => s.mode);
   const hasSelection = useProjectStore((s) => s.selectedIds.length > 0);
@@ -213,67 +211,6 @@ export function ModeProperties() {
       <SightlineWarnings />
       <div className="props">{hasSelection ? <ObjectProperties /> : <SetProperties />}</div>
     </>
-  );
-}
-
-const SPLIT_KEY = 'stage-builder:layers-split';
-const readSplit = () => {
-  try {
-    const v = Number(localStorage.getItem(SPLIT_KEY));
-    return v >= 0.15 && v <= 0.85 ? v : 0.42;
-  } catch {
-    return 0.42;
-  }
-};
-
-/**
- * The right-hand panel, always there (Focus mode aside): Layers on top, and
- * below it Edit — what's picked, or the mode's own settings when nothing is —
- * with a divider you can drag between them.
- */
-export function LayersSide() {
-  const [split, setSplit] = useState(readSplit);
-  const ref = useRef<HTMLElement>(null);
-  const onDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    const box = ref.current!.getBoundingClientRect();
-    const move = (ev: PointerEvent) => setSplit(Math.min(0.85, Math.max(0.15, (ev.clientY - box.top) / box.height)));
-    const up = () => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      setSplit((v) => {
-        try {
-          localStorage.setItem(SPLIT_KEY, String(v));
-        } catch {
-          /* not remembered */
-        }
-        return v;
-      });
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  };
-  return (
-    <aside className="layers-side" aria-label="Layers and edit" data-tour="layers" ref={ref}>
-      <div className="split__top" style={{ flexBasis: `${split * 100}%` }}>
-        <Outliner />
-      </div>
-      <div
-        className="split__divider"
-        role="separator"
-        aria-orientation="horizontal"
-        aria-label="Drag to resize Layers and Edit"
-        tabIndex={0}
-        onPointerDown={onDown}
-        onKeyDown={(e) => {
-          if (e.key === 'ArrowUp') setSplit((v) => Math.max(0.15, v - 0.05));
-          if (e.key === 'ArrowDown') setSplit((v) => Math.min(0.85, v + 0.05));
-        }}
-      />
-      <div className="split__bottom" data-tour="panel">
-        <ModeProperties />
-      </div>
-    </aside>
   );
 }
 

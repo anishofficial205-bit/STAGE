@@ -148,10 +148,10 @@ export function QuickBar() {
   const ids = p.ids;
   const one = ids.length === 1;
   const label = one ? nameOf({ domain: p.domain, kind: p.kind, id: ids[0] }) : `${ids.length} selected`;
-  // More: the full Edit panel under Layers (slid in on a narrow screen), scrolled to the top.
+  // More: the sidebar's Edit tab, scrolled to the top.
   const more = () => {
-    useShell.getState().setLayers(true);
-    document.querySelector('.split__bottom')?.scrollTo({ top: 0, behavior: 'smooth' });
+    useShell.getState().setDock('edit');
+    requestAnimationFrame(() => document.querySelector('.dock__body')?.scrollTo({ top: 0, behavior: 'smooth' }));
   };
   const del = () => removePick(p);
 

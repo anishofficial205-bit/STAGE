@@ -22,7 +22,7 @@ const TEXT: Record<TipId, string> = {
   export: 'Lighting plans and blocking sheets use technical terms crews know.',
   'new-project': 'Start here: pick a stage and its size.',
   presets: 'Each card is a ready-made size. Double-click one to start straight away.',
-  layers: 'Everything in your scene is listed here — right-click to delete or hide.',
+  layers: 'Layers lists everything in your scene — open it to pick, hide or delete things.',
 };
 
 const KEY = (id: TipId) => `stage-builder:tip:${id}`;
@@ -99,7 +99,7 @@ function useTriggers() {
       }
       if (!s.home && !s.newProject && p && (p.home || p.newProject)) {
         if (useTips.getState().tip?.id === 'presets' || useTips.getState().tip?.id === 'new-project') useTips.getState().dismiss();
-        later(() => !useShell.getState().home && showTip('layers', { selector: '.outliner__head' }), 2500);
+        later(() => !useShell.getState().home && showTip('layers', { selector: '[data-tour="layers"]' }), 2500);
       }
     };
     onShell(useShell.getState());
@@ -110,7 +110,7 @@ function useTriggers() {
       useProjectStore.subscribe((s, p) => {
         const t = s.templateId;
         // The stage selected for the first time.
-        if (s.stageSelected && !p.stageSelected) window.setTimeout(() => showTip('stage', { selector: '.split__bottom .stage-props .group' }), 500);
+        if (s.stageSelected && !p.stageSelected) window.setTimeout(() => showTip('stage', { selector: '.dock__body .stage-props .group' }), 500);
         // First set piece placed.
         const objs = s.objectsByTemplate[t] ?? [];
         const prevObjs = p.objectsByTemplate[t] ?? [];
@@ -123,7 +123,7 @@ function useTriggers() {
         }
         // First graphic put on a face.
         const graphics = (list: typeof objs) => list.reduce((n, o) => n + Object.values(o.faces ?? {}).filter((f) => f?.graphic).length, 0);
-        if (t === p.templateId && graphics(objs) > graphics(prevObjs)) window.setTimeout(() => showTip('graphic', { selector: '.split__bottom .graphic-controls, .split__bottom .group' }), 400);
+        if (t === p.templateId && graphics(objs) > graphics(prevObjs)) window.setTimeout(() => showTip('graphic', { selector: '.dock__body .graphic-controls, .dock__body .group' }), 400);
         // First light added.
         const lights = s.lightingByTemplate[t]?.fixtures ?? [];
         const prevLights = p.lightingByTemplate[t]?.fixtures ?? [];

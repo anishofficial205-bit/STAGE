@@ -1905,3 +1905,27 @@ input[type='range'], input[type='checkbox'], input[type='radio'], .field__slider
 .pdf-preview { height: min(70vh, 720px); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--soft); display: grid; place-items: center; margin-bottom: 14px; }
 .pdf-preview iframe { width: 100%; height: 100%; border: 0; background: #fff; }
 .pdf-preview__wait { color: var(--muted); }
+
+/* ===== One sidebar on the left (layout D): tabs on top, folds to a rail; the right side is all stage ===== */
+.app { --right-inset: 16px; --left-inset: 112px; }
+.app.has-dock { --left-inset: 412px; }
+.app.is-clean { --left-inset: 16px; --right-inset: 16px; }
+.dock { left: 16px; width: 380px; }
+.side-tabs { display: flex; align-items: stretch; gap: 2px; padding: 8px 8px 4px; border-bottom: 1px solid var(--border); }
+.side-tab { flex: 1 1 0; min-width: 0; height: 54px; padding: 0 2px; border: 0; border-radius: 13px; background: transparent; color: var(--text); font: inherit; font-size: 11.5px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
+.side-tab svg { width: 20px; height: 20px; flex: none; }
+.side-tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-tab:hover { background: var(--hover); }
+.side-tab.is-active { background: var(--accent-soft); color: var(--hi-text); font-weight: 600; }
+.side-tabs__fold { flex: none; width: 34px; align-self: center; height: 34px; border-radius: 11px; border: 0; background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); display: grid; place-items: center; cursor: pointer; margin-left: 2px; }
+.side-tabs__fold svg { width: 17px; height: 17px; }
+.side-tabs__fold:hover { background: var(--hover); }
+.dock__head { padding-top: 14px; }
+.dock--edit .dock__body, .dock--layers .dock__body { padding-top: 14px; }
+.dock--layers .dock__body { padding-left: 10px; padding-right: 10px; }
+.stagebar { right: 16px; }
+@media (max-width: 1099px) {
+  .app { --right-inset: 16px; --left-inset: 112px; }
+  .app.has-dock { --left-inset: 112px; }
+  .dock { width: min(380px, calc(100vw - 32px)); }
+}

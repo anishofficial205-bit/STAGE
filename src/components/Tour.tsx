@@ -24,8 +24,8 @@ interface Step {
 
 const FIRST_RUN: Step[] = [
   { target: 'modes', side: 'bottom', title: 'Work in steps', text: 'Set, Lights and Performers — press 1–3 to switch (4 is Backstage). Things from other steps stay in view but can’t be picked.' },
-  { target: 'library', side: 'right', title: 'Tools on the left', text: 'Add opens the pieces you can put on stage; Edit shows what you picked. Click a tool again, or ‹, to tuck the panel away.' },
-  { target: 'layers', side: 'left', title: 'Everything on stage', text: 'Every piece, light and performer is listed here. Click to pick it, right-click to delete or hide it.' },
+  { target: 'library', side: 'right', title: 'One panel on the left', text: 'Add, Library, Edit and Layers are tabs of one panel. Click a tab to switch; click it again, or ‹, to fold the panel away and see the whole stage.' },
+  { target: 'layers', side: 'right', title: 'Everything on stage', text: 'Layers lists every piece, light and performer. Click one to pick it, right-click to delete or hide it.' },
   { target: 'views', side: 'top', title: 'Check the views', text: 'Look from the audience, from above or from any seat. Drag in the 3D view to look around, scroll to zoom.' },
 ];
 
@@ -33,16 +33,16 @@ const MODE_TOURS: Partial<Record<Mode, Step[]>> = {
   venue: [
     { target: 'venue-tools', side: 'right', title: 'Draw the building', text: 'Walls (W), rooms (M), doors (D) and furniture (U). Rooms show their name and area; mark doors that lead onto the stage.' },
     { target: 'plan', side: 'right', title: 'Plan and 3D together', text: 'Draw on the plan and see it built in 3D. Selecting something in one selects it in the other. Import a floor plan to trace over it.' },
-    { target: 'panel', side: 'left', title: 'Routes and entrances', text: 'Use the Route tool to time walks between rooms; named stage entrances are listed here and used in Blocking.' },
+    { target: 'panel', side: 'right', title: 'Routes and entrances', text: 'Use the Route tool to time walks between rooms; named stage entrances are listed here and used in Blocking.' },
   ],
   lights: [
     { target: 'light-library', side: 'right', title: 'Hang some lights', text: 'Drag a light onto a light bar, side pole or lighting frame — or click it to hang it above the stage. Shift-click to select several.' },
-    { target: 'panel', side: 'left', title: 'Aim and colour', text: 'Select a light to focus it (click a point on stage, or drag its target), pick a gel or colour temperature, add a gobo.' },
+    { target: 'panel', side: 'right', title: 'Aim and colour', text: 'Select a light to focus it (click a point on stage, or drag its target), pick a gel or colour temperature, add a gobo.' },
     { target: 'light-looks', side: 'right', title: 'Looks', text: 'Save lighting states as looks and fade between them. The work light (right) helps while you build; the Lighting plan prints the drawing for the crew.' },
   ],
   blocking: [
     { target: 'cast', side: 'right', title: 'Your cast', text: 'Add performers, name and colour them. Shift-click several to group them or set a formation.' },
-    { target: 'panel', side: 'left', title: 'Paths', text: 'Select a performer and draw their path. Paths can start or end at an entrance; add pauses and timing.' },
+    { target: 'panel', side: 'right', title: 'Paths', text: 'Select a performer and draw their path. Paths can start or end at an entrance; add pauses and timing.' },
     { target: 'playbar', side: 'top', title: 'Play it', text: 'Play the scene (Space), scrub, slow it down. Checks catch performers seen waiting at the side, hidden or bumping into each other.' },
   ],
 };
