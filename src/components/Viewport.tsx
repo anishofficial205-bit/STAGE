@@ -43,6 +43,7 @@ import { PlacementGhost } from './objects/PlacementGhost';
 import { LightClickPlacer } from './lights/LightClickPlacer';
 import { useShell } from './shell';
 import { useSeatsShown } from '../helpers/seatsView';
+import { PerfWatch } from './PerfWatch';
 
 
 /** Builds a soft studio environment once, used only by reflective materials (metal, glass, mirror). */
@@ -244,6 +245,7 @@ export function Viewport() {
       <ShadowsOnChange deps={[template, params, data, units, objects, surfaceStyles, presentation, seatsShown]} />
       <AdaptiveDpr pixelated />
       <CameraRig />
+      <PerfWatch />
       <ViewportSync />
     </Canvas>
     </div>

@@ -97,7 +97,9 @@ export function copyUnits(
   for (const o of sources) ids.set(o.id, newObjectId());
   const copies = sources.map((o) => {
     const base: SetObject = { ...o, id: ids.get(o.id)!, parent: o.parent && ids.has(o.parent) ? ids.get(o.parent) : o.parent, locked: false, name: rename(o) };
-    return isGroup(o) ? base : transform(base);
+    // A combined piece remembers which of its pieces the others cut into: point it at the copy.
+    const keep = typeof o.params.base === 'string' && ids.has(o.params.base) ? { ...base, params: { ...o.params, base: ids.get(o.params.base)! } } : base;
+    return isGroup(o) ? keep : transform(base);
   });
   return { list: [...list, ...copies], leaves: copies.filter((c) => !isGroup(c)).map((c) => c.id), tops: unitIds.map((u) => ids.get(u)!) };
 }

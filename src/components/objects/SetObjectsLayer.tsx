@@ -30,6 +30,8 @@ import { useTallWarnings } from '../sightlines/useTallWarnings';
 import { updatePlacement } from '../../graphics/library';
 import { panBy } from '../../graphics/placement';
 import type { GraphicPlacement } from '../../graphics/types';
+import { Combined } from '../../objects/Combined';
+import { combinedGroups } from '../../objects/combine';
 
 /** The face id of the material hit by a pointer event (set by FaceMat), if any. */
 export function faceAt(e: { object: THREE.Object3D; face?: THREE.Face | null }): string | null {
@@ -537,13 +539,26 @@ export function SetObjectsLayer() {
   // Everything a piece can hang from: the stage's own rigging plus placed truss.
   const rigging = useMemo(() => [...(info.rigging ?? []), ...placed.filter((p) => !inherited(p.obj, objects, 'hidden')).flatMap(worldHangLines)], [info, placed, objects]);
 
+  // Combined pieces: their pieces are drawn inside a Combined, which shows the result instead.
+  const combined = useMemo(() => combinedGroups(objects), [objects]);
+  const inCombined = useMemo(() => new Set(combined.flatMap((c) => c.leaves)), [combined]);
+  const view = (p: Placed) => (
+    <ObjectView key={p.obj.id} p={p} rigging={placementOf(p.type, p.obj.params) === 'hanging' ? rigging : NO_RIGGING} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} flagged={flagged.has(p.obj.id)} active={active} />
+  );
+
   return (
     <group>
-      {placed
-        .filter((p) => !hidden.has(p.obj.id))
-        .map((p) => (
-          <ObjectView key={p.obj.id} p={p} rigging={placementOf(p.type, p.obj.params) === 'hanging' ? rigging : NO_RIGGING} selected={selectedIds.includes(p.obj.id)} offStage={isOffStage(p, info)} locked={locked.has(p.obj.id)} flagged={flagged.has(p.obj.id)} active={active} />
-        ))}
+      {placed.filter((p) => !hidden.has(p.obj.id) && !inCombined.has(p.obj.id)).map(view)}
+      {combined.map((c) => {
+        const members = placed.filter((p) => c.leaves.includes(p.obj.id) && !hidden.has(p.obj.id));
+        if (!members.length) return null;
+        const version = JSON.stringify(members.map((p) => [p.obj.id, p.wx, p.wz, p.baseY, p.obj.rotation, p.obj.params, p.obj.faces ?? null]));
+        return (
+          <Combined key={c.group.id} group={c.group} baseId={c.base} units={c.units} version={version}>
+            {members.map(view)}
+          </Combined>
+        );
+      })}
       {editing && single && !locked.has(single.obj.id) && !hidden.has(single.obj.id) && getObjectType(single.obj.type) && <Handles key={single.obj.id} p={single} />}
       {editing && multi.length > 1 && !multi.some((p) => locked.has(p.obj.id)) && <SelectionHandles members={multi} key={multi.map((p) => p.obj.id).join()} />}
       {editing && guides.map(([a, b], i) => (

@@ -5,6 +5,7 @@
  * ~27 MB). Each is downloaded once, then kept by the browser.
  */
 import type { Pic } from './image';
+import { noteBigDownload } from '../components/Notices';
 // The AI engine ships with the app (instead of coming from a public CDN), so it loads as fast as the app does.
 import ortWasm from '../../node_modules/@huggingface/transformers/dist/ort-wasm-simd-threaded.jsep.wasm?url';
 import ortMjs from '../../node_modules/@huggingface/transformers/dist/ort-wasm-simd-threaded.jsep.mjs?url';
@@ -38,8 +39,14 @@ export function loader<R>(make: (progress_callback: (e: { status: string; file?:
     try {
       loading ??= (() => {
         const files = new Map<string, { loaded: number; total: number }>();
+        let started = false;
         return make((e) => {
           if (e.status !== 'progress' || !e.file || !e.total) return;
+          // A real download (not from the browser's copy): say so if the connection looks slow.
+          if (!started && (e.loaded ?? 0) < e.total) {
+            started = true;
+            noteBigDownload();
+          }
           files.set(e.file, { loaded: e.loaded ?? 0, total: e.total });
           const all = [...files.values()];
           last = { loaded: all.reduce((s, f) => s + f.loaded, 0), total: all.reduce((s, f) => s + f.total, 0) };

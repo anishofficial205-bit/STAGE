@@ -110,6 +110,8 @@ function collect(scene: THREE.Scene, o: ModelOptions, keepMaps: boolean): THREE.
     const mesh = x as THREE.Mesh;
     if (!mesh.isMesh || !mesh.geometry || (mesh as unknown as { isLineSegments2?: boolean }).isLineSegments2 || !visible(mesh)) return;
     if (mesh.geometry.type === 'RingGeometry' || mesh.geometry.type === 'CircleGeometry') return;
+    // Pieces inside a combined piece: the combined shape is exported instead.
+    if (!mesh.layers.isEnabled(0)) return;
     const where = classify(mesh, names);
     if (!where || !want[where.part]) return;
     const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];

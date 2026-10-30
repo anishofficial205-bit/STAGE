@@ -5,6 +5,7 @@ import { CameraBar } from './components/CameraBar';
 import { Viewport } from './components/Viewport';
 import { ThumbnailRenderer } from './components/Thumbnails';
 import { UndoToast } from './components/UndoToast';
+import { Notices } from './components/Notices';
 import { Tour } from './components/Tour';
 import { Shortcuts } from './components/Shortcuts';
 import { PdfPagePicker } from './components/graphics/PdfPagePicker';
@@ -74,6 +75,7 @@ export default function App() {
       <ItemMenu />
       <Tips />
       <UndoToast />
+      <Notices />
       <Shortcuts />
       <ModeEffects />
       <PdfPagePicker />

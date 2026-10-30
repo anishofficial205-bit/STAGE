@@ -5,6 +5,8 @@ import { isGroup, unitsOf } from '../../objects/groups';
 import { setProps } from '../../objects/actions';
 import { align, distribute, flipSelection, makeArray, mirrorCopy, type AlignMode, type ArrayOptions } from '../../objects/arrange';
 import { Collapsible } from '../Collapsible';
+import { COMBINE_OPS, canCombine, combineOf } from '../../objects/combine';
+import type { SetObject } from '../../objects/types';
 import { removePick } from '../layers/ops';
 
 const I = ({ d }: { d: string }) => (
@@ -31,6 +33,47 @@ function IconButton({ title, onClick, children, disabled }: { title: string; onC
 }
 
 /** Shown when several objects (or a group) are selected. */
+/** Pathfinder: combine the picked pieces, or change how a combined piece is made. */
+function CombineSection({ group, canCombine }: { group?: SetObject; canCombine: boolean }) {
+  const objects = useActiveObjects();
+  if (!group && !canCombine) return null;
+  const op = group ? combineOf(group) : null;
+  const parts = group ? objects.filter((o) => o.parent === group.id) : [];
+  const base = group && typeof group.params.base === 'string' ? group.params.base : parts[0]?.id;
+  const s = useProjectStore.getState();
+  return (
+    <section className="group">
+      <h3 className="group__title">{group ? 'Combined as' : 'Combine into one shape'}</h3>
+      <div className="combine-ops">
+        {COMBINE_OPS.map((o) => (
+          <button key={o.id} className={`combine-op ${o.id === op ? 'is-on' : ''}`} title={o.help} aria-pressed={o.id === op} onClick={() => (group ? s.setCombine(group.id, { op: o.id }) : s.combineSelection(o.id))}>
+            <I d={o.icon} />
+            <span>{o.label}</span>
+          </button>
+        ))}
+      </div>
+      {!group && <p className="hint">The first piece you picked is the one the others cut into.</p>}
+      {group && op === 'subtract' && (
+        <label className="field">
+          <span className="field__label">Cut into</span>
+          <select className="field__select" value={base} onChange={(e) => s.setCombine(group.id, { base: e.target.value })}>
+            {parts.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {group && (
+        <button className="btn" onClick={() => s.releaseCombined(group.id)} title="Make them separate pieces again">
+          Release
+        </button>
+      )}
+    </section>
+  );
+}
+
 export function MultiProperties() {
   const objects = useActiveObjects();
   const selectedIds = useProjectStore((s) => s.selectedIds);
@@ -38,6 +81,7 @@ export function MultiProperties() {
   const units = unitsOf(selectedIds, objects);
   const groupUnit = units.length === 1 ? objects.find((o) => o.id === units[0] && isGroup(o)) : undefined;
   const hasGroup = units.some((u) => isGroup(objects.find((o) => o.id === u)!));
+  const combinedUnit = groupUnit && combineOf(groupUnit) ? groupUnit : undefined;
 
   return (
     <div className="obj-props">
@@ -52,8 +96,14 @@ export function MultiProperties() {
         </button>
       </div>
       <p className="hint obj-props__type">
-        {groupUnit ? `Group · ${selectedIds.length} objects. Double-click one in the view to select it alone.` : 'Drag any of them to move them together.'}
+        {combinedUnit
+          ? `Combined shape · ${objects.filter((o) => o.parent === combinedUnit.id).length} pieces. Double-click one in the view, or pick it in Layers, to change it alone.`
+          : groupUnit
+            ? `Group · ${selectedIds.length} objects. Double-click one in the view to select it alone.`
+            : 'Drag any of them to move them together.'}
       </p>
+
+      <CombineSection group={combinedUnit} canCombine={units.length > 1 && objects.filter((o) => selectedIds.includes(o.id)).every(canCombine)} />
 
       <div className="btn-row">
         {units.length > 1 && (
@@ -61,7 +111,7 @@ export function MultiProperties() {
             Group
           </button>
         )}
-        {hasGroup && (
+        {hasGroup && !combinedUnit && (
           <button className="btn" onClick={ungroupSelection} title="Ungroup (⇧⌘G)">
             Ungroup
           </button>

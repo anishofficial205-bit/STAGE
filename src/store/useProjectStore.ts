@@ -15,6 +15,7 @@ import { emptyVenue, sanitizeVenue, type Venue } from '../venue/types';
 import { emptyLighting, sanitizeLighting, type Lighting } from '../lighting/types';
 import { emptyBlocking, sanitizeBlocking, type Blocking } from '../blocking/types';
 import { copyUnits, groupUnits, pruneGroups, ungroupUnits, unitsOf } from '../objects/groups';
+import { combineList, releaseList, type CombineOp } from '../objects/combine';
 import { nextName as nextUnusedName } from '../helpers/names';
 
 const STORAGE_KEY = 'stage-builder:project';
@@ -125,6 +126,12 @@ interface ProjectState extends Omit<ProjectFile, 'app' | 'version'> {
   /** Group the selection (⌘G) / dissolve its groups (⇧⌘G). */
   groupSelection: () => void;
   ungroupSelection: () => void;
+  /** Pathfinder: combine the picked pieces into one shape (Add, Subtract, Intersect, Exclude). */
+  combineSelection: (op: CombineOp) => void;
+  /** Change a combined piece's operation, or which piece the others cut into. */
+  setCombine: (groupId: string, change: { op?: CombineOp; base?: string }) => void;
+  /** Turn a combined piece back into separate pieces. */
+  releaseCombined: (groupId: string) => void;
   /** Set (or clear, with null) the style of an object face or a stage surface. `key` merges slider drags. */
   setFaceStyle: (objectId: string, face: string, style: FaceStyle | null, key?: string) => void;
   setSurfaceStyle: (surfaceId: string, style: FaceStyle | null, key?: string) => void;
@@ -239,7 +246,10 @@ function sanitizeObjects(raw: unknown): SetObject[] {
   const out: SetObject[] = [];
   for (const o of raw as Partial<SetObject>[]) {
     if (o && o.type === GROUP_TYPE && typeof o.id === 'string') {
-      out.push({ id: o.id, type: GROUP_TYPE, name: typeof o.name === 'string' ? o.name : 'Group', params: {}, x: 0, z: 0, elevation: 0, rotation: 0, hidden: !!o.hidden, locked: !!o.locked, parent: typeof o.parent === 'string' ? o.parent : undefined });
+      // Groups keep only what they use: a combined piece's operation and the piece the others cut into.
+      const gp = (o.params ?? {}) as Record<string, unknown>;
+      const params = ['add', 'subtract', 'intersect', 'exclude'].includes(gp.combine as string) ? { combine: gp.combine as string, ...(typeof gp.base === 'string' ? { base: gp.base } : {}) } : {};
+      out.push({ id: o.id, type: GROUP_TYPE, name: typeof o.name === 'string' ? o.name : 'Group', params, x: 0, z: 0, elevation: 0, rotation: 0, hidden: !!o.hidden, locked: !!o.locked, parent: typeof o.parent === 'string' ? o.parent : undefined });
       continue;
     }
     const type = o && typeof o.type === 'string' ? getObjectType(o.type) : undefined;
@@ -678,6 +688,31 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     ungroupSelection: () => {
       const before = activeObjects();
       const list = ungroupUnits(before, get().selectedIds);
+      if (list === before) return;
+      commit();
+      setActiveObjects(list);
+    },
+
+    combineSelection: (op) => {
+      const sel = get().selectedIds;
+      const { list, id } = combineList(activeObjects(), sel, op);
+      if (!id) return;
+      commit();
+      setActiveObjects(list);
+      set({ selectedIds: sel });
+    },
+
+    setCombine: (groupId, change) => {
+      const list = activeObjects();
+      const g = list.find((o) => o.id === groupId);
+      if (!g) return;
+      commit();
+      setActiveObjects(list.map((o) => (o.id === groupId ? { ...o, params: { ...o.params, ...(change.op ? { combine: change.op } : {}), ...(change.base ? { base: change.base } : {}) } } : o)));
+    },
+
+    releaseCombined: (groupId) => {
+      const before = activeObjects();
+      const list = releaseList(before, groupId);
       if (list === before) return;
       commit();
       setActiveObjects(list);

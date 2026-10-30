@@ -14,6 +14,8 @@ import { QUICK_COLOURS } from './objects/ObjectProperties';
 import { useShell } from './shell';
 import { useExportState } from '../export/state';
 import { useDismiss } from './useDismiss';
+import { COMBINE_OPS, canCombine, combineOf, combinedParent } from '../objects/combine';
+import { leafIds, unitsOf } from '../objects/groups';
 
 /** The userData key each kind of thing carries in the 3D scene. */
 const MARK: Record<string, string> = {
@@ -131,6 +133,73 @@ function Colour({ ids }: { ids: string[] }) {
   );
 }
 
+/** The combined piece these ids are exactly the pieces of, if any. */
+function useCombinedOf(ids: string[]) {
+  return useProjectStore((s) => {
+    const list = s.objectsByTemplate[s.templateId] ?? [];
+    const first = list.find((o) => o.id === ids[0]);
+    const g = first && combinedParent(first, list);
+    if (!g) return undefined;
+    const leaves = leafIds(g.id, list);
+    return leaves.length === ids.length && leaves.every((id) => ids.includes(id)) ? g : undefined;
+  });
+}
+
+/** Pathfinder in the quick bar: combine the picked pieces, or change / release a combined piece. */
+function CombineAct({ ids }: { ids: string[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useDismiss(open, () => setOpen(false), ref);
+  const combined = useCombinedOf(ids);
+  const combinable = useProjectStore((s) => {
+    const list = s.objectsByTemplate[s.templateId] ?? [];
+    const picked = list.filter((o) => ids.includes(o.id));
+    return unitsOf(ids, list).length > 1 && picked.every(canCombine);
+  });
+  if (!combined && !combinable) return null;
+  const op = combined ? combineOf(combined) : null;
+  const current = COMBINE_OPS.find((o) => o.id === op);
+  return (
+    <span className="quick__colour" ref={ref}>
+      <Act label={current ? current.label : 'Combine'} icon={<I d={current?.icon ?? COMBINE_OPS[0].icon} />} onClick={() => setOpen(!open)} />
+      {open && (
+        <span className="quick__menu" role="menu">
+          {COMBINE_OPS.map((o) => (
+            <button
+              key={o.id}
+              role="menuitemradio"
+              aria-checked={o.id === op}
+              className={`quick__menuitem ${o.id === op ? 'is-on' : ''}`}
+              title={o.help}
+              onClick={() => {
+                const s = useProjectStore.getState();
+                if (combined) s.setCombine(combined.id, { op: o.id });
+                else s.combineSelection(o.id);
+                setOpen(false);
+              }}
+            >
+              <I d={o.icon} />
+              <span>{o.label}</span>
+            </button>
+          ))}
+          {combined && (
+            <button
+              className="quick__menuitem quick__menuitem--wide"
+              onClick={() => {
+                useProjectStore.getState().releaseCombined(combined.id);
+                setOpen(false);
+              }}
+              title="Make them separate pieces again"
+            >
+              Release
+            </button>
+          )}
+        </span>
+      )}
+    </span>
+  );
+}
+
 /**
  * A small bar that floats just above whatever is picked in the 3D view: the few
  * things you do most (colour, turn, copy, delete…), and More for the full panel.
@@ -144,10 +213,11 @@ export function QuickBar() {
   const p = own && own.domain !== 'stage' && MARK[`${own.domain}/${own.kind}`] && !exporting && !drawing && !aiming && !venueTool ? own : null;
   const at = useAnchor(p);
   useProjectStore((s) => s.objectsByTemplate); // names follow renames
+  const combined = useCombinedOf(p?.domain === 'set' ? p.ids : []);
   if (!p || !at) return null;
   const ids = p.ids;
   const one = ids.length === 1;
-  const label = one ? nameOf({ domain: p.domain, kind: p.kind, id: ids[0] }) : `${ids.length} selected`;
+  const label = combined ? combined.name : one ? nameOf({ domain: p.domain, kind: p.kind, id: ids[0] }) : `${ids.length} selected`;
   // More: the sidebar's Edit tab, scrolled to the top.
   const more = () => {
     useShell.getState().setDock('edit');
@@ -170,6 +240,7 @@ export function QuickBar() {
           }}
         />
         <Act label="Copy" icon={<I d={COPY} />} onClick={() => useProjectStore.getState().duplicateObjects(ids)} />
+        <CombineAct ids={ids} />
       </>
     );
   else if (p.kind === 'fixture')
