@@ -18,6 +18,7 @@ import { exportLightList } from '../../lighting/csv';
 import { removePick } from '../layers/ops';
 import { Drill, Group, ListHead, Row, RowPlus, RowSwitch, type PageDef } from '../SettingsList';
 import { create } from 'zustand';
+import { TILE, Tile, Tiles } from '../ActionTile';
 
 export const LIGHT_DRAG_TYPE = 'application/x-stage-light';
 
@@ -60,7 +61,7 @@ function Library() {
             <LightTile key={t} t={t} />
           ))}
       </div>
-      <p className="sl-note">Click one, then click on stage — or drag it onto a light bar, a side pole or the floor.</p>
+      <p className="sl-note">Click one, then click on stage. Or drag it onto a bar, a pole or the floor.</p>
     </>
   );
 }
@@ -68,18 +69,12 @@ function Library() {
 function Positions() {
   return (
     <>
-      <div className="btn-row">
-        <button className="btn btn--small" onClick={() => lightActions.addPosition('electric')}>
-          + Bar over the stage
-        </button>
-        <button className="btn btn--small" onClick={() => lightActions.addPosition('foh')}>
-          + Bar over the audience
-        </button>
-        <button className="btn btn--small" onClick={() => lightActions.addPosition('boom')}>
-          + Side pole
-        </button>
-      </div>
-      <p className="sl-note">Lights snap to these, to frames from the set, or to the floor.</p>
+      <Tiles>
+        <Tile icon={TILE.bar} label="Bar over the stage" onClick={() => lightActions.addPosition('electric')} />
+        <Tile icon={TILE.audience} label="Bar over the audience" onClick={() => lightActions.addPosition('foh')} />
+        <Tile icon={TILE.pole} label="Side pole" onClick={() => lightActions.addPosition('boom')} />
+      </Tiles>
+      <p className="sl-note">Lights snap to these, to set frames and to the floor.</p>
     </>
   );
 }
@@ -177,8 +172,8 @@ export function LightsLeft() {
         <Row label="Places to hang lights" value={String(positions)} page="places" />
         <Row label="Import your own lights" value="CSV" onClick={() => useLightsUI.getState().setImportOpen(true)} action={<span className="sl-row__chev-text">Import</span>} title="A spreadsheet of your lights saved as CSV, or an MVR file from Vectorworks and other lighting software" />
       </Group>
-      <p className="sl-note">Have a light list already? Save it as a CSV spreadsheet (from Excel, Google Sheets or Lightwright) and import it. MVR files work too.</p>
-      <p className="sl-note">Pick a light, then click on stage where you want it.</p>
+      <p className="sl-note">Have a light list? Import it as a CSV spreadsheet or an MVR file.</p>
+      <p className="sl-note">Pick a light, then click on stage.</p>
     </Drill>
   );
 }
@@ -372,7 +367,7 @@ function FixtureProps({ fixtures }: { fixtures: Fixture[] }) {
           <h3 className="group__title">
             Aim <span className="term__tech">focus</span>
           </h3>
-          <p className="hint">Drag the ring on the stage to move where it points. Drop the ring on a performer to follow them.</p>
+          <p className="hint">Drag the ring to aim. Drop it on a performer to follow them.</p>
           {performers.length > 0 && (
             <label className="field">
               <span className="field__label">Follow a performer</span>
@@ -461,7 +456,7 @@ function PositionProps({ p }: { p: HangPosition }) {
       </div>
       {p.kind !== 'boom' && <Field def={len('y', 'Height', 1, 40)} value={p.y} units={units} onChange={(v) => lightActions.patchPosition(p.id, { y: v as number })} />}
       <Field def={len('length', p.kind === 'boom' ? 'Height of the pole' : 'Length', 0.5, 60)} value={p.length} units={units} onChange={(v) => lightActions.patchPosition(p.id, { length: v as number })} />
-      <p className="hint">Drag it in the view to move it; the lights on it move too.</p>
+      <p className="hint">Drag it to move it. Its lights move too.</p>
       <div className="btn-row">
         <button className="btn btn--danger" onClick={() => removePick({ domain: 'lights', kind: 'position', ids: [p.id] })}>
           Delete position
@@ -478,7 +473,7 @@ function LightPerformers() {
   if (!performers.length)
     return (
       <>
-        <p className="sl-note">No performers yet. Add them in Performers mode, then come back to light them.</p>
+        <p className="sl-note">No performers yet. Add them in Performers first.</p>
         <button className="btn" onClick={() => useProjectStore.getState().setMode('blocking')}>
           Go to Performers
         </button>
@@ -506,7 +501,7 @@ function LightPerformers() {
           );
         })}
       </Group>
-      <p className="sl-note">The light hangs where it reaches them best and follows them as the scene plays.</p>
+      <p className="sl-note">It hangs where it reaches them best, and follows them.</p>
     </>
   );
 }
@@ -557,10 +552,10 @@ function Overview() {
           <Field def={num('house', 'Brightness (%)', 0, 100, 1)} value={houseLevel} units="m" onChange={(v) => lightActions.patch(house.map((f) => f.id), { intensity: v as number, on: (v as number) > 0 }, 'house')} />
         ) : (
           <>
-            <p className="sl-note">Soft light over the seats, set as one level.</p>
-            <button className="btn btn--primary" onClick={() => lightActions.addFixture('house')}>
-              + Add audience lights
-            </button>
+            <p className="sl-note">Soft light over the seats.</p>
+            <Tiles>
+              <Tile icon={TILE.light} label="Add audience lights" onClick={() => lightActions.addFixture('house')} />
+            </Tiles>
           </>
         ),
     },

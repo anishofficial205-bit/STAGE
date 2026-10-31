@@ -13,6 +13,7 @@ import { useProjectStore } from '../../store/useProjectStore';
 import { STARTER_SETS } from '../../starters';
 import type { SetObjectType } from '../../objects/types';
 import { MyProps } from '../props/MyProps';
+import { TILE, Tile as ActionTile } from '../ActionTile';
 
 const CATEGORY_TOOLS: Record<string, () => JSX.Element> = { [CURTAINS]: CurtainTools };
 
@@ -64,9 +65,7 @@ function ReadyMadeSets() {
   if (!sets.length) return null;
   return (
     <>
-      <button className="btn btn--wide library__readymade" onClick={() => setOpen(true)}>
-        Start from a ready-made set…
-      </button>
+      <ActionTile icon={TILE.sets} label="Ready-made sets" onClick={() => setOpen(true)} />
       {open && (
         <Modal title="Ready-made sets" onClose={() => setOpen(false)}>
           <p className="modal__text">{count ? 'Loading a set replaces the pieces on this stage. You can undo it.' : 'Pick one to start from, then change anything.'}</p>
@@ -102,8 +101,7 @@ export function ObjectLibrary() {
     .filter((t): t is SetObjectType => !!t);
   return (
     <div className="library" data-tour="library">
-      <ReadyMadeSets />
-      <MyProps />
+      <MyProps lead={<ReadyMadeSets />} />
       <label className="library__search">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
           <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3" />

@@ -12,6 +12,7 @@ import { Drill, Group, ListHead, Row, RowPlus, type PageDef } from '../SettingsL
 import { Plain } from '../../glossary/Plain';
 import { lookup, plainText } from '../../glossary/terms';
 import { removePick } from '../layers/ops';
+import { TILE, Tile, Tiles } from '../ActionTile';
 
 /** Scenes as rows (click one to open it), then what you can do to the one that's open. */
 function Scenes() {
@@ -78,7 +79,7 @@ function Groups() {
           </div>
         </>
       )}
-      {!b.groups.length && selected.length < 2 && <p className="hint">Shift-click performers to select several, then group them or arrange them in a formation.</p>}
+      {!b.groups.length && selected.length < 2 && <p className="hint">Shift-click performers to group them or set a formation.</p>}
     </Collapsible>
   );
 }
@@ -98,7 +99,7 @@ function Entrances() {
         ))}
         <Row label={tool === 'entrance' ? 'Click the stage to place it…' : 'Add a way on'} accent action={<RowPlus />} onClick={() => useBlockingUI.getState().setTool(tool === 'entrance' ? null : 'entrance')} />
       </Group>
-      <p className="sl-note">Found from gaps between the side curtains, doors marked in Backstage, and the aisles.</p>
+      <p className="sl-note">Found from side-curtain gaps, Backstage doors and the aisles.</p>
     </>
   );
 }
@@ -240,9 +241,9 @@ function PerformerProps({ ids }: { ids: string[] }) {
               ))}
             </ul>
             {marks.length > 0 && <p className="hint">Spike marks: {marks.map((_, i) => `${initials(p.name)}${i + 1}`).join(', ')}</p>}
-            <button className="btn btn--small" onClick={() => { const pose = posesAt(useBlockingUI.getState().time).get(p.id); if (pose) blockingActions.addMark(p.id, [pose.x, pose.z]); }}>
-              + Floor mark where they stand
-            </button>
+            <Tiles>
+              <Tile icon={TILE.mark} label="Floor mark here" title="Mark the floor where they stand" onClick={() => { const pose = posesAt(useBlockingUI.getState().time).get(p.id); if (pose) blockingActions.addMark(p.id, [pose.x, pose.z]); }} />
+            </Tiles>
           </section>
         </>
       )}
@@ -286,7 +287,7 @@ function PathProps({ path }: { path: Path }) {
         {path.points.map((_, i) => (
           <Field key={i} def={num(`hold${i}`, `At point ${i + 1}: hold (s)`, 0, 60, 0.5)} value={path.stops.find((x) => x.index === i)?.hold ?? 0} units={units} onChange={(v) => blockingActions.setStop(path.id, i, v as number)} />
         ))}
-        <p className="hint">Drag the white points in the view to reshape the path; double-click one to delete it.</p>
+        <p className="hint">Drag the white points to reshape. Double-click one to delete it.</p>
       </section>
       <label className="field">
         <span className="field__label">Ends</span>
@@ -323,7 +324,7 @@ function SceneProps() {
         <Row label="Scene" value={scene.name} page="scenes" />
       </Group>
       {b.performers.length === 0 ? (
-        <p className="sl-note">No one on stage yet. Add performers with Cast on the left, then plan where they move.</p>
+        <p className="sl-note">No one on stage yet. Add performers from Cast.</p>
       ) : (
         <Group title="In this scene">
           {b.performers.map((p) => {

@@ -170,7 +170,7 @@ function SetProperties() {
       <div className="panel-head">
         <h2 className="panel-title">Set</h2>
       </div>
-      <p className="sidebar__empty">{empty ? 'No scenery yet. Add pieces with Add on the left, then click on the stage to place them.' : 'Click a piece to edit it.'}</p>
+      {empty && <p className="sidebar__empty">No scenery yet. Add a piece, then click on the stage.</p>}
       <SurfacesSection />
     </>
   );

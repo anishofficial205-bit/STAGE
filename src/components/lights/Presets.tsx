@@ -126,7 +126,7 @@ export function MyMoods({ onPick }: { onPick: (name: string) => void }) {
         </div>
       )}
       <SaveAs label="Save this lighting as my mood…" placeholder="My mood" onSave={(name) => presetActions.saveMood(name)} />
-      <p className="sl-note">Your moods work on any stage in any project: lights are matched to the ones there, added where missing and sized to fit.</p>
+      <p className="sl-note">Your moods work on any stage: lights are matched, added and sized to fit.</p>
     </>
   );
 }
@@ -150,14 +150,14 @@ export function PresetsPage() {
         {moods(list).map((m) => (
           <Row key={m.id} label={m.name} value={`${m.lights.length} lights`} onClick={() => presetActions.applyMood(m)} action={<span className="sl-row__chev-text">Use</span>} />
         ))}
-        {!moods(list).length && <p className="sl-note sl-note--in">None yet. Light the stage the way you like, then save it from Mood.</p>}
+        {!moods(list).length && <p className="sl-note sl-note--in">None yet. Light the stage, then save it from Mood.</p>}
       </Group>
       <MyMoodsSave />
       <Group title="My rigs">
         {rigs(list).map((r) => (
           <Row key={r.id} label={r.name} value={`${r.positions.length} places · ${r.lights.length} lights`} onClick={() => setConfirm(r)} action={<span className="sl-row__chev-text">Use</span>} />
         ))}
-        {!rigs(list).length && <p className="sl-note sl-note--in">A rig is where lights hang and which lights are there — e.g. your venue’s standard rig.</p>}
+        {!rigs(list).length && <p className="sl-note sl-note--in">A rig is your venue’s standard lights and where they hang.</p>}
       </Group>
       <SaveAs label="Save these lights as my rig…" placeholder="My rig" onSave={(name) => presetActions.saveRig(name)} />
       <Group title="My lights">
@@ -175,7 +175,7 @@ export function PresetsPage() {
             onClick={() => presetActions.remove(p.id)}
           />
         ))}
-        {!lights(list).length && <p className="sl-note sl-note--in">Pick a light and choose “Save as my light…”. It then appears under Add a light.</p>}
+        {!lights(list).length && <p className="sl-note sl-note--in">Pick a light and choose “Save as my light…”.</p>}
       </Group>
       {(moods(list).length > 0 || rigs(list).length > 0) && (
         <Group title="Remove a mood or rig">
@@ -206,7 +206,7 @@ export function PresetsPage() {
           }
         }}
       />
-      <p className="sl-note">Presets are kept in this browser and work in every project.</p>
+      <p className="sl-note">Kept in this browser, for every project.</p>
       {confirm && (
         <Modal title={`Use the rig “${confirm.name}”?`} onClose={() => setConfirm(null)}>
           <p className="modal__text">This replaces every light and place to hang lights on this stage with the rig, sized to fit. Saved looks and groups for the old lights are removed. You can undo it.</p>

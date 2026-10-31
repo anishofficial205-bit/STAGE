@@ -49,7 +49,7 @@ function QuickLook({ o }: { o: SetObject }) {
           />
         ))}
         <button className="btn btn--small" onClick={() => file.current?.click()} title="Put a picture (JPG, PNG, SVG or PDF) on this piece">
-          + Picture…
+          Picture…
         </button>
         <input
           ref={file}
@@ -120,7 +120,7 @@ export function ObjectProperties() {
       )}
       <QuickLook o={o} />
       <Collapsible id="exact-position" title="Exact position" defaultOpen={false}>
-        <p className="hint">The easiest way to move a piece is to drag it on the stage.</p>
+        <p className="hint">Or drag the piece on the stage.</p>
         <div className="field-pair">
           <Field def={pos('x', 'Left ↔ Right', 'From the stage centre: negative is to the left, positive to the right (as the audience sees it).')} value={o.x} units={units} onChange={(v) => setProps(o.id, { x: v as number }, `x:${o.id}`)} />
           <Field def={pos('z', 'Front ↔ Back', 'From the stage centre: positive is toward the audience (front), negative toward the back.')} value={o.z} units={units} onChange={(v) => setProps(o.id, { z: v as number }, `z:${o.id}`)} />

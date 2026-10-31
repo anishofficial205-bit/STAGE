@@ -3,6 +3,7 @@ import { useActiveData, useProjectStore } from '../../store/useProjectStore';
 import type { ParamDef } from '../../types';
 import { PLATFORM_HEIGHTS, useBlackBoxUI, type BlackBoxData, type Block } from './blocks';
 import { blockActions } from './actions';
+import { TILE, Tile, Tiles } from '../../components/ActionTile';
 
 /** Params of a selected block, in the same schema format as template params. */
 const PLATFORM_FIELDS: ParamDef[] = [
@@ -28,14 +29,10 @@ export function BlackBoxPanel() {
   return (
     <section className="group">
       <h3 className="group__title">Blocks</h3>
-      <div className="btn-row">
-        <button className="btn" onClick={() => blockActions.add('platform')}>
-          + Add platform
-        </button>
-        <button className="btn" onClick={() => blockActions.add('seating')}>
-          + Add seating block
-        </button>
-      </div>
+      <Tiles>
+        <Tile icon={TILE.platform} label="Platform" onClick={() => blockActions.add('platform')} />
+        <Tile icon={TILE.seats} label="Seating block" onClick={() => blockActions.add('seating')} />
+      </Tiles>
       <p className="hint">
         {platforms} platform{platforms === 1 ? '' : 's'} · {blocks.length - platforms} seating block{blocks.length - platforms === 1 ? '' : 's'}
       </p>

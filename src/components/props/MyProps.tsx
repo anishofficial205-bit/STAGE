@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { TILE, Tile, Tiles } from '../ActionTile';
 import { createPortal } from 'react-dom';
 import { deleteProp, refreshMyProps, useMyProps, type PhotoProp } from '../../photoProps/store';
 import { usePlacing } from '../../objects/placing';
@@ -8,7 +9,7 @@ import { ImportModel } from './ImportModel';
 import { Modal } from '../Modal';
 
 /** My props in the Add panel: make one from photos, import a 3D model, or place one you made before (in any project). */
-export function MyProps() {
+export function MyProps({ lead }: { lead?: ReactNode }) {
   const list = useMyProps((s) => s.list);
   const [making, setMaking] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -24,20 +25,11 @@ export function MyProps() {
   };
   return (
     <section className="my-props">
-      <button className="btn btn--wide my-props__make" onClick={() => setMaking(true)}>
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
-          <circle cx="12" cy="13" r="3.5" />
-        </svg>
-        Make a prop from photos…
-      </button>
-      <button className="btn btn--wide my-props__make" onClick={() => setImporting(true)} title="OBJ (with its colours and pictures), or glTF — from SketchUp, Blender, Rhino or a model website">
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z" />
-          <path d="M4 7.5 12 12l8-4.5M12 12v9" />
-        </svg>
-        Import a 3D model (.obj)…
-      </button>
+      <Tiles>
+        {lead}
+        <Tile icon={TILE.photo} label="Prop from photos" onClick={() => setMaking(true)} />
+        <Tile icon={TILE.face} label="Import a 3D model" onClick={() => setImporting(true)} title="OBJ (with its colours and pictures), or glTF — from SketchUp, Blender, Rhino or a model website" />
+      </Tiles>
       {list.length > 0 && (
         <>
           <h3 className="group__title">My props</h3>

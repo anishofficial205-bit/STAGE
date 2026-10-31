@@ -57,7 +57,7 @@ function ShapeEditor({ shape }: { shape: DrawnShape }) {
           </div>
         </div>
       )}
-      <p className="hint">Drag a corner to move it (snaps to the grid; ⌘/Ctrl for free). Drag the blue diamond on an edge to curve it, or click it to add a corner. Double-click a corner to delete it.</p>
+      <p className="hint">Drag a corner to move it. Drag a blue diamond to curve an edge, or click it to add a corner. Double-click a corner to delete it.</p>
       <div className="btn-row">
         <button className="btn" onClick={() => customActions.duplicate(shape.id)}>
           Duplicate
@@ -140,7 +140,7 @@ export function CustomPanel() {
         </p>
       )}
       {tool === 'seat-edge' && <p className="panel-msg panel-msg--info">Click an edge of a stage shape: seating rows appear facing it.</p>}
-      {!tool && !shapes.length && <p className="hint">Start with “Draw stage” and click out any shape on the floor — an L, a hexagon, a runway…</p>}
+      {!tool && !shapes.length && <p className="hint">Start with Draw stage and click out any shape.</p>}
 
       {shape ? (
         <ShapeEditor shape={shape} />

@@ -48,7 +48,7 @@ export function ChecksSection({ more }: { more?: ReactNode }) {
         <h3 className="group__title">
           Checks {checking !== null && <span className="hint">· checking… {Math.round(checking * 100)}%</span>}
         </h3>
-        {!b.performers.length && <p className="hint">Checks run by themselves once there are performers on stage.</p>}
+        {!b.performers.length && <p className="hint">Checks run once performers are on stage.</p>}
         {warnings && !warnings.length && !stale && <p className="panel-msg panel-msg--info">Looks good — nobody is hidden, seen in the wings or bumping into anyone.</p>}
         {warnings && warnings.length > 0 && (
           <ul className="warning-list">

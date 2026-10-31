@@ -50,7 +50,7 @@ function TraceSection() {
       <input ref={input} type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void pick(f); e.target.value = ''; }} />
       {!trace ? (
         <>
-          <p className="hint">Import a JPG, PNG or PDF of the venue’s floor plan. It shows faintly under the plan so you can draw walls and rooms over it.</p>
+          <p className="hint">Import a floor plan (JPG, PNG or PDF) and draw over it.</p>
           <button className="btn" onClick={() => input.current?.click()} disabled={busy}>
             {busy ? 'Importing…' : 'Import plan to trace…'}
           </button>
@@ -271,7 +271,7 @@ function DoorProps({ door }: { door: Door }) {
             </datalist>
           </label>
         )}
-        <p className="hint">Named entrances are used in Blocking for performers’ entrances and exits.</p>
+        <p className="hint">Performers use these for entrances and exits.</p>
       </section>
       <div className="btn-row">
         <button className="btn btn--danger" onClick={() => removePick({ domain: 'venue', kind: 'door', ids: [door.id] })}>
@@ -440,7 +440,7 @@ export function VenueProperties() {
           <span className="switch__knob" />
         </button>
       </label>
-      <p className="hint">Everything you draw is listed in Layers, where you can delete it piece by piece.</p>
+      <p className="hint">Delete pieces from Layers.</p>
       <ClearVenue />
     </div>
   );

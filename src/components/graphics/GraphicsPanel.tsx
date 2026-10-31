@@ -3,6 +3,7 @@ import { useProjectStore } from '../../store/useProjectStore';
 import { ACCEPT, importFiles, replaceGraphic, usageCounts, useGraphicUrl } from '../../graphics/library';
 import { GRAPHIC_DRAG_TYPE } from '../../objects/ui';
 import type { GraphicMeta } from '../../graphics/types';
+import { TILE, Tile, Tiles } from '../ActionTile';
 
 function GraphicRow({ g, used }: { g: GraphicMeta; used: number }) {
   const url = useGraphicUrl(g.id);
@@ -62,9 +63,9 @@ export function GraphicsPanel() {
   const list = Object.values(graphics);
   return (
     <div className="graphics">
-      <button className="btn btn--wide" onClick={() => input.current?.click()}>
-        + Add graphics
-      </button>
+      <Tiles>
+        <Tile icon={TILE.picture} label="Add pictures" onClick={() => input.current?.click()} />
+      </Tiles>
       <input
         ref={input}
         type="file"
@@ -77,7 +78,7 @@ export function GraphicsPanel() {
         }}
       />
       {list.length === 0 ? (
-        <p className="hint">JPG, PNG, WebP, SVG or PDF. You can also drag an image from your computer straight onto a face.</p>
+        <p className="hint">JPG, PNG, WebP, SVG or PDF. Or drag a picture straight onto the stage.</p>
       ) : (
         <ul className="graphic-list">
           {list.map((g) => (

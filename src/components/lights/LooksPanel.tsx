@@ -54,7 +54,7 @@ export function LooksSection() {
           ))}
         </div>
       )}
-      <p className="hint">Click a look to fade to it. To change one, recall it, adjust the lights, then ⟳ to update it.</p>
+      <p className="hint">Click a look to fade to it. To change one, recall it, adjust, then press ⟳.</p>
     </Collapsible>
   );
 }
@@ -95,17 +95,17 @@ export function GroupsSection() {
             {selected.length > 0 && (
               <div className="btn-row">
                 <button className="btn btn--small" onClick={() => groupActions.setMembers(g.id, [...new Set([...g.ids, ...selected])])}>
-                  + Add selected
+                  Add selected
                 </button>
                 <button className="btn btn--small" onClick={() => groupActions.setMembers(g.id, g.ids.filter((id) => !selected.includes(id)))}>
-                  − Remove selected
+                  Remove selected
                 </button>
               </div>
             )}
           </div>
         );
       })}
-      {!groups.length && <p className="hint">Shift-click lights to select several, then group them.</p>}
+      {!groups.length && <p className="hint">Shift-click lights to group them.</p>}
     </Collapsible>
   );
 }

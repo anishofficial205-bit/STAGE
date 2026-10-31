@@ -3,6 +3,7 @@ import { addObjectAt } from '../actions';
 import { Modal } from '../../components/Modal';
 import { addFalseProscenium, addMaskingSets } from './masking';
 import { Plain } from '../../glossary/Plain';
+import { TILE, Tile } from '../../components/ActionTile';
 
 function MaskingDialog({ onClose }: { onClose: () => void }) {
   const [count, setCount] = useState(3);
@@ -33,19 +34,11 @@ function MaskingDialog({ onClose }: { onClose: () => void }) {
 export function CurtainTools() {
   const [masking, setMasking] = useState(false);
   return (
-    <div className="library__tools">
-      <button className="btn btn--small" onClick={() => addObjectAt('main-curtain')} title="Hang a main curtain just behind the arch (or across the front of the stage)">
-        + <Plain text="Main curtain" />
-      </button>
-      <button className="btn btn--small" onClick={() => setMasking(true)} title="Pairs of legs plus a border at even depths">
-        + <Plain text="Masking sets…" />
-      </button>
-      <button className="btn btn--small" onClick={addFalseProscenium} title="Front legs (tormentors) and border (teaser) that frame a false proscenium">
-        + <Plain text="Tormentors & teaser" />
-      </button>
-      <button className="btn btn--small" onClick={() => addObjectAt('stage-skirt')} title="Cover the front of a raised stage, sized automatically">
-        + <Plain text="Stage skirt" />
-      </button>
+    <div className="action-tiles library__tools">
+      <Tile icon={TILE.curtain} label={<Plain text="Main curtain" />} onClick={() => addObjectAt('main-curtain')} title="Hang a main curtain just behind the arch (or across the front of the stage)" />
+      <Tile icon={TILE.frame} label={<Plain text="Masking sets" />} onClick={() => setMasking(true)} title="Pairs of legs plus a border at even depths" />
+      <Tile icon={TILE.arch} label={<Plain text="Tormentors & teaser" />} onClick={addFalseProscenium} title="Front legs (tormentors) and border (teaser) that frame a false proscenium" />
+      <Tile icon={TILE.skirt} label={<Plain text="Stage skirt" />} onClick={() => addObjectAt('stage-skirt')} title="Cover the front of a raised stage, sized automatically" />
       {masking && <MaskingDialog onClose={() => setMasking(false)} />}
     </div>
   );

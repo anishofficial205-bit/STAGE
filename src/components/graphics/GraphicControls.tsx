@@ -43,10 +43,10 @@ export function GraphicControls({ target, graphic }: { target: FaceRef; graphic?
     const existing = Object.values(library);
     return (
       <div className="graphic-controls">
-        <h4 className="subhead">Graphic</h4>
+        <h4 className="subhead">Picture</h4>
         <div className="btn-row">
           <button className="btn" onClick={() => fileInput.current?.click()}>
-            Add graphic…
+            Add picture…
           </button>
           {existing.length > 0 && (
             <select className="field__select" value="" onChange={(e) => e.target.value && assignGraphic(target, e.target.value)} aria-label="Use a graphic from the library">
@@ -59,7 +59,7 @@ export function GraphicControls({ target, graphic }: { target: FaceRef; graphic?
             </select>
           )}
         </div>
-        <p className="hint">Or drag an image file onto the face in the view.</p>
+        <p className="hint">Or drag a picture onto the face.</p>
         {picker}
       </div>
     );
@@ -67,7 +67,7 @@ export function GraphicControls({ target, graphic }: { target: FaceRef; graphic?
 
   return (
     <div className="graphic-controls">
-      <h4 className="subhead">Graphic</h4>
+      <h4 className="subhead">Picture</h4>
       <FaceBadge target={target} />
       <div className="graphic-current">
         <span className="graphic__thumb">{url && <img src={url} alt="" />}</span>
@@ -118,7 +118,7 @@ export function GraphicControls({ target, graphic }: { target: FaceRef; graphic?
         </button>
       </div>
       {isDecal && (
-        <button className="btn" onClick={() => matchImageProportions(target.objectId, graphic.id)} title="Set the decal's depth to match the image's proportions">
+        <button className="btn" onClick={() => matchImageProportions(target.objectId, graphic.id)} title="Set the floor picture's depth to match the image's proportions">
           Match image proportions
         </button>
       )}

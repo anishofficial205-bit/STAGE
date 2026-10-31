@@ -13,7 +13,7 @@ export function ExampleProjects() {
   const [confirm, setConfirm] = useState<string | null>(null);
   return (
     <Collapsible id="examples" title="Example projects" defaultOpen={false}>
-      <p className="hint">Complete projects with a venue, set, curtains, lights and blocking — a good way to see every mode.</p>
+      <p className="hint">Full projects with a venue, set, lights and cast.</p>
       <ul className="venue-list">
         {templates.map((t) => (
           <li key={t.id}>
@@ -62,7 +62,7 @@ export function MyTemplates() {
   return (
     <Collapsible id="my-templates" title={`My templates${list.length ? ` (${list.length})` : ''}`}>
       {list.length === 0 ? (
-        <p className="hint">Draw a stage in Build Your Own, then use “Save as my template” to keep it here for other projects.</p>
+        <p className="hint">Draw your own stage, then save it here to reuse it.</p>
       ) : (
         <ul className="picker">
           {list.map((t) => (

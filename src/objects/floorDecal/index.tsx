@@ -12,7 +12,7 @@ import { FLOOR_DECAL } from '../ui';
 
 export const floorDecalObject: SetObjectType = {
   id: FLOOR_DECAL,
-  name: 'Floor decal',
+  name: 'Floor picture',
   category: 'Basic',
   icon: (
     <Icon>
