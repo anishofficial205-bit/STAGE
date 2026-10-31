@@ -31,7 +31,7 @@ interface View {
 }
 
 const SNAP_PX = 12;
-const ACCENT = '#6e8c00';
+const ACCENT = '#1a8a83';
 
 type Drag =
   | { kind: 'pan'; start: [number, number]; view: View; moved: boolean }

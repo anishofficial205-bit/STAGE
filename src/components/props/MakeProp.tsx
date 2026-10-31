@@ -462,7 +462,7 @@ function MaskEditor({ view, mask, load, onTap, onUndoTap, onBrush, onStrength }:
       for (const t of view.taps) {
         ctx.beginPath();
         ctx.arc(t.x, t.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = t.keep ? '#d4f542' : '#ff6b5b';
+        ctx.fillStyle = t.keep ? '#29b6ad' : '#ff6b5b';
         ctx.fill();
         ctx.lineWidth = r / 2.5;
         ctx.strokeStyle = '#141414';

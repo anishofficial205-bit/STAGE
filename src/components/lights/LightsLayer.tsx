@@ -23,7 +23,7 @@ import { lightBudget } from './budget';
 import { Plain } from '../../glossary/Plain';
 import { performerNear, useFollowTargets } from '../../lighting/follow';
 
-const ACCENT = '#d4f542';
+const ACCENT = '#29b6ad';
 /** Light output at 100% (decay 0, so brightness doesn't depend on throw distance). */
 const K_SPOT = 4;
 const K_POINT = 2.5;

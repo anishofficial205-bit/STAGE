@@ -11,7 +11,7 @@
   --accent-hover: #e0692a;
   --accent-soft: color-mix(in srgb, var(--hi) 16%, transparent);
   --accent-line: color-mix(in srgb, var(--hi) 45%, transparent);
-  --good: #5ee0a0;
+  --good: #29b6ad;
   --danger: #ff8a7a;
   --warn-bg: rgba(245, 194, 107, 0.14);
   --warn-text: var(--warn-text);
@@ -509,7 +509,7 @@ button, input, select { font: inherit; color: inherit; }
 
 /* Print check */
 .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; margin-bottom: 8px; white-space: nowrap; }
-.badge--good { background: rgba(94, 224, 160, 0.14); color: var(--good); }
+.badge--good { background: rgba(41, 182, 173, 0.14); color: var(--good); }
 .badge--ok { background: rgba(245, 194, 107, 0.15); color: var(--warn-text); }
 .badge--low { background: rgba(255, 138, 122, 0.14); color: var(--danger); }
 .modal--wide { width: min(920px, calc(100vw - 32px)); }
@@ -1519,7 +1519,7 @@ html, body, #root { overflow: hidden; }
   .hm-main { overflow: visible; }
 }
 
-/* ===== Look: Graphite and highlighter — neutral greys, one lime highlighter, light and dark ===== */
+/* ===== Look: Graphite and highlighter — neutral greys, one teal highlight, light and dark ===== */
 :root[data-theme='light'] {
   color-scheme: light;
   --bg: #ececE9;
@@ -1536,15 +1536,15 @@ html, body, #root { overflow: hidden; }
   --faint: #a3a39e;
   --pri: #161616;
   --on-pri: #ffffff;
-  --hi: #d4f542;
-  --hi-soft: rgba(212, 245, 66, 0.55);
-  --hi-text: #566c00;
-  --on-bg: #d4f542;
+  --hi: #29b6ad;
+  --hi-soft: rgba(41, 182, 173, 0.55);
+  --hi-text: #0f6f69;
+  --on-bg: #29b6ad;
   --on-text: #161616;
   --sel-text: #161616;
   --sel-line: #161616;
-  --plan-hi: #6e8c00;
-  --good: #2f9e5b;
+  --plan-hi: #1a8a83;
+  --good: #1a8a83;
   --danger: #c8392b;
   --error: #d93025;
   --warn: #e0a100;
@@ -1567,17 +1567,17 @@ html, body, #root { overflow: hidden; }
   --text-2: #cfcfc9;
   --muted: #9a9a94;
   --faint: #6a6a65;
-  --pri: #d4f542;
+  --pri: #29b6ad;
   --on-pri: #141414;
-  --hi: #d4f542;
-  --hi-soft: rgba(212, 245, 66, 0.16);
-  --hi-text: #d4f542;
-  --on-bg: #d4f542;
+  --hi: #29b6ad;
+  --hi-soft: rgba(41, 182, 173, 0.16);
+  --hi-text: #29b6ad;
+  --on-bg: #29b6ad;
   --on-text: #141414;
-  --sel-text: #d4f542;
-  --sel-line: #d4f542;
-  --plan-hi: #6e8c00;
-  --good: #5ee0a0;
+  --sel-text: #29b6ad;
+  --sel-line: #29b6ad;
+  --plan-hi: #1a8a83;
+  --good: #29b6ad;
   --danger: #ff6b5b;
   --error: #ff6b5b;
   --warn: #f5b54a;
@@ -1702,7 +1702,7 @@ input[type='range'], input[type='checkbox'], input[type='radio'], .field__slider
 .np__cats { background: var(--soft); }
 .np__plan { background: rgba(20, 20, 20, 0.85); }
 .np__plan rect, .preset-card__plan rect { fill: color-mix(in srgb, var(--hi) 30%, transparent); stroke: var(--text-2); }
-.np__plan rect { stroke: #d4f542; }
+.np__plan rect { stroke: #29b6ad; }
 .np__plan path { stroke: rgba(255, 255, 255, 0.35); }
 .np__nopic { color: var(--muted); }
 
@@ -1717,7 +1717,7 @@ input[type='range'], input[type='checkbox'], input[type='radio'], .field__slider
 /* ===== Lights: source and anchor, presets, table of lights, importing ===== */
 .anchor-badge { display: inline-flex; flex-direction: column; align-items: center; min-width: 22px; padding: 2px 7px; border-radius: 999px; background: var(--label-bg); color: #fff; border: 2px solid var(--tone, #fff); font-size: 11.5px; font-weight: 700; line-height: 1.2; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); white-space: nowrap; }
 .anchor-badge small { font-size: 9.5px; font-weight: 500; opacity: 0.8; }
-.anchor-badge.is-selected { border-color: #d4f542; }
+.anchor-badge.is-selected { border-color: #29b6ad; }
 .light-props__ch { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; margin-right: 8px; border-radius: 999px; background: var(--text); color: var(--panel); font-size: 11.5px; font-weight: 700; }
 .light-props__actions { display: flex; gap: 6px; margin: 2px 0 12px; }
 .light-props__actions .btn { flex: 1; height: 38px; font-weight: 600; }
