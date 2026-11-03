@@ -67,7 +67,7 @@ export const STARTER_SCENES: StarterScene[] = [
     id: 'play',
     title: 'A play',
     blurb: 'A framed stage with a living-room set, warm lights and two performers.',
-    image: 'starters/play.jpg',
+    image: '/starters/play.jpg',
     templateId: 'proscenium',
     build: () => {
       const living = fromLibrary('proscenium', 'living-room');
@@ -81,7 +81,7 @@ export const STARTER_SCENES: StarterScene[] = [
     id: 'concert',
     title: 'A concert',
     blurb: 'Open-air stage with a truss roof, an LED wall and concert lighting.',
-    image: 'starters/concert.jpg',
+    image: '/starters/concert.jpg',
     templateId: 'open-air',
     build: () => {
       const band = fromLibrary('open-air', 'festival-band');
@@ -93,7 +93,7 @@ export const STARTER_SCENES: StarterScene[] = [
     id: 'wedding',
     title: 'A wedding',
     blurb: 'End stage with a mandap, a floral backdrop and warm lighting. Sizes in feet.',
-    image: 'starters/wedding.jpg',
+    image: '/starters/wedding.jpg',
     templateId: 'end-stage',
     units: 'ft',
     build: () => {
@@ -125,7 +125,7 @@ export const STARTER_SCENES: StarterScene[] = [
     id: 'corporate',
     title: 'A corporate event',
     blurb: 'End stage with a podium, an LED wall and clean, even lighting.',
-    image: 'starters/corporate.jpg',
+    image: '/starters/corporate.jpg',
     templateId: 'end-stage',
     build: () => {
       useProjectStore.getState().loadStarterSet(
@@ -146,7 +146,7 @@ export const STARTER_SCENES: StarterScene[] = [
     id: 'fashion',
     title: 'A fashion show',
     blurb: 'A runway with seating on both sides and bright white light.',
-    image: 'starters/fashion.jpg',
+    image: '/starters/fashion.jpg',
     templateId: 'traverse',
     build: () => {
       const show = fromLibrary('traverse', 'fashion-show');
@@ -159,7 +159,7 @@ export const STARTER_SCENES: StarterScene[] = [
     id: 'scratch',
     title: 'Start from scratch',
     blurb: 'An empty framed stage. Nothing else.',
-    image: 'starters/scratch.jpg',
+    image: '/starters/scratch.jpg',
     templateId: 'proscenium',
     build: () => {},
   },

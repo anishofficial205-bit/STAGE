@@ -24,12 +24,12 @@ export interface Mood {
 }
 
 export const MOODS: Mood[] = [
-  { id: 'daylight', name: 'Daylight', preset: 'Full stage wash', image: 'moods/daylight.jpg', blurb: 'Bright, even, white' },
-  { id: 'warm', name: 'Warm evening', preset: 'Warm evening', image: 'moods/warm.jpg', blurb: 'Amber and gold' },
-  { id: 'night', name: 'Night', preset: 'Cold night', image: 'moods/night.jpg', blurb: 'Cool blue, a little haze' },
-  { id: 'concert', name: 'Concert', preset: 'Concert', image: 'moods/concert.jpg', blurb: 'Saturated colour and haze' },
-  { id: 'spot', name: 'Spotlight on one person', preset: 'Single spot centre', image: 'moods/spot.jpg', blurb: 'One light, centre stage' },
-  { id: 'blackout', name: 'Blackout', preset: 'Blackout', image: 'moods/blackout.jpg', blurb: 'Everything off' },
+  { id: 'daylight', name: 'Daylight', preset: 'Full stage wash', image: '/moods/daylight.jpg', blurb: 'Bright, even, white' },
+  { id: 'warm', name: 'Warm evening', preset: 'Warm evening', image: '/moods/warm.jpg', blurb: 'Amber and gold' },
+  { id: 'night', name: 'Night', preset: 'Cold night', image: '/moods/night.jpg', blurb: 'Cool blue, a little haze' },
+  { id: 'concert', name: 'Concert', preset: 'Concert', image: '/moods/concert.jpg', blurb: 'Saturated colour and haze' },
+  { id: 'spot', name: 'Spotlight on one person', preset: 'Single spot centre', image: '/moods/spot.jpg', blurb: 'One light, centre stage' },
+  { id: 'blackout', name: 'Blackout', preset: 'Blackout', image: '/moods/blackout.jpg', blurb: 'Everything off' },
 ];
 
 const lighting = () => {

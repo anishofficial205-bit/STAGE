@@ -291,8 +291,8 @@ details p{padding:0 44px 24px 2px;color:rgba(243,245,243,.78);font-size:var(--le
 
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 <script type="module">
-/* Served with the app at /welcome/, every button opens the app and each show card opens that show. Elsewhere (a preview) they stay on the page. */
-const APP_URL = location.pathname.startsWith('/welcome') ? '/' : '';
+/* On the live site (the build sets MANCH_APP), every button opens the app and each show card opens that show. In a preview they stay on the page. */
+const APP_URL = window.MANCH_APP || '';
 if (APP_URL) document.querySelectorAll('[data-app]').forEach(a => { a.href = APP_URL; });
 
 const $ = id => document.getElementById(id);

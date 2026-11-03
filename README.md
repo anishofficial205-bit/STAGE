@@ -4,7 +4,7 @@ Visualise stage templates in 3D. Vite + React + TypeScript + React Three Fiber. 
 
 ```bash
 npm install
-npm run dev      # local dev server
+npm run dev      # local dev server: the landing page at /, the app at /app/
 npm run build    # static build into dist/
 ```
 
