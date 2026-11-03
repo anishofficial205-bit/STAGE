@@ -13,6 +13,7 @@ import { reflections, useReflectionsReady } from '../objects/materials';
 import { GRAPHIC_DRAG_TYPE, OBJECT_DRAG_TYPE, useObjectUI, viewportBridge } from '../objects/ui';
 import { pickFace } from '../objects/pick';
 import { assignGraphic, importFiles, importOnto } from '../graphics/library';
+import { hasModel } from './props/ImportModel';
 import { FaceContextMenu } from './graphics/FaceContextMenu';
 import { SeatLayer } from './sightlines/SeatLayer';
 import { Capturer } from './export/Capturer';
@@ -144,9 +145,15 @@ export function Viewport() {
       if (spec) lightActions.addFixture(lightType as FixtureType, at ?? undefined);
       return;
     }
+    const files = [...e.dataTransfer.files];
+    // A 3D model (.glb, .gltf, .obj, with its .mtl and pictures) dropped in any mode opens the import.
+    if (hasModel(files)) {
+      e.preventDefault();
+      useShell.getState().setImporting(files);
+      return;
+    }
     if (useProjectStore.getState().mode !== 'set') return;
     const graphicId = e.dataTransfer.getData(GRAPHIC_DRAG_TYPE);
-    const files = [...e.dataTransfer.files];
     if (graphicId || files.length) {
       e.preventDefault();
       const target = pickFace(e.clientX, e.clientY);

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useProjectStore } from '../store/useProjectStore';
 import { MODE_TOUR_EVENT, TOUR_EVENT, hasModeTour } from './Tour';
 import { resetTips, showTip } from './Tips';
-import { exportZip, importZip } from '../graphics/library';
+import { exportZip } from '../graphics/library';
 import { PrintCheckDialog } from './graphics/PrintCheck';
 import { ExportDialog } from './export/ExportDialog';
 import { ModelDialog } from './export/ModelDialog';
@@ -22,7 +22,6 @@ import { PdfPreview } from './export/PdfPreview';
 
 export function TopBar() {
   const s = useProjectStore();
-  const fileInput = useRef<HTMLInputElement>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [printCheck, setPrintCheck] = useState(false);
   const [render, setRender] = useState(false);
@@ -76,17 +75,6 @@ export function TopBar() {
     a.click();
     URL.revokeObjectURL(url);
     flash('Exported');
-  };
-
-  /** Import a .zip export (with images) or an older .json export. */
-  const importFile = async (file: File) => {
-    try {
-      if (/\.zip$/i.test(file.name) || file.type.includes('zip')) await importZip(file);
-      else s.loadFile(JSON.parse(await file.text()));
-      flash(`Imported “${file.name}” — press Save to keep it`);
-    } catch (err) {
-      flash(err instanceof Error && !(err instanceof SyntaxError) ? err.message : 'Could not read that file.');
-    }
   };
 
   return (
@@ -187,6 +175,10 @@ export function TopBar() {
             </span>
           )}
         </span>
+        <button className="glass topbar__import" onClick={() => useShell.getState().setImporting([])} title="Bring in a 3D model: a .glb, .gltf or .obj file (or drop it on the stage)">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 21V9M7 14l5-5 5 5M12 3 4 7.5v9M12 3l8 4.5v9" /></svg>
+          Import 3D
+        </button>
         <span className="menu">
           <button className="glass topbar__share" onClick={() => toggle('file')} aria-expanded={menu === 'file'}>
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 3v12M7 10l5 5 5-5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" /></svg>
@@ -219,23 +211,9 @@ export function TopBar() {
               <button role="menuitem" onClick={() => { close(); void exportZipFile(); }} title="Download the project and its images as a .zip">
                 Download project (.zip)
               </button>
-              <button role="menuitem" onClick={() => { close(); fileInput.current?.click(); }}>
-                Open a project file…
-              </button>
             </span>
           )}
         </span>
-        <input
-          ref={fileInput}
-          type="file"
-          accept=".zip,.json,application/zip,application/json"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void importFile(f);
-            e.target.value = '';
-          }}
-        />
       </div>
       {toast && <div className="toast">{toast}</div>}
       {printCheck && <PrintCheckDialog onClose={() => setPrintCheck(false)} />}

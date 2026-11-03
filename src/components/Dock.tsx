@@ -3,7 +3,6 @@ import { useProjectStore } from '../store/useProjectStore';
 import { useShell, type DockTab } from './shell';
 import { ModeTools } from './ToolsPanel';
 import { ModeProperties } from './PropertiesPanel';
-import { Outliner } from './layers/Outliner';
 import type { Mode } from '../modes';
 
 const Icon = ({ d, w = 1.8 }: { d: string; w?: number }) => (
@@ -16,7 +15,6 @@ const PICTURES = 'M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0
 const STAGE = 'M3 15l9-5 9 5-9 5zM12 3v7';
 const LIBRARY = 'M4 4h4v16H4zM10 4h4v16h-4zM16 5l3.5-1 3 15.5-3.5 1z';
 const EDIT = 'M4 20h4L18 10l-4-4L4 16zM14 6l4 4';
-const LAYERS = 'M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5';
 const DRAW = 'M3 21h18M5 21V8l7-5 7 5v13';
 const FOLD = 'M15 18l-6-6 6-6';
 
@@ -43,7 +41,6 @@ function tabsFor(mode: Mode): Tab[] {
       : []),
     { id: 'library', label: 'Library', icon: LIBRARY, title: 'Project library' },
     { id: 'edit', label: 'Edit', icon: EDIT, tour: 'edit' },
-    { id: 'layers', label: 'Layers', icon: LAYERS, tour: 'layers' },
   ];
 }
 
@@ -64,12 +61,11 @@ function TabButton({ tab, active, onClick, rail }: { tab: Tab; active: boolean; 
 
 function Body({ tab }: { tab: DockTab }): ReactNode {
   if (tab === 'edit') return <ModeProperties />;
-  if (tab === 'layers') return <Outliner />;
   return <ModeTools tab={tab} />;
 }
 
 /**
- * The left sidebar: one panel at a time (Add, Pictures, Library, Edit, Layers),
+ * The left sidebar: one panel at a time (Add, Pictures, Library, Edit),
  * switched by its tabs. Folded, it's a slim rail of the same tabs, so the rest
  * of the window is all stage.
  */

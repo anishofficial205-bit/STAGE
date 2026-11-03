@@ -24,8 +24,8 @@ interface Step {
 
 const FIRST_RUN: Step[] = [
   { target: 'modes', side: 'bottom', title: 'Work in steps', text: 'Set, Lights and Performers — press 1–3 to switch (4 is Backstage). Things from other steps stay in view but can’t be picked.' },
-  { target: 'library', side: 'right', title: 'One panel on the left', text: 'Add, Library, Edit and Layers are tabs of one panel. Click a tab to switch; click it again, or ‹, to fold the panel away and see the whole stage.' },
-  { target: 'layers', side: 'right', title: 'Everything on stage', text: 'Layers lists every piece, light and performer. Click one to pick it, right-click to delete or hide it.' },
+  { target: 'library', side: 'right', title: 'One panel on the left', text: 'Add, Library and Edit are tabs of one panel. Click a tab to switch; click it again, or ‹, to fold the panel away and see the whole stage.' },
+  { target: 'layers', side: 'left', title: 'Everything on stage', text: 'Layers, on the right, lists every piece, light and performer. Click one to pick it, right-click to delete or hide it; › folds it away.' },
   { target: 'views', side: 'top', title: 'Check the views', text: 'Look from the audience, from above or from any seat. Drag in the 3D view to look around, scroll to zoom.' },
 ];
 

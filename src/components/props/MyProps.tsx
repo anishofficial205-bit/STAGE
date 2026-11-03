@@ -5,14 +5,13 @@ import { deleteProp, refreshMyProps, useMyProps, type PhotoProp } from '../../ph
 import { usePlacing } from '../../objects/placing';
 import { PHOTO_PROP } from '../../objects/photoProp';
 import { MakeProp } from './MakeProp';
-import { ImportModel } from './ImportModel';
+import { useShell } from '../shell';
 import { Modal } from '../Modal';
 
 /** My props in the Add panel: make one from photos, import a 3D model, or place one you made before (in any project). */
 export function MyProps({ lead }: { lead?: ReactNode }) {
   const list = useMyProps((s) => s.list);
   const [making, setMaking] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [removing, setRemoving] = useState<PhotoProp | null>(null);
   const placing = usePlacing((s) => (s.typeId === PHOTO_PROP ? s.init?.key : null));
   useEffect(() => {
@@ -28,7 +27,7 @@ export function MyProps({ lead }: { lead?: ReactNode }) {
       <Tiles>
         {lead}
         <Tile icon={TILE.photo} label="Prop from photos" onClick={() => setMaking(true)} />
-        <Tile icon={TILE.face} label="Import a 3D model" onClick={() => setImporting(true)} title="OBJ (with its colours and pictures), or glTF — from SketchUp, Blender, Rhino or a model website" />
+        <Tile icon={TILE.face} label="Import a 3D model" onClick={() => useShell.getState().setImporting([])} title="A .glb, .gltf or .obj file — from SketchUp, Blender, Rhino or a model website. You can also drop it on the stage." />
       </Tiles>
       {list.length > 0 && (
         <>
@@ -50,7 +49,6 @@ export function MyProps({ lead }: { lead?: ReactNode }) {
       )}
       {/* On the page itself, not inside the panel (which would clip it). */}
       {making && createPortal(<MakeProp onClose={() => setMaking(false)} />, document.body)}
-      {importing && createPortal(<ImportModel onClose={() => setImporting(false)} />, document.body)}
       {removing &&
         createPortal(
         <Modal title={`Delete “${removing.name}” from My props?`} onClose={() => setRemoving(null)}>

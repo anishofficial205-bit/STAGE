@@ -3,7 +3,6 @@ import { useShell } from './shell';
 import { STARTER_SCENES, loadStarterScene } from '../starters/scenes';
 import { deleteProject, deleteProjects, duplicateProject, recordCurrentProject, recordWithPicture, refreshRecent, renameProject, useRecentProjects, type ProjectRecord } from '../projects/library';
 import { setDefaultUnits, useProjectStore } from '../store/useProjectStore';
-import { importZip } from '../graphics/library';
 import { getTemplate } from '../templates/registry';
 import { useThumbnails } from './Thumbnails';
 import { lookup } from '../glossary/terms';
@@ -248,7 +247,6 @@ export function Home() {
   const home = useShell((s) => s.home);
   const setHome = useShell((s) => s.setHome);
   const recent = useRecentProjects((s) => s.list);
-  const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState('');
   const [view, setView] = useState<View>('home');
   const [sort, setSort] = useState<'recent' | 'name'>('recent');
@@ -256,7 +254,6 @@ export function Home() {
   const [picked, setPicked] = useState<string[]>([]);
   const [confirmMany, setConfirmMany] = useState(false);
   const stopPicking = () => (setPicking(false), setPicked([]));
-  const file = useRef<HTMLInputElement>(null);
   const currentId = useProjectStore((s) => s.projectId);
   const units = useProjectStore((s) => s.units);
   const theme = useTheme((s) => s.theme);
@@ -297,15 +294,6 @@ export function Home() {
     }
     setHome(false);
   };
-  const openFile = async (f: File) => {
-    try {
-      await importZip(f);
-      useProjectStore.getState().save();
-      setHome(false);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not read that file.');
-    }
-  };
   const setUnits = (u: Units) => {
     setDefaultUnits(u);
     useProjectStore.getState().setUnits(u);
@@ -339,22 +327,7 @@ export function Home() {
             <Icon d="M4 5h16v14H4zM4 9h16" />
             Templates<span className="hm-nav__n">{STARTER_SCENES.length - 1}</span>
           </button>
-          <button onClick={() => file.current?.click()}>
-            <Icon d="M12 3v12M7 10l5 5 5-5M5 21h14" />
-            Open a file
-          </button>
         </nav>
-        <input
-          ref={file}
-          type="file"
-          accept=".zip,.json,application/zip,application/json"
-          hidden
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void openFile(f);
-            e.target.value = '';
-          }}
-        />
         <div className="hm-side__foot">
           <span className="hm-side__row">
             <span className="hm-side__label">{theme === 'dark' ? 'Dark mode' : 'Light mode'}</span>
@@ -383,7 +356,6 @@ export function Home() {
             <input type="search" placeholder="Search projects and templates" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search projects and templates" />
           </label>
         </div>
-        {error && <p className="panel-msg panel-msg--warning">{error}</p>}
 
         {view === 'home' && (
           <>

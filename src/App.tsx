@@ -28,13 +28,15 @@ import { VenueViewBar } from './components/venue/VenuePanels';
 import { useProjectStore } from './store/useProjectStore';
 import { useVenueUI } from './venue/ui';
 import { ItemMenu } from './components/layers/ItemMenu';
+import { LayersPanel } from './components/layers/LayersPanel';
+import { ImportModel } from './components/props/ImportModel';
 import { useLightsMode } from './components/lights/LightsPanels';
 import { useBlockingKeys } from './components/blocking/BlockingPanels';
 
 /**
  * The 3D stage fills the window and everything else floats over it: the top bar
  * (project, the View menu, Download), one sidebar on the left (Add, Library,
- * Edit, Layers… as tabs, folding to a rail), a quick bar over whatever is
+ * Edit… as tabs, folding to a rail), Layers on the right (folding to a button), a quick bar over whatever is
  * picked, and the modes at the bottom.
  */
 /** Each mode's keyboard shortcuts and setup, active whether or not its panels are open. */
@@ -50,6 +52,8 @@ export default function App() {
   const layout = useVenueUI((s) => s.layout);
   const panels = useShell((s) => s.panels);
   const dock = useShell((s) => s.dock);
+  const layers = useShell((s) => s.layers);
+  const importing = useShell((s) => s.importing);
   useEffect(() => startRecentSync(), []);
   // A landing page link like ?show=cabaret opens that show straight away.
   useEffect(() => {
@@ -63,7 +67,7 @@ export default function App() {
   }, []);
   const show = venue ? layout : '3d';
   return (
-    <div className={`app app--${mode} ${panels ? '' : 'is-clean'} ${dock ? 'has-dock' : ''}`}>
+    <div className={`app app--${mode} ${panels ? '' : 'is-clean'} ${dock ? 'has-dock' : ''} ${layers ? 'has-layers' : ''}`}>
       <main className={`viewport viewport--${show}`}>
         {show !== '3d' && (
           <div className="viewport__plan">
@@ -79,6 +83,7 @@ export default function App() {
       <ModeBar />
       <TopBar />
       <Dock />
+      <LayersPanel />
       <QuickBar />
       <CameraBar />
       <LabelDeclutter />
@@ -98,6 +103,7 @@ export default function App() {
       <ThumbnailRenderer />
       <Home />
       <NewProjectDialog />
+      {importing && <ImportModel files={importing} onClose={() => useShell.getState().setImporting(null)} />}
     </div>
   );
 }

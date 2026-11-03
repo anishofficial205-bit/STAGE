@@ -12,8 +12,13 @@ import { Field } from '../fields';
 const len = (key: string, label: string, help?: string) => ({ key, label, group: '', type: 'number' as const, unit: 'length' as const, default: 1, min: 0.02, max: 60, step: 0.01, help });
 const fmt = (m: number, units: string) => (units === 'ft' ? `${(m / 0.3048).toFixed(1)} ft` : `${m.toFixed(2)} m`);
 
-/** Import a 3D model (OBJ with its colours and pictures, or glTF) as one of My props. */
-export function ImportModel({ onClose }: { onClose: () => void }) {
+/** The files the import dialog takes: a model and what goes with it (an OBJ's .mtl and pictures, a .gltf's .bin). */
+export const MODEL_ACCEPT = '.obj,.mtl,.zip,.glb,.gltf,.bin,image/*';
+/** Whether a dropped set of files holds a 3D model. */
+export const hasModel = (files: File[]) => files.some((f) => /\.(glb|gltf|obj)$/i.test(f.name));
+
+/** Import a 3D model (OBJ with its colours and pictures, or glTF) as one of My props. `files`: start on these (e.g. dropped on the stage). */
+export function ImportModel({ files, onClose }: { files?: File[]; onClose: () => void }) {
   const units = useProjectStore((s) => s.units);
   const [loaded, setLoaded] = useState<LoadedModel | null>(null);
   const [fileUnits, setFileUnits] = useState<FileUnits>('m');
@@ -48,6 +53,11 @@ export function ImportModel({ onClose }: { onClose: () => void }) {
     }
     setBusy(false);
   };
+
+  // Files dropped on the stage are read straight away.
+  useEffect(() => {
+    if (files?.length) void read(files);
+  }, [files]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fitted = useMemo(() => (loaded ? fit(loaded, fileUnits, zUp) : null), [loaded, fileUnits, zUp]);
   // Typing a height scales the whole model evenly.
@@ -143,7 +153,7 @@ export function ImportModel({ onClose }: { onClose: () => void }) {
           ref={input}
           type="file"
           multiple
-          accept=".obj,.mtl,.zip,.glb,.gltf,.bin,image/*"
+          accept={MODEL_ACCEPT}
           hidden
           onChange={(e) => {
             const files = [...(e.target.files ?? [])];

@@ -144,7 +144,7 @@ function lightNodes(fixtures: Fixture[], positions: { id: string; name: string; 
 }
 
 /** The single layers list: Stage, Set, Lights, Performers and Backstage & venue. */
-export function Outliner() {
+export function Outliner({ onFold }: { onFold?: () => void }) {
   const mode = useProjectStore((s) => s.mode);
   const templateId = useProjectStore((s) => s.templateId);
   const otherLayers = useProjectStore((s) => s.otherLayers);
@@ -400,6 +400,13 @@ export function Outliner() {
       <div className="outliner__head">
         <h2 className="outliner__title">Layers</h2>
         <OtherLayersToggle value={otherLayers} />
+        {onFold && (
+          <button className="outliner__fold" onClick={onFold} title="Fold Layers away" aria-label="Fold Layers away">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        )}
       </div>
       <input className="field__input outliner__search" type="search" placeholder="Filter layers" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Filter layers" />
       <ul className="layers outliner__tree" role="tree" aria-multiselectable>

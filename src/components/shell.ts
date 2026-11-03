@@ -13,8 +13,8 @@ function initialPanels() {
 }
 
 /** The left sidebar's tabs (null: folded to its rail). */
-export type DockTab = 'add' | 'pictures' | 'library' | 'edit' | 'layers';
-const TABS: DockTab[] = ['add', 'pictures', 'library', 'edit', 'layers'];
+export type DockTab = 'add' | 'pictures' | 'library' | 'edit';
+const TABS: DockTab[] = ['add', 'pictures', 'library', 'edit'];
 const DOCK_KEY = 'stage-builder:dock';
 function initialDock(): DockTab | null {
   // On a small screen the sidebar would cover the stage: start folded.
@@ -27,6 +27,17 @@ function initialDock(): DockTab | null {
   }
 }
 
+const LAYERS_KEY = 'stage-builder:layers';
+/** Layers on the right starts open on a wide screen, folded on a small one; after that it remembers. */
+function initialLayers() {
+  if (window.innerWidth < NARROW) return false;
+  try {
+    return localStorage.getItem(LAYERS_KEY) !== 'folded';
+  } catch {
+    return true;
+  }
+}
+
 interface Shell {
   /** Focus mode off: panels shown. */
   panels: boolean;
@@ -34,6 +45,12 @@ interface Shell {
   /** The left sidebar: which tab is open, or null when it's folded to its rail. */
   dock: DockTab | null;
   setDock: (tab: DockTab | null) => void;
+  /** The Layers panel on the right is open (false: folded to its button). */
+  layers: boolean;
+  setLayers: (open: boolean) => void;
+  /** The Import a 3D model dialog is open, with the files it starts on (an empty list: none yet). */
+  importing: File[] | null;
+  setImporting: (files: File[] | null) => void;
   /** The start screen ("What are you making?") is showing. */
   home: boolean;
   setHome: (home: boolean) => void;
@@ -67,6 +84,17 @@ export const useShell = create<Shell>((set) => ({
     }
     set({ dock });
   },
+  layers: initialLayers(),
+  setLayers: (layers) => {
+    try {
+      localStorage.setItem(LAYERS_KEY, layers ? 'open' : 'folded');
+    } catch {
+      /* not remembered */
+    }
+    set({ layers });
+  },
+  importing: null,
+  setImporting: (importing) => set({ importing }),
   // The home page always comes first.
   home: true,
   setHome: (home) => set({ home }),
