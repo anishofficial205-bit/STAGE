@@ -181,7 +181,7 @@ async function objZip(model: THREE.Group, base: string): Promise<Blob> {
     used.set(n, k);
     x.name = k > 1 ? `${n}_${k}` : n;
   });
-  const obj = `# ${model.name} — exported from Stage Builder. Units: metres. Y is up.\nmtllib ${base}.mtl\n${new OBJExporter().parse(model)}`;
+  const obj = `# ${model.name} — exported from Manch. Units: metres. Y is up.\nmtllib ${base}.mtl\n${new OBJExporter().parse(model)}`;
   const zip = new JSZip();
   zip.file(`${base}.obj`, obj);
   zip.file(`${base}.mtl`, `# Materials for ${base}.obj\n\n${mtl(model)}`);
@@ -228,7 +228,7 @@ function collada(model: THREE.Group): Blob {
   const materials = [...mats.values()].map((m) => `<material id="${esc(m.name)}" name="${esc(m.name)}"><instance_effect url="#${esc(m.name)}-fx"/></material>`);
   const xml =
     `<?xml version="1.0" encoding="utf-8"?>\n<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">` +
-    `<asset><contributor><authoring_tool>Stage Builder</authoring_tool></contributor><created>${new Date().toISOString()}</created><modified>${new Date().toISOString()}</modified><unit name="meter" meter="1"/><up_axis>Y_UP</up_axis></asset>` +
+    `<asset><contributor><authoring_tool>Manch</authoring_tool></contributor><created>${new Date().toISOString()}</created><modified>${new Date().toISOString()}</modified><unit name="meter" meter="1"/><up_axis>Y_UP</up_axis></asset>` +
     `<library_effects>${effects.join('')}</library_effects><library_materials>${materials.join('')}</library_materials><library_geometries>${geoms.join('')}</library_geometries>` +
     `<library_visual_scenes><visual_scene id="scene" name="${esc(model.name)}">${nodes.join('')}</visual_scene></library_visual_scenes><scene><instance_visual_scene url="#scene"/></scene></COLLADA>`;
   return new Blob([xml], { type: 'model/vnd.collada+xml' });

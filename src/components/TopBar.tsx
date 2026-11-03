@@ -101,7 +101,7 @@ export function TopBar() {
           title="Home: your projects and new ones"
           aria-label="Back to home"
         >
-          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M15 18l-6-6 6-6" /></svg>
+          <img src="/logo.svg" width="26" height="26" alt="" />
         </button>
         <input
           className="project-chip__name"

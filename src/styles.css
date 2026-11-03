@@ -1410,8 +1410,7 @@ html, body, #root { overflow: hidden; }
 .hm { position: fixed; inset: 0; z-index: 70; display: flex; background: var(--bg); color: var(--text); }
 .hm-side { width: 260px; flex: none; box-sizing: border-box; padding: 28px 20px 24px; border-right: 1px solid color-mix(in srgb, var(--text) 7%, transparent); background: var(--panel); display: flex; flex-direction: column; gap: 24px; }
 .hm-brand { display: flex; align-items: center; gap: 12px; padding: 0 4px; font-size: 17px; font-weight: 600; }
-.hm-logo { width: 34px; height: 34px; border-radius: 10px; background: linear-gradient(135deg, #ffb26b, #e8602a); display: flex; align-items: flex-end; justify-content: center; overflow: hidden; flex: none; }
-.hm-logo span { width: 16px; height: 13px; border-radius: 8px 8px 0 0; background: var(--on-pri); margin-bottom: 6px; }
+.hm-logo { width: 36px; height: 36px; flex: none; display: block; }
 .hm-new { height: 48px; border-radius: 14px; border: 0; background: var(--accent); color: var(--on-pri); font-weight: 600; font-size: 15.5px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
 .hm-new:hover { filter: brightness(1.08); }
 .hm-nav { display: flex; flex-direction: column; gap: 4px; }
@@ -1684,8 +1683,6 @@ input[type='range'], input[type='checkbox'], input[type='radio'], .field__slider
 
 /* Home */
 .hm-side { background: var(--panel); border-right: 1px solid var(--border); }
-.hm-logo { background: var(--on-bg); }
-.hm-logo span { background: #161616; }
 .hm-nav button { color: var(--muted); font-weight: 500; }
 .hm-search, .home__search, .library__search { background: var(--soft); border-color: transparent; }
 .hm-search:focus-within { border-color: var(--sel-line); }

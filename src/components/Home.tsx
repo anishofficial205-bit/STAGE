@@ -319,10 +319,8 @@ export function Home() {
     <div className="hm" role="dialog" aria-modal="true" aria-label="Home">
       <aside className="hm-side">
         <div className="hm-brand">
-          <span className="hm-logo" aria-hidden>
-            <span />
-          </span>
-          Stage Builder
+          <img className="hm-logo" src="/logo.svg" alt="" />
+          Manch
         </div>
         <button className="hm-new" onClick={() => newProject()} data-tip-anchor="new-project">
           <Icon d="M12 5v14M5 12h14" />

@@ -318,7 +318,7 @@ export async function exportZip(): Promise<Blob> {
 export async function importZip(file: Blob) {
   const zip = await JSZip.loadAsync(file);
   const json = zip.file('project.json');
-  if (!json) throw new Error('This zip has no project.json — it is not a Stage Builder export.');
+  if (!json) throw new Error('This zip has no project.json — it is not a Manch export.');
   const project = JSON.parse(await json.async('string'));
   const metas: Record<string, GraphicMeta> = project.graphics ?? {};
   for (const path of Object.keys(zip.files)) {

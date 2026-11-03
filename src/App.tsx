@@ -18,7 +18,8 @@ import { NewProjectDialog } from './components/NewProjectDialog';
 import { CrossModeToast } from './components/CrossModeToast';
 import { Tips } from './components/Tips';
 import { useEffect } from 'react';
-import { startRecentSync } from './projects/library';
+import { recordWithPicture, startRecentSync } from './projects/library';
+import { STARTER_SCENES, loadStarterScene } from './starters/scenes';
 import { LightPlot } from './components/lights/LightPlot';
 import { LightTable } from './components/lights/LightTable';
 import { ImportLights } from './components/lights/ImportLights';
@@ -50,6 +51,16 @@ export default function App() {
   const panels = useShell((s) => s.panels);
   const dock = useShell((s) => s.dock);
   useEffect(() => startRecentSync(), []);
+  // A landing page link like ?show=cabaret opens that show straight away.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('show');
+    if (!id || id === 'scratch' || !STARTER_SCENES.some((s) => s.id === id)) return;
+    window.history.replaceState(null, '', window.location.pathname);
+    void loadStarterScene(id).then(() => {
+      useShell.getState().setHome(false);
+      window.setTimeout(() => void recordWithPicture(), 2500);
+    });
+  }, []);
   const show = venue ? layout : '3d';
   return (
     <div className={`app app--${mode} ${panels ? '' : 'is-clean'} ${dock ? 'has-dock' : ''}`}>

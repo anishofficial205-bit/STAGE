@@ -1,4 +1,4 @@
-# Stage Builder
+# Manch
 
 Visualise stage templates in 3D. Vite + React + TypeScript + React Three Fiber. No backend.
 

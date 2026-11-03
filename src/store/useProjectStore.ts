@@ -278,7 +278,7 @@ function sanitizeObjects(raw: unknown): SetObject[] {
 function parseProject(data: unknown): Omit<ProjectFile, 'app' | 'version'> {
   if (!data || typeof data !== 'object') throw new Error('Not a valid project file.');
   const d = data as Partial<ProjectFile>;
-  if (d.app !== 'stage-builder') throw new Error('This file is not a Stage Builder project.');
+  if (d.app !== 'stage-builder') throw new Error('This file is not a Manch project.');
   const base = freshProject();
   const saved = d.paramsByTemplate && typeof d.paramsByTemplate === 'object' ? d.paramsByTemplate : {};
   const savedData = d.dataByTemplate && typeof d.dataByTemplate === 'object' ? d.dataByTemplate : {};
