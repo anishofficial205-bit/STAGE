@@ -112,6 +112,7 @@ export function Viewport() {
   const objects = useActiveObjects();
   const surfaceStyles = useProjectStore((s) => s.surfaceStylesByTemplate[s.templateId]);
   const presentation = useExportState((s) => s.presentation);
+  const sharp = useProjectStore((s) => s.lightQuality === 'presentation') || presentation;
   const seatsShown = useSeatsShown();
   const template = getTemplate(templateId)!;
 
@@ -215,7 +216,8 @@ export function Viewport() {
         if (!useBlockingUI.getState().tool) useBlockingUI.getState().select(null);
       }}
       shadows
-      dpr={[1, 2]}
+      // Draft stays at 1.5× pixel density at most, which roughly halves the work on a Retina screen; Presentation and exports go sharp.
+      dpr={[1, sharp ? 2 : 1.5]}
       camera={{ fov: CAMERA_FOV, near: 0.1, far: 3000, position: [15, 12, 25] }}
       gl={{ antialias: true }}
     >

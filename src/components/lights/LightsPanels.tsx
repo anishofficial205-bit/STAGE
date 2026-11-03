@@ -8,7 +8,7 @@ import { GOBOS, drawGobo, uploadGobo } from '../../lighting/gobos';
 import { currentStage } from '../../objects/actions';
 import { floorHeightAt } from '../../helpers/stageInfo';
 import type { ParamDef } from '../../types';
-import { MAX_REAL, MAX_SHADOWS, lightBudget } from './budget';
+import { MAX_SHADOWS, lightBudget, stageLightCount } from './budget';
 import { LooksSection, GroupsSection } from './LooksPanel';
 import { Plain } from '../../glossary/Plain';
 import { MOODS, SIMPLE_LIGHTS, applyMood, lightPerformer, useLightPlacing } from '../../lighting/moods';
@@ -521,7 +521,8 @@ function Overview() {
   const lastMood = useLastMood((s) => s.name);
   const house = lighting.fixtures.filter((f) => f.type === 'house');
   const houseLevel = house.length ? Math.round(house.reduce((t, f) => t + (f.on ? f.intensity : 0), 0) / house.length) : 0;
-  const { real, approx, shadows } = lightBudget(lighting.fixtures, quality);
+  const stageLights = useProjectStore((s) => stageLightCount(s.templateId, s.paramsByTemplate[s.templateId] ?? {}));
+  const { real, approx, shadows, max } = lightBudget(lighting.fixtures, quality, stageLights);
   const lit = real.size + approx.size;
   const mood = MOODS.find((m) => m.name === lastMood);
   const count = lighting.fixtures.length;
@@ -632,7 +633,7 @@ function Overview() {
       </Group>
       {approx.size > 0 && (
         <p className="sl-note">
-          {lit} lights are on. To keep things fast, the {MAX_REAL} brightest are real lights and the other {approx.size} are drawn as soft pools.
+          {lit} lights are on. To keep things fast, the {max} brightest are real lights and the other {approx.size} are drawn as soft pools{quality === 'draft' ? '. “With shadows” shows more.' : '.'}
         </p>
       )}
     </Drill>

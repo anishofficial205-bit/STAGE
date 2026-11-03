@@ -157,6 +157,9 @@ function Spot({ position, target, color, intensity = 3, angle = 0.45 }: { positi
   );
 }
 
+/** How many real lights the stage itself turns on (its show lights at sunset and night); they share the lighting budget. */
+export const openAirLightCount = (p: Params) => (['night', 'sunset'].includes(str(p, 'timeOfDay')) ? 5 : 0);
+
 function ShowLights({ L, strength }: { L: Layout; strength: number }) {
   const y = L.hasTruss ? L.trussH - 0.4 : 7;
   const z = L.hasTruss ? L.headerZ + 0.4 : 2;

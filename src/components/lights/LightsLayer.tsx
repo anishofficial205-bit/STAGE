@@ -19,7 +19,7 @@ import { useLightsUI } from '../../lighting/ui';
 import { goboTexture, useGoboTextures } from '../../lighting/gobos';
 import { FixtureModel, PracticalModel } from './models';
 import { beamCone, hazeMaterial, poolTexture } from './haze';
-import { lightBudget } from './budget';
+import { lightBudget, stageLightCount } from './budget';
 import { Plain } from '../../glossary/Plain';
 import { performerNear, useFollowTargets } from '../../lighting/follow';
 
@@ -417,7 +417,8 @@ export function LightsLayer() {
   const selected = useLightsUI((s) => (active ? s.selected : null));
   const focusMode = useLightsUI((s) => s.focusMode);
   const presentation = quality === 'presentation' || exporting;
-  const { real, approx, shadows } = useMemo(() => lightBudget(lighting.fixtures, presentation ? 'presentation' : 'draft'), [lighting.fixtures, presentation]);
+  const stageLights = useProjectStore((s) => stageLightCount(s.templateId, s.paramsByTemplate[s.templateId] ?? {}));
+  const { real, approx, shadows } = useMemo(() => lightBudget(lighting.fixtures, presentation ? 'presentation' : 'draft', stageLights), [lighting.fixtures, presentation, stageLights]);
   const isSel = (kind: 'fixture' | 'position', id: string) => selected?.kind === kind && selected.ids.includes(id);
   // Lines are gathered when a drag starts (they depend on the stage and the set).
   const raw = useActiveLighting();
