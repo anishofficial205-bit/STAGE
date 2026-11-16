@@ -13,6 +13,7 @@ import { lightActions } from '../lighting/actions';
 import { PRESET_LOOKS, fadeTo, lookActions } from '../lighting/looks';
 import type { FixtureType, Fixture, Vec3 } from '../lighting/types';
 import { blockingActions } from '../blocking/actions';
+import type { Pt, Speed } from '../blocking/types';
 import { useBlockingUI } from '../blocking/ui';
 import { useLightsUI } from '../lighting/ui';
 import { aimPoints } from '../lighting/follow';
@@ -309,7 +310,8 @@ const drawingRoom: ShowcaseScene = {
   image: '/starters/drawing-room.jpg',
   templateId: 'proscenium',
   preset: 'City theatre',
-  params: { rows: 18, balcony: false, pit: false },
+  // The arch stops just under the top of the set walls, and black borders mask the rest.
+  params: { rows: 18, balcony: false, pit: false, archHeight: 6.4 },
   art: ['damask', 'rug', 'landscape', 'sky', 'clock'],
   build: (g) => {
     lightActions.ensureReady();
@@ -349,6 +351,7 @@ const drawingRoom: ShowcaseScene = {
     put('bookshelf', -6.4, -7.4, { width: 1.4, height: 2.6 }, 'Bookshelf', 72);
     put('plant', -5.6, -0.9, { height: 1.6 }, 'Palm');
     put('chandelier', 0, -3.6, { diameter: 1.6, tiers: 2 }, 'Chandelier', 0, 5.2);
+    for (const [z, hang] of [[-2.2, 6.3], [-5.6, 6.6]]) paint(put('hanging-panel', 0, z, { width: 15, height: 3.2, thickness: 0.05, hangHeight: hang }, 'Border'), '#0b0908', 0.95);
 
     // The cast: Sir Hugo lies dead on the rug
     cast(
@@ -358,10 +361,28 @@ const drawingRoom: ShowcaseScene = {
     const people = state().blockingByTemplate[state().templateId]?.performers ?? [];
     const hugo = people.find((p) => p.name === 'Sir Hugo');
     if (hugo) blockingActions.patchPerformers([hugo.id], { posture: 'lying' });
+    // The scene already moves: press play. The maid finds the body, the inspector closes in,
+    // Lady Ashford crosses the gallery to the stair, the nephew comes in from the garden.
+    const who = (name: string) => people.find((p) => p.name === name)?.id;
+    const moves: [string, Pt[], number, Speed][] = [
+      ['Maid', [[1.3, -6.2], [1.2, -4.6], [0.2, -3.3]], 0.5, 'fast'],
+      ['Inspector', [[3.0, -1.6], [2.1, -2.0]], 1.5, 'normal'],
+      ['Lady Ashford', [[-1.4, -7.7], [2.4, -7.7]], 3, 'slow'],
+      ['Nephew', [[5.2, -4.6], [3.8, -3.3], [2.6, -1.1]], 5, 'normal'],
+      ['Inspector', [[2.1, -2.0], [0.4, -1.1], [-2.2, -1.3], [-4.3, -3.1]], 8, 'slow'],
+    ];
+    for (const [name, points, start, speed] of moves) {
+      const id = who(name);
+      if (!id) continue;
+      const path = blockingActions.addPath(id, points, undefined, start);
+      blockingActions.patchPath(path.id, { speed });
+    }
+    useBlockingUI.getState().select(null);
+    useBlockingUI.getState().setTime(0);
 
     // Lights: room, gallery, practicals, moonlight, storm sky, lightning, the torch,
     // and a soft light following each performer so everyone reads in every look.
-    const wash = ROW(6, (i) => light('fresnel', [(-6 + i * 2.4) * 0.7, 9.5, 4], { color: '#ffc98a', intensity: 60, beam: 22, target: [-5 + i * 2, 1.2, -4] }));
+    const wash = ROW(6, (i) => light('fresnel', [(-6 + i * 2.4) * 0.7, 9.5, 4], { color: '#ffc98a', intensity: 85, beam: 26, target: [-5 + i * 2, 1.2, -4] }));
     const gallery = ROW(3, (i) => light('fresnel', [-3 + i * 3, 8.5, -3], { color: '#ffd7a0', intensity: 60, beam: 18, target: [-3 + i * 3, 3.4, -7.7] }));
     const practicals = [[-5.72, 0.35, -4.4], [-4.4, 1.0, -6.6], [-1.6, 0.9, -3.6]].map(([x, y, z]) => light('practical', [x, y, z], { color: '#ff8a3a', intensity: 80 }, true));
     const moon = light('profile', [11, 6, -5.2], { color: '#8fb4ff', intensity: 70, beam: 30, gobo: 'window', target: [0.8, 0, -3] });
@@ -371,13 +392,13 @@ const drawingRoom: ShowcaseScene = {
     const keys = people.map((p) => {
       const at = aims.get(p.id) ?? [0, 1.5, -4];
       // Up on the gallery: a fixed light at their height (following aims at stage-floor height)
-      if (at[2] < -6.9) return light('fresnel', [at[0], 7.5, 2.5], { color: '#fff0dc', intensity: 95, beam: 16, target: [at[0], 3.9, at[2]], name: `Wash on ${p.name}`, purpose: p.name });
+      if (at[2] < -6.9) return light('fresnel', [0.5, 7.5, 2.5], { color: '#fff0dc', intensity: 95, beam: 34, target: [0.5, 3.9, at[2]], name: `Wash on ${p.name}`, purpose: p.name });
       return light('fresnel', [at[0] * 0.6, 9, Math.min(4, at[2] + 6)], { color: '#fff0dc', intensity: 85, beam: 14, target: at, follow: p.id, name: `Wash on ${p.name}`, purpose: p.name });
     });
     const torch = light('profile', [0, 9, 10], { color: '#ffffff', intensity: 0, beam: 7, target: hugo ? (aims.get(hugo.id) ?? [0.8, 0, -2.4]) : [0.8, 0, -2.4], follow: hugo?.id, name: 'The torch' });
     lightActions.setHaze({ on: true, density: 22 });
 
-    const evening = stateLook('Evening, lamps lit', [[wash, { intensity: 60, color: '#ffc98a' }], [gallery, { intensity: 45 }], [practicals, { intensity: 80 }], [[moon], { intensity: 45 }], [sky, { intensity: 55, color: '#4a6ad8' }], [lightning, { intensity: 0 }], [keys, { intensity: 85, color: '#fff0dc' }], [[torch], { intensity: 0 }]]);
+    const evening = stateLook('Evening, lamps lit', [[wash, { intensity: 85, color: '#ffc98a' }], [gallery, { intensity: 60 }], [practicals, { intensity: 80 }], [[moon], { intensity: 45 }], [sky, { intensity: 55, color: '#4a6ad8' }], [lightning, { intensity: 0 }], [keys, { intensity: 95, color: '#fff0dc' }], [[torch], { intensity: 0 }]]);
     stateLook('The storm breaks', [[wash, { intensity: 15, color: '#a9b8e0' }], [gallery, { intensity: 15 }], [practicals, { intensity: 35 }], [[moon], { intensity: 100 }], [sky, { intensity: 100, color: '#3a5ad8' }], [lightning, { intensity: 100 }], [keys, { intensity: 80, color: '#dbe4ff' }], [[torch], { intensity: 0 }]]);
     stateLook('Blackout, one torch', [[wash, { intensity: 0 }], [gallery, { intensity: 0 }], [practicals, { intensity: 0 }], [[practicals[0]], { intensity: 45 }], [[moon], { intensity: 25 }], [sky, { intensity: 20 }], [lightning, { intensity: 0 }], [keys, { intensity: 60, color: '#b8c8ff' }], [[torch], { intensity: 100 }]]);
     stateLook('The accusation', [[wash, { intensity: 30, color: '#ffc98a' }], [gallery, { intensity: 100, color: '#ffe2b8' }], [practicals, { intensity: 60 }], [[moon], { intensity: 60 }], [sky, { intensity: 50 }], [lightning, { intensity: 0 }], [keys, { intensity: 90, color: '#ffe8cc' }], [[torch], { intensity: 55 }]]);
@@ -388,6 +409,9 @@ const drawingRoom: ShowcaseScene = {
     }
     fadeTo(evening, 0);
     useLightsUI.getState().select(null);
+    // Open with everything at full strength, so set, lights and cast read together in every mode.
+    state().setOtherLayers('show');
+    state().saveView({ id: 'dress-circle', label: 'Dress circle', position: [3.2, 4.4, 11.5], target: [0, 2.0, -5] });
   },
 };
 

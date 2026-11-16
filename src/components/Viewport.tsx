@@ -211,7 +211,7 @@ export function Viewport() {
     >
       <FaceContextMenu />
       <ViewTools />
-      {mode === 'blocking' && <PlayBar />}
+      {(mode === 'blocking' || mode === 'lights') && <PlayBar hints={mode === 'blocking'} />}
       <EmptyHint />
       <SeatPanel />
     <Canvas

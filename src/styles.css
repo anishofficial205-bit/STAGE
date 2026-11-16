@@ -1272,8 +1272,8 @@ input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color:
 .stagebar .next-step__text { flex-direction: row; align-items: baseline; gap: 8px; font-size: 13px; }
 .stagebar .next-step__text b { font-size: 14.5px; }
 .app.is-clean .stagebar .next-step { display: none; }
-.app--blocking .playbar, .seat-panel { left: var(--stage-mid) !important; }
-.app--blocking .playbar { bottom: 80px; width: min(640px, calc(100% - var(--left-inset) - var(--right-inset) - 24px)) !important; }
+.app--blocking .playbar, .app--lights .playbar, .seat-panel { left: var(--stage-mid) !important; }
+.app--blocking .playbar, .app--lights .playbar { bottom: 80px; width: min(640px, calc(100% - var(--left-inset) - var(--right-inset) - 24px)) !important; }
 .path-hint { left: var(--stage-mid); bottom: 154px; }
 .empty-hint { left: var(--left-inset); bottom: 82px; }
 .view-tools { top: 92px; left: var(--stage-mid); transform: translateX(-50%); max-width: calc(100% - var(--left-inset) - var(--right-inset)); }
@@ -1381,7 +1381,7 @@ html, body, #root { overflow: hidden; }
 .viewbar .menu__list { top: calc(100% + 10px); bottom: auto; left: 50%; right: auto; transform: translateX(-50%); }
 .viewbar__btn { height: 44px; padding: 0 16px; }
 .app.is-clean .viewbar { display: flex; }
-.app--blocking .playbar { bottom: 92px; }
+.app--blocking .playbar, .app--lights .playbar { bottom: 92px; }
 .path-hint { bottom: 168px; }
 .empty-hint { bottom: 92px; }
 @media (max-width: 860px) {

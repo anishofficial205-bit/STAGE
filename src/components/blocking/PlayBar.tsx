@@ -5,8 +5,8 @@ import { useActiveBlocking } from '../../store/useProjectStore';
 
 const fmt = (t: number) => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`;
 
-/** Play, pause, scrub, speed and follow for the current scene (Blocking mode). */
-export function PlayBar() {
+/** Play, pause, scrub, speed and follow for the current scene. Performers mode shows the drawing hints too; Lights mode only the player. */
+export function PlayBar({ hints = true }: { hints?: boolean }) {
   const { duration, name } = useSceneDuration();
   const time = useBlockingUI((s) => s.time);
   const playing = useBlockingUI((s) => s.playing);
@@ -19,14 +19,15 @@ export function PlayBar() {
   const scene = b.scenes.find((x) => x.id === b.sceneId);
   if (!b.performers.length) return null;
   const noPaths = !scene?.paths.length;
+  if (!hints && noPaths) return null;
   return (
     <>
-      {tool === 'path' && (
+      {hints && tool === 'path' && (
         <div className="draw-hint" role="status">
           Click to add points · Double-click to finish · Esc to cancel
         </div>
       )}
-      {noPaths && tool !== 'path' && (
+      {hints && noPaths && tool !== 'path' && (
         <div className="path-hint" role="note">
           <svg viewBox="0 0 120 40" width="120" height="40" aria-hidden>
             <circle cx="14" cy="28" r="6" className="path-hint__who" />

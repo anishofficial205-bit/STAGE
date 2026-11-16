@@ -104,18 +104,19 @@ function Entrances() {
   );
 }
 
-/** Performers mode's keys, mounted all the time: Space plays/pauses, Delete removes the selection, Esc lets go. */
+/** Performers mode's keys, mounted all the time: Space plays/pauses (in Lights mode too), Delete removes the selection, Esc lets go. */
 export function useBlockingKeys() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (useProjectStore.getState().mode !== 'blocking') return;
+      const mode = useProjectStore.getState().mode;
+      if (mode !== 'blocking' && mode !== 'lights') return;
       const el = e.target as HTMLElement;
       if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable || el.tagName === 'BUTTON')) return;
       const ui = useBlockingUI.getState();
       if (e.key === ' ') {
         e.preventDefault();
         ui.setPlaying(!ui.playing);
-      } else if ((e.key === 'Delete' || e.key === 'Backspace') && ui.selected && !ui.tool) {
+      } else if (mode !== 'blocking') return; else if ((e.key === 'Delete' || e.key === 'Backspace') && ui.selected && !ui.tool) {
         e.preventDefault();
         const sel = ui.selected;
         removePick(sel.kind === 'performer' ? { domain: 'performers', kind: 'performer', ids: sel.ids } : { domain: 'performers', kind: sel.kind, ids: [sel.id] });

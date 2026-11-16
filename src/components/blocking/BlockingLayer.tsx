@@ -506,6 +506,8 @@ function Clock({ duration, poses }: { duration: number; poses: Map<string, Pose>
 export function BlockingLayer() {
   const { b, scene, entrances, map, tracks, duration } = useSceneModel();
   const active = useProjectStore((s) => s.mode === 'blocking');
+  // The scene also plays in Lights mode, so lights can be checked against the movement.
+  const lightsMode = useProjectStore((s) => s.mode === 'lights');
   const time = useBlockingUI((s) => s.time);
   const selected = useBlockingUI((s) => (active ? s.selected : null));
   const tool = useBlockingUI((s) => s.tool);
@@ -535,7 +537,8 @@ export function BlockingLayer() {
       {markLabels.map(({ m, label, color }) => (
         <MarkView key={m.id} x={m.x} z={m.z} y={floorAt(m.x, m.z)} color={color} label={label} selected={selected?.kind === 'mark' && selected.id === m.id} onSelect={active ? () => useBlockingUI.getState().select({ kind: 'mark', id: m.id }) : undefined} />
       ))}
-      {b.performers
+      {/* Lights mode plays the scene without the drawn paths, so the picture stays clean. */}
+      {!lightsMode && b.performers
         .filter((p) => !p.hidden)
         .flatMap((p) =>
           (tracks.get(p.id)?.tracks ?? []).map((tr, i) => (
@@ -560,7 +563,7 @@ export function BlockingLayer() {
         </mesh>
       ))}
       {active && tool && <ToolCatcher entrances={entrances} from={one ? [one.x, one.z] : null} y={one ? floorAt(one.x, one.z) : 0} />}
-      {active && <Clock duration={duration} poses={poses} />}
+      {(active || lightsMode) && <Clock duration={duration} poses={poses} />}
       <SceneKey id={scene.id} />
     </group>
   );
