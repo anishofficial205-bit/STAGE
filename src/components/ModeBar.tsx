@@ -22,6 +22,25 @@ export function ModeIcon({ mode, size = 18 }: { mode: Mode; size?: number }) {
   );
 }
 
+/** Full view: every mode's things (set, lights, performers, masking) at full strength, so you see the finished picture while you work. Off: other modes are dimmed again. */
+function FullView() {
+  const on = useProjectStore((s) => s.otherLayers === 'show');
+  return (
+    <button
+      className={`modes__btn modes__full ${on ? 'is-active' : ''}`}
+      aria-pressed={on}
+      onClick={() => useProjectStore.getState().setOtherLayers(on ? 'dim' : 'show')}
+      title={on ? 'Full view is on: everything shows at full. Click to dim other modes (V)' : 'See everything at full: set, lights and performers together (V)'}
+    >
+      <svg viewBox="0 0 24 24" width={18} height={18} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+      Full view
+    </button>
+  );
+}
+
 /** The mode switcher at the top centre: Set, Lights, Performers (keys 1–3), then Backstage (4), and the light/dark switch. Also holds the mode keys and F for Focus mode. */
 export function ModeBar() {
   const mode = useProjectStore((s) => s.mode);
@@ -46,6 +65,13 @@ export function ModeBar() {
       if (e.key.toLowerCase() === 'f') {
         e.preventDefault();
         useShell.getState().togglePanels();
+        return;
+      }
+      // V: Full view on/off.
+      if (e.key.toLowerCase() === 'v') {
+        e.preventDefault();
+        const s = useProjectStore.getState();
+        s.setOtherLayers(s.otherLayers === 'show' ? 'dim' : 'show');
         return;
       }
       const i = Number(e.key) - 1;
@@ -76,6 +102,7 @@ export function ModeBar() {
         </span>
       ))}
       <span className="modes__sep" aria-hidden />
+      <FullView />
       <ThemeToggle className="modes__theme" />
     </nav>
   );

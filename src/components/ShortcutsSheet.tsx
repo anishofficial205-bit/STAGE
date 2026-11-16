@@ -15,6 +15,7 @@ const GROUPS: { title: string; rows: [string, string][] }[] = [
       ['4', 'Backstage & venue'],
       ['⌘Z / ⇧⌘Z', 'Undo / redo works in every mode'],
       ['F', 'Focus mode: hide the panels to see the full stage'],
+      ['V', 'Full view: set, lights and performers all at full strength'],
       ['Click a tool on the left again', 'Tuck its panel away'],
       ['?', 'Show this sheet'],
       ['Esc', 'Deselect, or leave a seat'],
