@@ -380,28 +380,32 @@ const drawingRoom: ShowcaseScene = {
     useBlockingUI.getState().select(null);
     useBlockingUI.getState().setTime(0);
 
-    // Lights: room, gallery, practicals, moonlight, storm sky, lightning, the torch,
-    // and a soft light following each performer so everyone reads in every look.
-    const wash = ROW(6, (i) => light('fresnel', [(-6 + i * 2.4) * 0.7, 9.5, 4], { color: '#ffc98a', intensity: 85, beam: 26, target: [-5 + i * 2, 1.2, -4] }));
-    const gallery = ROW(3, (i) => light('fresnel', [-3 + i * 3, 8.5, -3], { color: '#ffd7a0', intensity: 60, beam: 18, target: [-3 + i * 3, 3.4, -7.7] }));
-    const practicals = [[-5.72, 0.35, -4.4], [-4.4, 1.0, -6.6], [-1.6, 0.9, -3.6]].map(([x, y, z]) => light('practical', [x, y, z], { color: '#ff8a3a', intensity: 80 }, true));
-    const moon = light('profile', [11, 6, -5.2], { color: '#8fb4ff', intensity: 70, beam: 30, gobo: 'window', target: [0.8, 0, -3] });
-    const sky = ROW(2, (i) => light('cyc', [7.8, 6, -3 - i * 3], { color: '#4a6ad8', intensity: 70, target: [9.4, 3, -6.4] }));
+    // Lights. The fast 3D view draws 8 lights for real (the brightest ones), so each look is
+    // carried by a few broad warm washes that reach the walls as well as the cast:
+    // front washes from the house, two over the gallery and back wall, one on the fireplace wall, and the fire.
+    const warm = '#ffbf78';
+    const front = [-5.4, -1.8, 1.8, 5.4].map((x) => light('fresnel', [x, 9.5, 5], { color: warm, intensity: 100, beam: 46, target: [x * 0.9, 2.0, -5.5] }));
+    const upstage = [-2.6, 2.6].map((x) => light('fresnel', [x, 9, -3.5], { color: '#ffb46a', intensity: 95, beam: 48, target: [x, 4.2, -8.6] }));
+    const side = light('fresnel', [-1, 9, -1], { color: '#ffb070', intensity: 92, beam: 44, target: [-6.4, 2.8, -5.2], name: 'Fireplace wall' });
+    const fire = light('practical', [-5.72, 0.35, -4.4], { color: '#ff7a2a', intensity: 90, name: 'Fire' }, true);
+    const lamps = [[-4.4, 1.0, -6.6], [-1.6, 0.9, -3.6]].map(([x, y, z]) => light('practical', [x, y, z], { color: '#ff9a48', intensity: 70 }, true));
+    const moon = light('profile', [11, 6, -5.2], { color: '#8fb4ff', intensity: 60, beam: 30, gobo: 'window', target: [0.8, 0, -3] });
+    const sky = ROW(2, (i) => light('cyc', [7.8, 6, -3 - i * 3], { color: '#4a6ad8', intensity: 60, target: [9.4, 3, -6.4] }));
     const lightning = ROW(2, (i) => light('moving', [5 + i * 2, 9, -2], { color: '#eef3ff', intensity: 0, beam: 10, target: [2 - i * 3, 0, -3] }));
+    // A soft light following each performer (their pool moves with them as the scene plays).
     const aims = aimPoints(0);
-    const keys = people.map((p) => {
+    const keys = people.filter((p) => p.id !== hugo?.id).map((p) => {
       const at = aims.get(p.id) ?? [0, 1.5, -4];
-      // Up on the gallery: a fixed light at their height (following aims at stage-floor height)
-      if (at[2] < -6.9) return light('fresnel', [0.5, 7.5, 2.5], { color: '#fff0dc', intensity: 95, beam: 34, target: [0.5, 3.9, at[2]], name: `Wash on ${p.name}`, purpose: p.name });
-      return light('fresnel', [at[0] * 0.6, 9, Math.min(4, at[2] + 6)], { color: '#fff0dc', intensity: 85, beam: 14, target: at, follow: p.id, name: `Wash on ${p.name}`, purpose: p.name });
+      if (at[2] < -6.9) return light('fresnel', [0.5, 7.5, 2.5], { color: '#ffd9a8', intensity: 60, beam: 34, target: [0.5, 3.9, at[2]], name: `Wash on ${p.name}`, purpose: p.name });
+      return light('fresnel', [at[0] * 0.6, 9, Math.min(4, at[2] + 6)], { color: '#ffd9a8', intensity: 60, beam: 14, target: at, follow: p.id, name: `Wash on ${p.name}`, purpose: p.name });
     });
-    const torch = light('profile', [0, 9, 10], { color: '#ffffff', intensity: 0, beam: 7, target: hugo ? (aims.get(hugo.id) ?? [0.8, 0, -2.4]) : [0.8, 0, -2.4], follow: hugo?.id, name: 'The torch' });
-    lightActions.setHaze({ on: true, density: 22 });
+    const torch = light('profile', [0, 9, 10], { color: '#fff4e0', intensity: 0, beam: 7, target: hugo ? (aims.get(hugo.id) ?? [0.8, 0, -2.4]) : [0.8, 0, -2.4], follow: hugo?.id, name: 'The torch' });
+    lightActions.setHaze({ on: true, density: 18 });
 
-    const evening = stateLook('Evening, lamps lit', [[wash, { intensity: 85, color: '#ffc98a' }], [gallery, { intensity: 60 }], [practicals, { intensity: 80 }], [[moon], { intensity: 45 }], [sky, { intensity: 55, color: '#4a6ad8' }], [lightning, { intensity: 0 }], [keys, { intensity: 95, color: '#fff0dc' }], [[torch], { intensity: 0 }]]);
-    stateLook('The storm breaks', [[wash, { intensity: 15, color: '#a9b8e0' }], [gallery, { intensity: 15 }], [practicals, { intensity: 35 }], [[moon], { intensity: 100 }], [sky, { intensity: 100, color: '#3a5ad8' }], [lightning, { intensity: 100 }], [keys, { intensity: 80, color: '#dbe4ff' }], [[torch], { intensity: 0 }]]);
-    stateLook('Blackout, one torch', [[wash, { intensity: 0 }], [gallery, { intensity: 0 }], [practicals, { intensity: 0 }], [[practicals[0]], { intensity: 45 }], [[moon], { intensity: 25 }], [sky, { intensity: 20 }], [lightning, { intensity: 0 }], [keys, { intensity: 60, color: '#b8c8ff' }], [[torch], { intensity: 100 }]]);
-    stateLook('The accusation', [[wash, { intensity: 30, color: '#ffc98a' }], [gallery, { intensity: 100, color: '#ffe2b8' }], [practicals, { intensity: 60 }], [[moon], { intensity: 60 }], [sky, { intensity: 50 }], [lightning, { intensity: 0 }], [keys, { intensity: 90, color: '#ffe8cc' }], [[torch], { intensity: 55 }]]);
+    const evening = stateLook('Evening, lamps lit', [[front, { intensity: 100, color: warm }], [upstage, { intensity: 95, color: '#ffb46a' }], [[side], { intensity: 92 }], [[fire], { intensity: 90 }], [lamps, { intensity: 70 }], [[moon], { intensity: 40 }], [sky, { intensity: 50 }], [lightning, { intensity: 0 }], [keys, { intensity: 60 }], [[torch], { intensity: 0 }]]);
+    stateLook('The storm breaks', [[front, { intensity: 75, color: '#ffae66' }], [upstage, { intensity: 45 }], [[side], { intensity: 40 }], [[fire], { intensity: 90 }], [lamps, { intensity: 50 }], [[moon], { intensity: 100 }], [sky, { intensity: 70, color: '#3a5ad8' }], [lightning, { intensity: 100 }], [keys, { intensity: 40 }], [[torch], { intensity: 0 }]]);
+    stateLook('Blackout, one torch', [[front, { intensity: 40, color: '#ff9e55' }], [upstage, { intensity: 20 }], [[side], { intensity: 15 }], [[fire], { intensity: 70 }], [lamps, { intensity: 0 }], [[moon], { intensity: 30 }], [sky, { intensity: 20 }], [lightning, { intensity: 0 }], [keys, { intensity: 0 }], [[torch], { intensity: 100 }]]);
+    stateLook('The accusation', [[front, { intensity: 80, color: warm }], [upstage, { intensity: 100, color: '#ffc488' }], [[side], { intensity: 60 }], [[fire], { intensity: 85 }], [lamps, { intensity: 60 }], [[moon], { intensity: 40 }], [sky, { intensity: 40 }], [lightning, { intensity: 0 }], [keys, { intensity: 50 }], [[torch], { intensity: 55 }]]);
     const wash2 = PRESET_LOOKS.find((p) => p.name === 'Full stage wash');
     if (wash2) {
       fadeTo(wash2.make(lighting().fixtures), 0);

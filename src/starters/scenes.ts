@@ -16,6 +16,7 @@ import { getTemplate } from '../templates/registry';
 import { storeFiles } from '../graphics/library';
 import { SHOWCASE_SCENES, type ArtIds } from './showcase';
 import { ART, renderArt, type ArtKey } from './showcaseArt';
+import { deleteProjects, refreshRecent, useRecentProjects } from '../projects/library';
 
 export interface StarterScene {
   id: string;
@@ -165,7 +166,7 @@ export const STARTER_SCENES: StarterScene[] = [
   },
 ];
 
-/** Open a starter scene as a new project (one undo step). */
+/** Open a starter scene as a new project (one undo step), replacing any earlier unrenamed copy of it. */
 export async function loadStarterScene(id: string) {
   const scene = STARTER_SCENES.find((s) => s.id === id);
   if (!scene) return;
@@ -195,4 +196,12 @@ export async function loadStarterScene(id: string) {
     useProjectStore.getState().setMode('set');
   });
   useProjectStore.getState().save();
+  // Opening a template again replaces the earlier copy of it, as long as that copy was never
+  // renamed (a renamed copy is the user's own project and stays).
+  if (scene.id !== 'scratch') {
+    await refreshRecent();
+    const current = useProjectStore.getState().projectId;
+    const old = useRecentProjects.getState().list.filter((r) => r.name === name && r.id !== current).map((r) => r.id);
+    if (old.length) await deleteProjects(old);
+  }
 }

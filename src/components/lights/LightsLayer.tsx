@@ -19,6 +19,7 @@ import { useLightsUI } from '../../lighting/ui';
 import { goboTexture, useGoboTextures } from '../../lighting/gobos';
 import { FixtureModel, PracticalModel } from './models';
 import { beamCone, hazeMaterial, poolTexture } from './haze';
+import { useFloorAt } from '../blocking/BlockingLayer';
 import { lightBudget, stageLightCount } from './budget';
 import { Plain } from '../../glossary/Plain';
 import { performerNear, useFollowTargets } from '../../lighting/follow';
@@ -155,7 +156,7 @@ function PositionView({ p, selected, active }: { p: HangPosition; selected: bool
   );
 }
 
-function FixtureView({ f, real, shadow, approx, selected, active, haze, presentation, lines }: { f: Fixture; real: boolean; shadow: boolean; approx: boolean; selected: boolean; active: boolean; haze: { on: boolean; density: number }; presentation: boolean; lines: () => HangLine[] }) {
+function FixtureView({ f, real, shadow, approx, floorY, selected, active, haze, presentation, lines }: { f: Fixture; real: boolean; shadow: boolean; approx: boolean; floorY: number; selected: boolean; active: boolean; haze: { on: boolean; density: number }; presentation: boolean; lines: () => HangLine[] }) {
   const spec = FIXTURES[f.type];
   const exporting = useExportState((s) => s.exporting);
   const target = useMemo(() => new THREE.Object3D(), []);
@@ -230,7 +231,8 @@ function FixtureView({ f, real, shadow, approx, selected, active, haze, presenta
       )}
       {real && spec.point && <pointLight position={[f.pos[0], f.pos[1] + 1.42, f.pos[2]]} color={color} intensity={level * K_POINT} distance={8} decay={1} />}
       {pool > 0 && (
-        <mesh position={[f.target[0], f.target[1] + 0.012, f.target[2]]} rotation-x={-Math.PI / 2} userData={{ lightHelper: true }} renderOrder={2}>
+        // The soft pool lies on the floor under the aim point, even when the light is aimed at someone's chest or a backdrop.
+        <mesh position={[f.target[0], floorY + 0.012, f.target[2]]} rotation-x={-Math.PI / 2} userData={{ lightHelper: true }} renderOrder={2}>
           <planeGeometry args={[pool * 2, pool * 2]} />
           <meshBasicMaterial map={poolTexture()} color={color} transparent opacity={0.55 * level} blending={THREE.AdditiveBlending} depthWrite={false} />
         </mesh>
@@ -418,6 +420,7 @@ export function LightsLayer() {
   const focusMode = useLightsUI((s) => s.focusMode);
   const presentation = quality === 'presentation' || exporting;
   const stageLights = useProjectStore((s) => stageLightCount(s.templateId, s.paramsByTemplate[s.templateId] ?? {}));
+  const floorAt = useFloorAt();
   const { real, approx, shadows } = useMemo(() => lightBudget(lighting.fixtures, presentation ? 'presentation' : 'draft', stageLights), [lighting.fixtures, presentation, stageLights]);
   const isSel = (kind: 'fixture' | 'position', id: string) => selected?.kind === kind && selected.ids.includes(id);
   // Lines are gathered when a drag starts (they depend on the stage and the set).
@@ -437,7 +440,7 @@ export function LightsLayer() {
         <PositionView key={p.id} p={p} selected={isSel('position', p.id)} active={active} />
       ))}
       {lighting.fixtures.map((f) => (
-        <FixtureView key={f.id} f={f} real={real.has(f.id)} shadow={shadows.has(f.id)} approx={approx.has(f.id)} selected={isSel('fixture', f.id)} active={active} haze={lighting.haze} presentation={presentation} lines={lines} />
+        <FixtureView key={f.id} f={f} real={real.has(f.id)} shadow={shadows.has(f.id)} approx={approx.has(f.id)} floorY={approx.has(f.id) ? floorAt(f.target[0], f.target[2]) : 0} selected={isSel('fixture', f.id)} active={active} haze={lighting.haze} presentation={presentation} lines={lines} />
       ))}
       {active && lighting.fixtures.filter((f) => !FIXTURES[f.type].point).map((f) => <Anchor key={f.id} f={f} selected={isSel('fixture', f.id)} />)}
       {active && focusMode && <FocusClick />}
