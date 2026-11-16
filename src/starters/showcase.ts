@@ -15,6 +15,7 @@ import type { FixtureType, Fixture, Vec3 } from '../lighting/types';
 import { blockingActions } from '../blocking/actions';
 import { useBlockingUI } from '../blocking/ui';
 import { useLightsUI } from '../lighting/ui';
+import { aimPoints } from '../lighting/follow';
 import type { ArtKey } from './showcaseArt';
 
 /** Graphic ids for the artwork a showcase asked for. */
@@ -93,6 +94,15 @@ function looks(showName: string) {
   }
   fadeTo(showLook, 0);
   useLightsUI.getState().select(null);
+}
+
+/** Set groups of lights to a state, then keep it as a named look. */
+function stateLook(name: string, groups: [(string | undefined)[], Partial<Fixture>][]) {
+  for (const [ids, change] of groups) {
+    const list = ids.filter((id): id is string => !!id);
+    if (list.length) lightActions.patch(list, change);
+  }
+  return lookActions.save(name);
 }
 
 const ROW = <T,>(n: number, f: (i: number) => T) => Array.from({ length: n }, (_, i) => f(i));
@@ -295,54 +305,89 @@ const sea: ShowcaseScene = {
 const drawingRoom: ShowcaseScene = {
   id: 'drawing-room',
   title: 'Drawing-room drama',
-  blurb: 'A box set in damask wallpaper: bookshelves, chandelier, Chesterfield, a Persian rug, working lamps and moonlit windows.',
+  blurb: 'A country-house mystery: a gallery and grand stair, a fire in the grate, a storm at the windows and four lighting looks.',
   image: '/starters/drawing-room.jpg',
   templateId: 'proscenium',
   preset: 'City theatre',
   params: { rows: 18, balcony: false, pit: false },
-  art: ['damask', 'rug', 'landscape', 'garden'],
+  art: ['damask', 'rug', 'landscape', 'sky', 'clock'],
   build: (g) => {
     lightActions.ensureReady();
-    const walls: string[] = [];
-    const back: [number, string, Params][] = [
-      [-4.8, 'flat', { width: 2.4 }],
-      [-2.4, 'flat-opening', { width: 2.4, openingType: 'window', openingWidth: 1.5, openingHeight: 2.6, openingOffset: 1 }],
-      [0, 'flat-opening', { width: 2.4, openingType: 'arch', openingWidth: 1.7, openingHeight: 3 }],
-      [2.4, 'flat-opening', { width: 2.4, openingType: 'window', openingWidth: 1.5, openingHeight: 2.6, openingOffset: 1 }],
-      [4.8, 'flat', { width: 2.4 }],
-    ];
-    for (const [x, type, p] of back) walls.push(put(type, x, -8, { ...p, height: 5.2, brace: false }, 'Back wall'));
-    for (const id of walls) show({ objectId: id, face: 'front' }, g.damask);
-    for (const sx of [-1, 1]) {
-      const run = put('wall-run', sx * 6.9, -5.6, { panels: 2, panelWidth: 2.6, height: 5.2 }, sx < 0 ? 'Wall SR' : 'Wall SL', sx * -72);
-      for (const face of ['panel-1-front', 'panel-2-front', 'panel-1-back', 'panel-2-back']) show({ objectId: run, face }, g.damask);
-    }
-    show({ objectId: put('floor-decal', 0, -3.6, { width: 6, depth: 3.8 }, 'Rug'), face: 'graphic' }, g.rug);
-    paint(put('sofa', 0, -4.6, {}, 'Chesterfield'), '#6a1a20');
-    paint(put('chair', -2.6, -3.2, { style: 'armchair' }, 'Armchair SR', 55), '#2f4a3a');
-    paint(put('chair', 2.6, -3.2, { style: 'armchair' }, 'Armchair SL', -55), '#2f4a3a');
-    paint(put('table', 0, -3.2, { shape: 'rect', width: 1.2, depth: 0.6, height: 0.45 }, 'Coffee table'), '#4a2c18');
-    paint(put('table', 4.6, -2.0, { shape: 'rect', width: 1.6, depth: 0.8, height: 0.76 }, 'Desk', -20), '#4a2c18');
-    paint(put('chair', 4.9, -2.7, {}, 'Desk chair', 160), '#4a2c18');
-    for (const sx of [-1, 1]) {
-      put('bookshelf', sx * 6.3, -4.2, { width: 1.6, height: 2.6 }, 'Bookshelf', sx * -72);
-      put('bookshelf', sx * 6.9, -6.4, { width: 1.6, height: 2.6 }, 'Bookshelf', sx * -72);
-      paint(put('table', sx * 3.6, -7.3, { shape: 'round', diameter: 0.5, height: 0.8 }, 'Lamp table'), '#4a2c18');
-      put('plant', sx * 1.6, -7.5, { height: 1.4 }, 'Palm');
-      show({ objectId: put('picture-frame', sx * 4.8, -7.92, { width: 1.3, height: 1.6, hangHeight: 2.2 }, 'Portrait'), face: 'picture' }, g.landscape);
-    }
-    put('chandelier', 0, -4.2, { diameter: 1.6, tiers: 2 }, 'Chandelier', 0, 4.6);
-    show({ objectId: put('backdrop', 0, -9.6, { width: 11, height: 6 }, 'Garden backing'), face: 'front' }, g.garden);
-    for (const wx of [-2.4, 2.4]) for (const sx of [-1, 1]) put('leg', wx + sx * 1.05, -7.8, { width: 0.55, height: 4.2, color: '#6a1018' }, 'Window curtain');
+    const wood = '#3a2214';
+    // Back wall: two upper doors onto the gallery, the hall door below
+    const back = (x: number, type: string, p: Params) => show({ objectId: put(type, x, -8.6, { ...p, height: 6.8, brace: false }, 'Back wall'), face: 'front' }, g.damask);
+    back(-4.8, 'flat', { width: 2.4 });
+    back(-2.4, 'flat-opening', { width: 2.4, openingType: 'window', openingWidth: 1.2, openingHeight: 2.3, openingOffset: 2.75 });
+    back(0, 'flat-opening', { width: 2.4, openingType: 'door', openingWidth: 1.7, openingHeight: 2.4 });
+    back(2.4, 'flat-opening', { width: 2.4, openingType: 'window', openingWidth: 1.2, openingHeight: 2.3, openingOffset: 2.75 });
+    back(4.8, 'flat', { width: 2.4 });
+    paint(put('flat', 0, -9.3, { width: 9.6, height: 6.8, brace: false }, 'Hall backing'), '#1c1410', 0.9);
+    put('chandelier', 0, -8.95, { diameter: 0.9, tiers: 1 }, 'Hall lantern', 0, 5.6);
+    // The gallery landing with its balustrade, and the grand stair up to it
+    paint(put('platform', 0, -7.75, { width: 9.6, depth: 1.6, heightPreset: 'custom', customHeight: 2.6 }, 'Gallery'), '#5a3826');
+    paint(put('box', 0, -6.98, { width: 9.6, depth: 0.1, height: 0.09 }, 'Gallery rail', 0, 3.5), wood);
+    ROW(23, (i) => paint(put('box', -4.4 + i * 0.4, -6.98, { width: 0.05, depth: 0.05, height: 0.9 }, 'Baluster', 0, 2.6), '#c9a25a'));
+    put('staircase', 3.9, -5.2, { kind: 'curved', width: 1.5, steps: 14, totalHeight: 2.6, railing: true }, 'Grand stair');
+    // Stage right: the fireplace wall. Stage left: French windows onto the storm.
+    const sr = put('wall-run', -6.9, -5.6, { panels: 2, panelWidth: 2.6, height: 6.8 }, 'Wall SR', 72);
+    for (const face of ['panel-1-front', 'panel-2-front']) show({ objectId: sr, face }, g.damask);
+    paint(put('box', -5.9, -4.6, { width: 2.2, depth: 0.45, height: 1.5 }, 'Fireplace', 72), '#e6dccb', 0.3);
+    paint(put('box', -5.72, -4.54, { width: 1.0, depth: 0.2, height: 0.9 }, 'Firebox', 72), '#140c08');
+    paint(put('box', -5.92, -4.6, { width: 2.6, depth: 0.55, height: 0.1 }, 'Mantel', 72, 1.5), '#e6dccb', 0.3);
+    show({ objectId: put('picture-frame', -6.05, -4.66, { width: 1.2, height: 1.5, hangHeight: 2.0 }, 'Portrait of the late Lord', 72), face: 'picture' }, g.landscape);
+    show({ objectId: put('flat-opening', 6.9, -5.6, { width: 5.2, height: 6.8, openingType: 'door', openingWidth: 2.6, openingHeight: 3.2, brace: false }, 'French windows', -72), face: 'front' }, g.damask);
+    show({ objectId: put('backdrop', 9.4, -6.4, { width: 7, height: 6 }, 'Storm sky', -72), face: 'front' }, g.sky);
+    // The room
+    show({ objectId: put('floor-decal', 0, -3.4, { width: 6, depth: 3.8 }, 'Rug'), face: 'graphic' }, g.rug);
+    paint(put('sofa', -0.6, -4.9, {}, 'Chesterfield'), '#5a141a');
+    paint(put('chair', -3.0, -2.9, { style: 'armchair' }, 'Armchair', 60), '#2b4434');
+    paint(put('chair', 2.6, -4.2, { style: 'armchair' }, 'Armchair', -40), '#2b4434');
+    paint(put('table', -0.6, -3.6, { shape: 'rect', width: 1.2, depth: 0.6, height: 0.45 }, 'Coffee table'), wood);
+    paint(put('table', -4.4, -6.6, { shape: 'rect', width: 1.5, depth: 0.7, height: 0.76 }, 'Writing desk', 30), wood);
+    paint(put('box', -2.2, -8.2, { width: 0.55, depth: 0.4, height: 2.2 }, 'Grandfather clock'), wood, 0.35);
+    show({ objectId: put('picture-frame', -2.2, -7.98, { width: 0.42, height: 0.42, hangHeight: 1.55 }, 'Clock face'), face: 'picture' }, g.clock);
+    put('bookshelf', -6.4, -7.4, { width: 1.4, height: 2.6 }, 'Bookshelf', 72);
+    put('plant', -5.6, -0.9, { height: 1.6 }, 'Palm');
+    put('chandelier', 0, -3.6, { diameter: 1.6, tiers: 2 }, 'Chandelier', 0, 5.2);
 
-    ROW(6, (i) => light('fresnel', [(-6 + i * 2.4) * 0.7, 9.5, 4], { color: '#ffc98a', intensity: 75, beam: 22, target: [-5 + i * 2, 1.2, -4] }));
-    for (const sx of [-1, 1]) light('profile', [sx * 2.4, 4, -11], { color: '#9ec4ff', intensity: 100, beam: 16, target: [sx * 1.4, 1, -3] });
-    light('fresnel', [0, 4, -11], { color: '#ffb060', intensity: 80, target: [0, 1.5, -8.5] });
-    for (const [x, z, y] of [[-3.6, -7.3, 2.1], [3.6, -7.3, 2.1], [4.4, -1.9, 1.9], [-6, -2, 2.6], [6, -2, 2.6]]) light('practical', [x, y, z], { color: '#ffb35c', intensity: 70 }, true);
-    for (const sx of [-1, 0, 1]) light('cyc', [sx * 3, 5.6, -8.5], { color: '#6f8fd8', intensity: 100, target: [sx * 3, 3, -9.6] });
-    lightActions.setHaze({ on: true, density: 12 });
-    cast([['Lady Ashford', -2.6, -3.2], ['Inspector', 1.2, -2.2], ['Colonel', 2.6, -3.2], ['Maid', 0, -7.2], ['Nephew', 4.9, -2.7]], ['Lady Ashford', 'Colonel', 'Nephew']);
-    looks('Evening, lamps lit');
+    // The cast: Sir Hugo lies dead on the rug
+    cast(
+      [['Lady Ashford', -1.4, -7.7], ['Inspector', 3.0, -1.6], ['Colonel', -3.0, -2.9], ['Maid', 1.3, -6.2], ['Nephew', 5.2, -4.6], ['Sir Hugo', 0.8, -2.4]],
+      ['Colonel'],
+    );
+    const people = state().blockingByTemplate[state().templateId]?.performers ?? [];
+    const hugo = people.find((p) => p.name === 'Sir Hugo');
+    if (hugo) blockingActions.patchPerformers([hugo.id], { posture: 'lying' });
+
+    // Lights: room, gallery, practicals, moonlight, storm sky, lightning, the torch,
+    // and a soft light following each performer so everyone reads in every look.
+    const wash = ROW(6, (i) => light('fresnel', [(-6 + i * 2.4) * 0.7, 9.5, 4], { color: '#ffc98a', intensity: 60, beam: 22, target: [-5 + i * 2, 1.2, -4] }));
+    const gallery = ROW(3, (i) => light('fresnel', [-3 + i * 3, 8.5, -3], { color: '#ffd7a0', intensity: 60, beam: 18, target: [-3 + i * 3, 3.4, -7.7] }));
+    const practicals = [[-5.72, 0.35, -4.4], [-4.4, 1.0, -6.6], [-1.6, 0.9, -3.6]].map(([x, y, z]) => light('practical', [x, y, z], { color: '#ff8a3a', intensity: 80 }, true));
+    const moon = light('profile', [11, 6, -5.2], { color: '#8fb4ff', intensity: 70, beam: 30, gobo: 'window', target: [0.8, 0, -3] });
+    const sky = ROW(2, (i) => light('cyc', [7.8, 6, -3 - i * 3], { color: '#4a6ad8', intensity: 70, target: [9.4, 3, -6.4] }));
+    const lightning = ROW(2, (i) => light('moving', [5 + i * 2, 9, -2], { color: '#eef3ff', intensity: 0, beam: 10, target: [2 - i * 3, 0, -3] }));
+    const aims = aimPoints(0);
+    const keys = people.map((p) => {
+      const at = aims.get(p.id) ?? [0, 1.5, -4];
+      // Up on the gallery: a fixed light at their height (following aims at stage-floor height)
+      if (at[2] < -6.9) return light('fresnel', [at[0], 7.5, 2.5], { color: '#fff0dc', intensity: 95, beam: 16, target: [at[0], 3.9, at[2]], name: `Wash on ${p.name}`, purpose: p.name });
+      return light('fresnel', [at[0] * 0.6, 9, Math.min(4, at[2] + 6)], { color: '#fff0dc', intensity: 85, beam: 14, target: at, follow: p.id, name: `Wash on ${p.name}`, purpose: p.name });
+    });
+    const torch = light('profile', [0, 9, 10], { color: '#ffffff', intensity: 0, beam: 7, target: hugo ? (aims.get(hugo.id) ?? [0.8, 0, -2.4]) : [0.8, 0, -2.4], follow: hugo?.id, name: 'The torch' });
+    lightActions.setHaze({ on: true, density: 22 });
+
+    const evening = stateLook('Evening, lamps lit', [[wash, { intensity: 60, color: '#ffc98a' }], [gallery, { intensity: 45 }], [practicals, { intensity: 80 }], [[moon], { intensity: 45 }], [sky, { intensity: 55, color: '#4a6ad8' }], [lightning, { intensity: 0 }], [keys, { intensity: 85, color: '#fff0dc' }], [[torch], { intensity: 0 }]]);
+    stateLook('The storm breaks', [[wash, { intensity: 15, color: '#a9b8e0' }], [gallery, { intensity: 15 }], [practicals, { intensity: 35 }], [[moon], { intensity: 100 }], [sky, { intensity: 100, color: '#3a5ad8' }], [lightning, { intensity: 100 }], [keys, { intensity: 80, color: '#dbe4ff' }], [[torch], { intensity: 0 }]]);
+    stateLook('Blackout, one torch', [[wash, { intensity: 0 }], [gallery, { intensity: 0 }], [practicals, { intensity: 0 }], [[practicals[0]], { intensity: 45 }], [[moon], { intensity: 25 }], [sky, { intensity: 20 }], [lightning, { intensity: 0 }], [keys, { intensity: 60, color: '#b8c8ff' }], [[torch], { intensity: 100 }]]);
+    stateLook('The accusation', [[wash, { intensity: 30, color: '#ffc98a' }], [gallery, { intensity: 100, color: '#ffe2b8' }], [practicals, { intensity: 60 }], [[moon], { intensity: 60 }], [sky, { intensity: 50 }], [lightning, { intensity: 0 }], [keys, { intensity: 90, color: '#ffe8cc' }], [[torch], { intensity: 55 }]]);
+    const wash2 = PRESET_LOOKS.find((p) => p.name === 'Full stage wash');
+    if (wash2) {
+      fadeTo(wash2.make(lighting().fixtures), 0);
+      lookActions.save(wash2.name);
+    }
+    fadeTo(evening, 0);
+    useLightsUI.getState().select(null);
   },
 };
 
