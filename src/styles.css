@@ -1089,6 +1089,12 @@ input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color:
 .tip::after { content: ''; position: absolute; left: 50%; width: 12px; height: 12px; background: var(--pri); transform: translateX(-50%) rotate(45deg); }
 .tip--above::after { bottom: -5px; }
 .tip--below::after { top: -5px; }
+.tip::after { left: calc(50% + var(--arrow, 0px)); }
+.tip--right { transform: translate(0, -50%); }
+.tip--left { transform: translate(-100%, -50%); }
+.tip--right::after, .tip--left::after { top: 50%; transform: translateY(-50%) rotate(45deg); }
+.tip--right::after { left: -5px; }
+.tip--left::after { left: auto; right: -5px; }
 .tip__ok { flex: 0 0 auto; border: 0; border-radius: 999px; padding: 6px 12px; background: var(--on-pri); color: var(--pri); font-weight: 500; cursor: pointer; }
 @keyframes tip-in { from { opacity: 0; margin-top: 6px; } to { opacity: 1; margin-top: 0; } }
 @media (prefers-reduced-motion: reduce) { .tip { animation: none; } }

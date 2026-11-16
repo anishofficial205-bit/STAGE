@@ -22,7 +22,7 @@ const TEXT: Record<TipId, string> = {
   export: 'Lighting plans and blocking sheets use technical terms crews know.',
   'new-project': 'Start here: pick a stage and its size.',
   presets: 'Each card is a ready-made size. Double-click one to start straight away.',
-  layers: 'Layers lists everything in your scene — open it to pick, hide or delete things.',
+  layers: 'Everything in your scene is listed here. Click to pick, right-click to hide or delete; › folds it away.',
 };
 
 const KEY = (id: TipId) => `stage-builder:tip:${id}`;
@@ -73,18 +73,46 @@ export function resetTips() {
 }
 
 const v = new THREE.Vector3();
-function screenOf(a: Anchor): { x: number; y: number } | null {
+type Box = { left: number; top: number; right: number; bottom: number };
+/** The anchor's box on screen (a point in the 3D view is a box of no size). */
+function screenOf(a: Anchor): Box | null {
   if ('selector' in a) {
     const r = document.querySelector(a.selector)?.getBoundingClientRect();
-    return r && r.width ? { x: r.left + r.width / 2, y: r.top } : null;
+    return r && r.width ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null;
   }
   const three = viewportBridge.three;
   if (!three) return null;
   v.set(...a.world).project(three.camera);
   if (v.z > 1) return null;
   const r = three.gl.domElement.getBoundingClientRect();
-  return { x: r.left + ((v.x + 1) / 2) * r.width, y: r.top + ((1 - v.y) / 2) * r.height };
+  const x = r.left + ((v.x + 1) / 2) * r.width;
+  const y = r.top + ((1 - v.y) / 2) * r.height;
+  return { left: x, top: y, right: x, bottom: y };
 }
+
+const GAP = 14;
+const HALF = 170; // half the bubble's widest
+/**
+ * Where the bubble goes so it never covers what it's about: beside things at the
+ * left or right edge (panels, the Home sidebar), otherwise (and for a point in
+ * the 3D view) above, or below when
+ * there's no room above. Tall things are pointed at near their top, where their title is.
+ */
+function place(b: Box) {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const midY = b.bottom - b.top > 120 ? b.top + 28 : (b.top + b.bottom) / 2;
+  const y = Math.min(Math.max(midY, 40), h - 40);
+  const sized = b.right > b.left;
+  if (sized && b.right < w * 0.4 && b.right + GAP + 2 * HALF < w) return { side: 'right' as const, x: b.right + GAP, y, arrow: 0 };
+  if (sized && b.left > w * 0.6 && b.left - GAP - 2 * HALF > 0) return { side: 'left' as const, x: b.left - GAP, y, arrow: 0 };
+  const cx = (b.left + b.right) / 2;
+  const x = Math.min(Math.max(cx, HALF + 12), w - HALF - 12);
+  if (b.top > 100) return { side: 'above' as const, x, y: b.top - GAP, arrow: cx - x };
+  return { side: 'below' as const, x, y: b.bottom + GAP, arrow: cx - x };
+}
+
+let openedAt = 0;
 
 /** Watches for the first time things happen and shows the matching tip. */
 function useTriggers() {
@@ -109,16 +137,21 @@ function useTriggers() {
     () =>
       useProjectStore.subscribe((s, p) => {
         const t = s.templateId;
+        // A project or template opening builds its pieces one by one: that isn't you adding them.
+        if (s.projectId !== p.projectId) openedAt = Date.now();
+        if (Date.now() - openedAt < 1500) return;
         // The stage selected for the first time.
         if (s.stageSelected && !p.stageSelected) window.setTimeout(() => showTip('stage', { selector: '.dock__body .stage-props .group' }), 500);
-        // First set piece placed.
+        // First set piece placed (one piece: not a template or a project loading).
         const objs = s.objectsByTemplate[t] ?? [];
         const prevObjs = p.objectsByTemplate[t] ?? [];
-        if (t === p.templateId && objs.length > prevObjs.length && s.mode === 'set') {
+        if (t === p.templateId && objs.length === prevObjs.length + 1 && s.mode === 'set') {
           const o = objs[objs.length - 1];
           window.setTimeout(() => {
             const placed = (useProjectStore.getState().objectsByTemplate[t] ?? []).find((x) => x.id === o.id);
-            showTip('object', placed ? { world: worldOf(placed.id) ?? [0, 1, 0] } : { selector: '.viewport' });
+            // Above the quick bar over the new piece, so it covers neither.
+            if (document.querySelector('.quick')) showTip('object', { selector: '.quick' });
+            else showTip('object', placed ? { world: worldOf(placed.id) ?? [0, 1, 0] } : { selector: '.viewport' });
           }, 400);
         }
         // First graphic put on a face.
@@ -157,7 +190,7 @@ export function Tips() {
   const tip = useTips((s) => s.tip);
   const dismiss = useTips((s) => s.dismiss);
   const mode = useProjectStore((s) => s.mode);
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [pos, setPos] = useState<Box | null>(null);
 
   useEffect(() => {
     if (!tip) return;
@@ -177,10 +210,9 @@ export function Tips() {
   }, [mode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!tip || !pos) return null;
-  const x = Math.min(Math.max(pos.x, 172), window.innerWidth - 172);
-  const above = pos.y > 140;
+  const at = place(pos);
   return (
-    <div className={`tip ${above ? 'tip--above' : 'tip--below'}`} role="status" style={{ left: x, top: above ? pos.y - 12 : pos.y + 40 }}>
+    <div className={`tip tip--${at.side}`} role="status" style={{ left: at.x, top: at.y, ['--arrow' as string]: `${at.arrow}px` }}>
       <span>{TEXT[tip.id]}</span>
       <button className="tip__ok" onClick={dismiss}>
         Got it
