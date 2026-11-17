@@ -16,11 +16,21 @@ export const MAX_REAL = { draft: 8, presentation: 16 } as const;
 export const MAX_SHADOWS = 8;
 
 /**
+ * How much a kind of light counts when choosing which ones are real. Lights that
+ * fall on the performers (washes, spots, follow spots, practicals) come first, so
+ * the cast stays lit; a moving light's beam still shows in haze when it is a soft
+ * pool, and backdrop and house lights matter less to who can be seen.
+ */
+const WEIGHT: Partial<Record<Fixture['type'], number>> = { moving: 0.6, uplight: 0.7, cyc: 0.75, house: 0.5 };
+const rank = (f: Fixture) => f.intensity * (WEIGHT[f.type] ?? 1);
+
+/**
  * Which fixtures get a real light and which of those cast shadows. The brightest
- * win. Gobo lights need a shadow map to project, so they keep shadows in Draft too.
+ * win, weighted towards lights that fall on performers. Gobo lights need a shadow
+ * map to project, so they keep shadows in Draft too.
  */
 export function lightBudget(fixtures: Fixture[], quality: 'draft' | 'presentation', stageLights = 0) {
-  const lit = fixtures.filter((f) => f.on && f.intensity > 0).sort((a, b) => b.intensity - a.intensity);
+  const lit = fixtures.filter((f) => f.on && f.intensity > 0).sort((a, b) => rank(b) - rank(a));
   // Lights the stage itself turns on come out of the same budget, but the plan always keeps a few.
   const max = quality === 'draft' ? Math.max(4, MAX_REAL.draft - stageLights) : MAX_REAL.presentation;
   const real = new Set(lit.slice(0, max).map((f) => f.id));
