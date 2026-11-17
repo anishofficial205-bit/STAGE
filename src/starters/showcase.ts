@@ -502,4 +502,116 @@ const keynote: ShowcaseScene = {
   },
 };
 
-export const SHOWCASE_SCENES: ShowcaseScene[] = [stadium, arena, cabaret, sea, drawingRoom, farce, keynote];
+/** Give performers moves: each walks `points` starting at `start` seconds, holding where asked. */
+function walks(list: [name: string, points: Pt[], start: number, speed: Speed, stops?: { index: number; hold: number }[]][]) {
+  const people = state().blockingByTemplate[state().templateId]?.performers ?? [];
+  for (const [name, points, start, speed, stops] of list) {
+    const id = people.find((p) => p.name === name)?.id;
+    if (!id) continue;
+    const path = blockingActions.addPath(id, points, undefined, start);
+    blockingActions.patchPath(path.id, { speed, ...(stops ? { stops } : {}) });
+  }
+  useBlockingUI.getState().select(null);
+  useBlockingUI.getState().setTime(0);
+}
+
+// The runway (Traverse, 'Fashion show' size) runs along z from the entrance wall at -12.5 to +12.5.
+const RZ = 12.5;
+
+const noir: ShowcaseScene = {
+  id: 'noir-fashion',
+  title: 'Noir fashion show',
+  blurb: 'A black runway edged in magenta light, a big screen and neon title at the entrance, beams down both sides and models walking in haze.',
+  image: '/starters/noir.jpg',
+  templateId: 'traverse',
+  preset: 'Fashion show',
+  params: { rows1: 4, rows2: 4 },
+  art: ['halo', 'header'],
+  build: (g) => {
+    lightActions.ensureReady();
+    show({ objectId: SURFACE, face: 'end-wall-a' }, g.halo);
+    for (const s of [-1, 1]) paint(put('box', s * 1.5, 0, { width: 0.06, depth: 25, height: 0.04 }, 'LED edge', 0, 0.6), '#ff2bd6', 0.1);
+    show({ objectId: put('led-wall', 0, -RZ + 0.4, { panelsWide: 12, panelsHigh: 7, panelSize: 0.5 }, 'Screen'), face: 'screen' }, g.header);
+    put('neon-sign', 0, -RZ + 0.5, { shape: 'text', text: 'NOIR', font: 'block', color: '#ff2bd6', height: 1.1, backing: false }, 'Title', 0, 4.1);
+    ROW(8, (i) => [-1, 1].forEach((s) => light('uplight', [s * 1.8, 0.6, -10 + i * 3], { color: i % 2 ? '#ff2bd6' : '#7a5cff', intensity: 80, beam: 6, target: [s * 2.4, 10, -10 + i * 3] }, true)));
+    ROW(8, (i) => light('moving', [(i % 2 ? 1 : -1) * 1.8, 6, -11 + i * 3.2], { color: i % 2 ? '#ff2bd6' : '#ffffff', intensity: 100, beam: 4, target: [(i % 2 ? -1 : 1) * 3, 0.6, -9 + i * 3.2] }));
+    // Six soft white pools cover the whole walk, so the models stay lit all the way down and back.
+    ROW(6, (i) => light('fresnel', [0, 6, -10.5 + i * 4.3], { color: '#f0e8ff', intensity: 100, beam: 52, target: [0, 1.2, -10.5 + i * 4.3] }));
+    light('follow', [0, 7, RZ + 8], { color: '#ffffff', intensity: 100, beam: 6, target: [0, 1.8, 4] });
+    lightActions.setHaze({ on: true, density: 60 });
+    // Three models already out on the runway; three more wait backstage behind the entrance.
+    cast([
+      ['Model 1', -0.45, 6], ['Model 2', -0.45, 0], ['Model 3', -0.45, -6],
+      ['Model 4', 0, -13.4], ['Model 5', 0, -14.2], ['Model 6', 0, -15],
+    ]);
+    // Down the left of the walk, pose at the end, back up the right and off through the entrance.
+    const lap = (from: Pt): Pt[] => [from, [-0.45, 10.6], [0.45, 10.6], [0.45, -12], [0.45, -13.6]];
+    walks([
+      ['Model 1', lap([-0.45, 6]), 0, 'normal', [{ index: 1, hold: 2 }]],
+      ['Model 2', lap([-0.45, 0]), 1.5, 'normal', [{ index: 1, hold: 2 }]],
+      ['Model 3', lap([-0.45, -6]), 3, 'normal', [{ index: 1, hold: 2 }]],
+      ['Model 4', [[0, -13.4], [-0.45, -12], [-0.45, 10.6], [0.45, 10.6], [0.45, -12]], 5, 'normal', [{ index: 2, hold: 2 }]],
+      ['Model 5', [[0, -14.2], [-0.45, -12], [-0.45, 10.6], [0.45, 10.6], [0.45, -12]], 8.5, 'normal', [{ index: 2, hold: 2 }]],
+      ['Model 6', [[0, -15], [-0.45, -12], [-0.45, 10.6]], 12, 'normal', [{ index: 2, hold: 3 }]],
+    ]);
+    looks('Night show');
+    state().setOtherLayers('show');
+  },
+};
+
+const jazz: ShowcaseScene = {
+  id: 'jazz-club',
+  title: 'Jazz supper club',
+  blurb: 'A grand piano and singer in the round, 24 lamp-lit supper tables on red velvet, amber light and a waiter doing the rounds.',
+  image: '/starters/jazz.jpg',
+  templateId: 'in-the-round',
+  preset: 'Studio in-the-round',
+  params: { shape: 'circle', stageSize: 13, stageHeight: 0.3, sections: 6, rows: 8, rake: 0.25, gap: 1.5, aisleWidth: 1.6, vomitories: true, lightingGrid: true, gridHeight: 11 },
+  art: ['velvet'],
+  build: (g) => {
+    lightActions.ensureReady();
+    show({ objectId: SURFACE, face: 'stage-floor' }, g.velvet);
+    put('arc-platform', 0, 0, { radius: 2.6, width: 0.3, angle: 330, height: 0.45, deckColor: '#1a120c', edgeLight: true, edgeColor: '#ffb35c' }, 'Bandstand rim', 15);
+    paint(put('box', -0.6, -0.5, { width: 1.6, depth: 1.1, height: 1.0 }, 'Grand piano', 20), '#0c0a09', 0.15);
+    put('mic-stand', 0.9, 0.6, {}, 'Singer mic');
+    paint(put('stool', -0.4, 0.4, {}, 'Piano stool'), '#0c0a09');
+    put('chandelier', 0, 0, { diameter: 1.8, tiers: 2 }, 'Chandelier', 0, 5);
+    // Two rings of supper tables round the bandstand, each with a chair, every other one with a lamp
+    const tables: [number, number][] = [];
+    ROW(10, (i) => { const a = (i / 10) * Math.PI * 2; tables.push([Math.sin(a) * 4.6, Math.cos(a) * 4.6]); });
+    ROW(14, (i) => { const a = (i / 14) * Math.PI * 2 + 0.2; tables.push([Math.sin(a) * 6.6, Math.cos(a) * 6.6]); });
+    for (const [x, z] of tables) {
+      paint(put('table', x, z, { shape: 'round', diameter: 0.8, height: 0.75 }, 'Supper table'), '#f1e6d6', 0.8);
+      paint(put('chair', x * 1.12, z * 1.12, {}, 'Chair', (Math.atan2(x, z) * 180) / Math.PI + 180), '#5a141a', 0.7);
+    }
+    tables.forEach(([x, z], i) => { if (i % 2 === 0) light('practical', [x, 0.75, z], { color: '#ffa04a', intensity: 70 }, true); });
+    ROW(4, (i) => { const a = (i / 4) * Math.PI * 2 + Math.PI / 4; light('fresnel', [Math.sin(a) * 6, 8, Math.cos(a) * 6], { color: '#ffc27a', intensity: 100, beam: 46, target: [Math.sin(a) * 2.5, 0.8, Math.cos(a) * 2.5] }); });
+    ROW(3, (i) => { const a = (i / 3) * Math.PI * 2; light('fresnel', [Math.sin(a) * 9, 7, Math.cos(a) * 9], { color: '#ffa860', intensity: 100, beam: 56, target: [Math.sin(a) * 5.6, 0.8, Math.cos(a) * 5.6] }); });
+    lightActions.setHaze({ on: true, density: 25 });
+    const seat = (i: number): [number, number] => [tables[i][0] * 1.12, tables[i][1] * 1.12];
+    cast(
+      [
+        ['Singer', 0.9, 0.9], ['Pianist', -0.4, 0.4], ['Bass', -1.9, 0.9],
+        ['Guest 1', ...seat(2)], ['Guest 2', ...seat(7)], ['Guest 3', ...seat(14)],
+        ['Waiter', 0, 5.65], ['Late guest', 9.5, 0],
+      ],
+      ['Pianist', 'Guest 1', 'Guest 2', 'Guest 3'],
+    );
+    // Follow the singer with a soft spot.
+    const people = state().blockingByTemplate[state().templateId]?.performers ?? [];
+    const singer = people.find((p) => p.name === 'Singer');
+    light('profile', [6, 8, 6], { color: '#fff1dc', intensity: 100, beam: 12, target: [0.9, 1.6, 0.9], follow: singer?.id, name: 'Spot on Singer' });
+    // The singer strolls round the bandstand; the waiter does a slow lap between the rings of tables;
+    // a late guest comes in through the aisle and is shown to a table.
+    const ring = (r: number, from: number, to: number, n: number): Pt[] => ROW(n + 1, (k) => { const a = from + ((to - from) * k) / n; return [Math.sin(a) * r, Math.cos(a) * r]; });
+    walks([
+      ['Singer', [[0.9, 0.9], [1.9, 0.2], [1.5, -1.3], [0.4, -1.8], [1.9, 0.2], [0.9, 0.9]], 2, 'slow', [{ index: 2, hold: 3 }, { index: 3, hold: 3 }]],
+      ['Waiter', ring(5.65, 0, Math.PI * 1.5, 9), 0.5, 'slow', [{ index: 2, hold: 2 }, { index: 5, hold: 2 }]],
+      ['Late guest', [[9.5, 0], [7.9, 0.2], [6.0, 1.0], seat(3)], 6, 'normal'],
+    ]);
+    looks('Late set');
+    state().setOtherLayers('show');
+  },
+};
+
+export const SHOWCASE_SCENES: ShowcaseScene[] = [stadium, arena, cabaret, sea, drawingRoom, farce, noir, jazz, keynote];
